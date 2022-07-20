@@ -107,7 +107,28 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
             echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table</b>';
         }
     }
-    // Display table of specific.
+
+    // Display context table data for this module.
+    $contexttable = new html_table();
+    if (!is_null($cms)
+        && $contextrecords = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $cms->id))) {
+        $contexttable->head = array_keys((array) current($contextrecords));
+        $moduleofconcernfound  = false;
+        foreach ($contextrecords as $record) {
+            $row = array();
+            foreach ($record as $key => $value) {
+                $row[] = '<b class="text-danger">'.$value.'</b>';
+            }
+            $contexttable->data[] = $row;
+        }
+        echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'));
+        echo html_writer::table($contexttable);
+        if (!$moduleofconcernfound) {
+            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in context table</b>';
+        }
+    }
+
+    // Display tool_recyclebin_course table data for this course.
     $recyclebintable = new html_table();
     if (!is_null($cms)
         && $recyclebinrecords = $DB->get_records('tool_recyclebin_course', array('courseid' => $cms->course))) {

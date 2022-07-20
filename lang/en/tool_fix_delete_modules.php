@@ -25,13 +25,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Fix Delete Modules';
+$string['pluginname']          = 'Fix Delete Modules';
+$string['table_context']       = 'Context table';
 $string['table_coursemodules'] = 'Course modules table';
 $string['table_adhoctasks']    = 'Adhoc tasks table';
 $string['table_modules']       = 'Modules table';
-$string['table_assign']        = 'Assign table';
-$string['table_quiz']          = 'Quiz table';
-$string['table_choice']        = 'Choice table';
-$string['table_file']          = 'File table';
 $string['table_recyclebin']    = 'Course Recycle bin table';
 
