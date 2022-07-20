@@ -101,7 +101,7 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
         echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)");
         echo html_writer::table($moduletable);
         if (!$moduleofconcernfound) {
-            echo '<b class="text-danger">Module (id '.$cms->id.') not found in '.$modulename.' table</b>';
+            echo '<b class="text-danger">Module (id '.$cms->instance.') not found in '.$modulename.' table</b>';
         }
     }
 } else { // No course_module_delete task in adhoc task queue... Show "Everything's fine".
