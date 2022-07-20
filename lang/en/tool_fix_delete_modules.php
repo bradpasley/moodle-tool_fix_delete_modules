@@ -33,3 +33,5 @@ $string['table_assign']        = 'Assign table';
 $string['table_quiz']          = 'Quiz table';
 $string['table_choice']        = 'Choice table';
 $string['table_file']          = 'File table';
+$string['table_recyclebin']    = 'Course Recycle bin table';
+

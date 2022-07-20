@@ -57,7 +57,10 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
 
     // Display Course Module table.
     $cmtable = new html_table();
-    if (!is_null($cms) && $cmrecords = $DB->get_records('course_modules', array('course' => $cms->course), '', 'id, course, module, idnumber, deletioninprogress')) {
+    if (!is_null($cms) && $cmrecords = $DB->get_records('course_modules',
+                                                        array('course' => $cms->course),
+                                                        '',
+                                                        'id, course, module, instance, section, idnumber, deletioninprogress')) {
         $cmtable->head   = array_keys((array) current($cmrecords));
         foreach ($cmrecords as $cmrecord) {
             $row = array();
@@ -102,6 +105,32 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
         echo html_writer::table($moduletable);
         if (!$moduleofconcernfound) {
             echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table</b>';
+        }
+    }
+    // Display table of specific.
+    $recyclebintable = new html_table();
+    if (!is_null($cms)
+        && $recyclebinrecords = $DB->get_records('tool_recyclebin_course', array('courseid' => $cms->course))) {
+        $recyclebintable->head = array_keys((array) current($recyclebinrecords));
+        $moduleofconcernfound  = false;
+        foreach ($recyclebinrecords as $record) {
+            $row = array();
+            $moduleofconcern = false;
+            foreach ($record as $key => $value) {
+                if ($moduleofconcern || ($key == 'id' && $value == $cms->instance)) {
+                    $moduleofconcern = true;
+                    $moduleofconcernfound = true;
+                    $row[] = '<b class="text-danger">'.$value.'</b>';
+                } else {
+                    $row[] = $value;
+                }
+            }
+            $recyclebintable->data[] = $row;
+        }
+        echo $OUTPUT->heading(get_string('table_recyclebin', 'tool_fix_delete_modules'));
+        echo html_writer::table($recyclebintable);
+        if (!$moduleofconcernfound) {
+            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in tool_recyclebin_course table</b>';
         }
     }
 } else { // No course_module_delete task in adhoc task queue... Show "Everything's fine".
