@@ -18,7 +18,8 @@
  * Plugin version and other meta-data are defined here.
  *
  * @package     tool_fix_delete_modules
- * @copyright   2022 Brad Pasley <brad.pasley@catalyst-au.net>
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -26,6 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_fix_delete_modules';
 $plugin->release = '0.1.0';
-$plugin->version = 2022071904;
+$plugin->version = 2022080401;
 $plugin->requires = 2018051700;
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->maturity = MATURITY_BETA;

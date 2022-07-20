@@ -15,19 +15,36 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Code to be executed after the plugin's database scheme has been installed is defined here.
+ * Privacy Subsystem for tool_fix_course_delete_modules implementing null_provider.
  *
  * @package     tool_fix_delete_modules
- * @category    upgrade
+ * @subpackage  privacy
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
  * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
- * Custom code to be run on installing the plugin.
- */
-function xmldb_tool_fix_delete_modules_install() {
+namespace tool_fix_delete_modules\privacy;
 
-    return true;
+/**
+ * Privacy Subsystem for tool_fix_course_delete_modules implementing null_provider.
+ *
+ * @package    tool_fix_delete_modules
+ * @author     Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright  Catalyst IT, 2022
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class provider implements \core_privacy\local\metadata\null_provider {
+
+    /**
+     * get_reason()
+     *
+     * Get the language string identifier with the component's language
+     * file to explain why this plugin stores no data.
+     *
+     * @return  string
+     */
+    public static function get_reason() : string {
+        return 'privacy:metadata';
+    }
 }

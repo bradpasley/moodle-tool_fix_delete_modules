@@ -1,0 +1,25 @@
+
+#page-admin-tool-fix_delete_modules-index hr.fix_delete_modules_first_divider {
+    border: 2px;
+    border-top: 2px dashed#666666;
+    border-bottom: 2px;
+    width: 300px;
+}
+
+#page-admin-tool-fix_delete_modules-index hr.fix_delete_modules_divider {
+    border: 3px;
+    border-top: 4px dotted green;
+    border-bottom: 3px;
+}
+
+#page-admin-tool-fix_delete_modules-index #id_submit {
+    background-color: #dd4444;
+}
+
+#page-admin-tool-fix_delete_modules-index .mform .fitem .felement {
+    margin-left: 0px;
+}
+
+#page-admin-tool-fix_delete_modules-index #fitem_id_submit div.col-md-3 {
+    max-width: 0;
+}
