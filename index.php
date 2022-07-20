@@ -87,7 +87,7 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
                 $row = array();
                 $moduleofconcern = false;
                 foreach ($record as $key => $value) {
-                    if ($moduleofconcern || ($key == 'id' && $value == $cms->id)) {
+                    if ($moduleofconcern || ($key == 'id' && $value == $cms->instance)) {
                         $moduleofconcern = true;
                         $moduleofconcernfound = true;
                         $row[] = '<b class="text-danger">'.$value.'</b>';
