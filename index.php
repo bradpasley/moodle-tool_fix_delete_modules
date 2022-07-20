@@ -57,6 +57,7 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
 
     // Display Course Module table.
     $cmtable = new html_table();
+    echo $OUTPUT->heading(get_string('table_coursemodules', 'tool_fix_delete_modules'));
     if (!is_null($cms) && $cmrecords = $DB->get_records('course_modules',
                                                         array('course' => $cms->course),
                                                         '',
@@ -75,7 +76,6 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
             }
             $cmtable->data[] = $row;
         }
-        echo $OUTPUT->heading(get_string('table_coursemodules', 'tool_fix_delete_modules'));
         echo html_writer::table($cmtable);
     }
 
@@ -83,9 +83,9 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
     $moduletable = new html_table();
     if (!is_null($cms)) {
         $modulename  = current($DB->get_records('modules', array('id' => $cms->module), '', 'name'))->name;
+        $moduleofconcernfound = false;
         if ($modulerecords = $DB->get_records($modulename, array('course' => $cms->course))) {
             $moduletable->head   = array_keys((array) current($modulerecords));
-            $moduleofconcernfound = false;
             foreach ($modulerecords as $record) {
                 $row = array();
                 $moduleofconcern = false;
@@ -110,22 +110,23 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
 
     // Display context table data for this module.
     $contexttable = new html_table();
+    echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'));
+    $moduleofconcernfound  = false;
     if (!is_null($cms)
         && $contextrecords = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $cms->id))) {
         $contexttable->head = array_keys((array) current($contextrecords));
-        $moduleofconcernfound  = false;
         foreach ($contextrecords as $record) {
             $row = array();
             foreach ($record as $key => $value) {
+                $moduleofconcernfound = true;
                 $row[] = '<b class="text-danger">'.$value.'</b>';
             }
             $contexttable->data[] = $row;
         }
-        echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'));
         echo html_writer::table($contexttable);
-        if (!$moduleofconcernfound) {
-            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in context table</b>';
-        }
+    }
+    if (!$moduleofconcernfound) {
+        echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in context table</b>';
     }
 
     // Display tool_recyclebin_course table data for this course.
