@@ -69,7 +69,9 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
             foreach ($cmrecord as $key => $value) {
                 if ($moduleofconcern || ($key == 'id' && $value == $cms->id)) {
                     $moduleofconcern = true;
-                    $row[] = '<b class="text-danger">'.$value.'</b>';
+                    $row[] = '<b class="text-success">'.$value.'</b>';
+                    $cmtable->data = array();
+                    break;
                 } else {
                     $row[] = $value;
                 }
@@ -93,7 +95,7 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
                     if ($moduleofconcern || ($key == 'id' && $value == $cms->instance)) {
                         $moduleofconcern = true;
                         $moduleofconcernfound = true;
-                        $row[] = '<b class="text-danger">'.$value.'</b>';
+                        $row[] = '<b class="text-success">'.$value.'</b>';
                     } else {
                         $row[] = $value;
                     }
@@ -112,14 +114,16 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
     $contexttable = new html_table();
     echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'));
     $moduleofconcernfound  = false;
+    $modcontextid = null;
     if (!is_null($cms)
         && $contextrecords = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $cms->id))) {
         $contexttable->head = array_keys((array) current($contextrecords));
         foreach ($contextrecords as $record) {
+            $modcontextid = $record['id'];
             $row = array();
             foreach ($record as $key => $value) {
                 $moduleofconcernfound = true;
-                $row[] = '<b class="text-danger">'.$value.'</b>';
+                $row[] = '<b class="text-success">'.$value.'</b>';
             }
             $contexttable->data[] = $row;
         }
@@ -127,6 +131,22 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
     }
     if (!$moduleofconcernfound) {
         echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in context table</b>';
+    }
+
+    // Display file table data for this module.
+    $filestable = new html_table();
+    echo $OUTPUT->heading(get_string('table_files', 'tool_fix_delete_modules'));
+    if (!is_null($cms) && !is_null($modcontextid)
+        && $filesrecords = $DB->get_records('files', array('contextid' => $modcontextid))) {
+        $filestable->head = array_keys((array) current($filesrecords));
+        foreach ($filesrecords as $record) {
+            $row = array();
+            foreach ($record as $key => $value) {
+                $row[] = $value;
+            }
+            $filestable->data[] = $row;
+        }
+        echo html_writer::table($filestable);
     }
 
     // Display tool_recyclebin_course table data for this course.
