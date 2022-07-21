@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['button_delete_mod_without_backup']  = 'Delete Module (no recycle bin)';
 $string['pluginname']          = 'Fix Delete Modules';
 $string['table_adhoctasks']    = 'Adhoc tasks table';
 $string['table_context']       = 'Context table';
@@ -32,4 +33,5 @@ $string['table_coursemodules'] = 'Course modules table';
 $string['table_files']         = 'Files table';
 $string['table_modules']       = 'Modules table';
 $string['table_recyclebin']    = 'Course Recycle bin table';
+
 

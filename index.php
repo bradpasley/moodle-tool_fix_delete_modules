@@ -24,6 +24,8 @@
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->libdir.'/moodlelib.php');
+require_once(__DIR__.'/form.php');
+require_login();
 
 admin_externalpage_setup('tool_fix_delete_modules');
 
@@ -31,6 +33,7 @@ $url = new moodle_url('/admin/tool/fix_delete_modules/index.php');
 $PAGE->set_url($url);
 $PAGE->set_title(get_string('pluginname', 'tool_fix_delete_modules'));
 $PAGE->set_heading(get_string('pluginname', 'tool_fix_delete_modules'));
+
 $renderer = $PAGE->get_renderer('core');
 
 echo $OUTPUT->header();
@@ -83,6 +86,7 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
 
     // Display table of specific.
     $moduletable = new html_table();
+    $moduleinstanceid = null;
     if (!is_null($cms)) {
         $modulename  = current($DB->get_records('modules', array('id' => $cms->module), '', 'name'))->name;
         $moduleofconcernfound = false;
@@ -93,6 +97,9 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
                 $moduleofconcern = false;
                 foreach ($record as $key => $value) {
                     if ($moduleofconcern || ($key == 'id' && $value == $cms->instance)) {
+                        if (!$moduleofconvern) {
+                            $moduleinstanceid = $cms->instance;
+                        }
                         $moduleofconcern = true;
                         $moduleofconcernfound = true;
                         $row[] = '<b class="text-success">'.$value.'</b>';
@@ -106,7 +113,16 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
         echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)");
         echo html_writer::table($moduletable);
         if (!$moduleofconcernfound) {
+
+            $urlparams  = array('action' => 'delete_module');
+            $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
+            $customdata = array('cmid'          => $cms->id,
+                                'cminstanceid'  => $cms->instance,
+                                'cmname'        => $modulename);
+
+            $mform = new fix_delete_modules_form($actionurl, $customdata);
             echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table</b>';
+            $mform->display();
         }
     }
 
@@ -119,7 +135,7 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
         && $contextrecords = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $cms->id))) {
         $contexttable->head = array_keys((array) current($contextrecords));
         foreach ($contextrecords as $record) {
-            $modcontextid = $record['id'];
+            $modcontextid = $record->id;
             $row = array();
             foreach ($record as $key => $value) {
                 $moduleofconcernfound = true;
