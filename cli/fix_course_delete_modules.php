@@ -72,7 +72,7 @@ if ($options['help']) {
 }
 
 $courseslist = preg_split('/\s*,\s*/', $options['courses'], -1, PREG_SPLIT_NO_EMPTY);
-if (in_array('*', $courseslist)) {
+if (in_array('*', $courseslist) || empty($courselist)) {
     $where = '';
     $params = array();
 } else {
@@ -87,15 +87,22 @@ if (!$coursescount) {
 echo "Checking $coursescount courses...\n\n";
 
 require_once($CFG->dirroot. '/course/lib.php');
+require_once(__DIR__ . '/../lib.php');
 
-$problems = array();
-$courses = $DB->get_fieldset_sql('SELECT id FROM {course} '. $where, $params);
+$problems   = array();
+$courses    = $DB->get_fieldset_sql('SELECT id FROM {course} '. $where, $params);
+$delcourses = get_all_affects_courseids(get_all_cms_from_adhoctask());
+if (is_null($delcourses) || empty($delcourses)) {
+    echo "\n...No courses have module delete tasks\n\n";
+    die();
+}
+$courses    = array_intersect($delcourses, $courses);
 foreach ($courses as $courseid) {
-    $errors = course_integrity_check($courseid, null, null, true, empty($options['fix']));
+    $errors = course_module_delete_issues($courseid);
     if ($errors) {
         if (!empty($options['fix'])) {
-            // Reset the course cache to make sure cache is recalculated next time the course is viewed.
-            rebuild_course_cache($courseid, true);
+            // Delete the remnant data related to this module.
+            force_delete_modules_of_course($courseid);
         }
         foreach ($errors as $error) {
             cli_problem($error);
@@ -112,6 +119,6 @@ if (!count($problems)) {
         echo "\n...Found and fixed ".count($problems)." courses with problems". "\n";
     } else {
         echo "\n...Found ".count($problems)." courses with problems. To fix run:\n";
-        echo "\$sudo -u www-data /usr/bin/php admin/cli/fix_course_sequence.php --courses=".join(',', $problems)." --fix". "\n";
+        echo "\$sudo -u www-data /usr/bin/php admin/cli/fix_delete_modules.php --courses=".join(',', $problems)." --fix". "\n";
     }
 }
