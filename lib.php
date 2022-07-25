@@ -29,13 +29,20 @@ require_once($CFG->dirroot.'/blog/lib.php');
 /**
  * get_adhoctasks()
  * @param bool $htmloutput - htmloutput true for gui output, false for cli output
- *
+ * @param stdClass $cms- if not null, only get specific adhoctask
  * @return html_table|array|bool - records of course_delete_module adhoc tasks.
  */
-function get_adhoctasks(bool $htmloutput = false) {
+function get_adhoctasks(bool $htmloutput = false, stdClass $cms = null) {
     global $DB;
     if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'))) {
 
+        if (!is_null($cms)) { // Filtered down to one adhoc task.
+            foreach ($adhocrecords as $adhocrecord) {
+                if (json_decode($adhocrecord->customdata)->cms === $cms) {
+                    $adhocrecords = array($adhocrecord);
+                }
+            }
+        }
         if ($htmloutput) { // HTML GUI output.
             return get_htmltable($adhocrecords);
         } else {
