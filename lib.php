@@ -328,9 +328,14 @@ function get_cms_from_adhoctask() {
     global $DB;
 
     $adhoccustomdata = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'), '', 'customdata');
-    $value = current($adhoccustomdata)->customdata;
-    $customdata = json_decode($value);
-    return current($customdata->cms);
+    if ($adhoccustomdata && !is_null($adhoccustomdata)) {
+        $value = current($adhoccustomdata)->customdata;
+        $customdata = json_decode($value);
+        return current($customdata->cms);
+    } else {
+        return null;
+    }
+
 }
 
 /**
