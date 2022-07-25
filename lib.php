@@ -189,7 +189,7 @@ function get_files_table(stdClass $cms, bool $htmloutput) {
 
     $modcontextid = get_context_id($cms);
 
-    if (!is_null($cms) && !is_null($modcontextid)
+    if (!is_null($cms) && !is_null($modcontextid && $modcontextid)
         && $records = $DB->get_records('files', array('contextid' => $modcontextid))) {
 
         if ($htmloutput) { // HTML GUI output.
@@ -265,13 +265,22 @@ function get_recycle_table(stdClass $cms, bool $htmloutput) {
  * Get the contextid of the module in question.
  *
  * @param stdClass $cms - course module data
- * @param bool $htmloutput - htmloutput true for gui output, false for cli output
+ * @param int|bool contextid of module
  *
  * @return int
  */
 function get_context_id(stdClass $cms) {
     global $DB;
-    return current($DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $cms->id), '', 'id'))->id;
+    if (is_null($cms) || is_null($cms->id)) {
+        return false;
+    }
+    $result = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $cms->id));
+    if ($result && count($result) > 0) {
+        return current($result)->id;
+    } else {
+        return false;
+    }
+
 }
 
 /**
