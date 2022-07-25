@@ -25,6 +25,7 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->libdir.'/moodlelib.php');
 require_once(__DIR__.'/form.php');
+require_once(__DIR__.'/lib.php');
 require_login();
 
 admin_externalpage_setup('tool_fix_delete_modules');
@@ -40,90 +41,35 @@ echo $OUTPUT->header();
 
 // 1) Search current 'stuck' course_module_delete failure tasks
 
-$adhoctable = new html_table();
-$cms = null;
-if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'))) {
-    $adhoctable->head = array_keys((array) current($adhocrecords));
-    foreach ($adhocrecords as $record) {
-        $row = array();
-        foreach ($record as $key => $value) {
-            $row[] = $value;
-            if ($key == 'customdata') { // Grab data from customdata.
-                $customdata = json_decode($value);
-                $cms = current($customdata->cms);
-            }
-        }
-        $adhoctable->data[] = $row;
-    }
+$cms = get_cms_from_adhoctask();
+if ($adhoctable = get_adhoctasks(true)) {
     echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'));
     echo html_writer::table($adhoctable);
 
     // Display Course Module table.
-    $cmtable = new html_table();
     echo $OUTPUT->heading(get_string('table_coursemodules', 'tool_fix_delete_modules'));
-    if (!is_null($cms) && $cmrecords = $DB->get_records('course_modules',
-                                                        array('course' => $cms->course),
-                                                        '',
-                                                        'id, course, module, instance, section, idnumber, deletioninprogress')) {
-        $cmtable->head   = array_keys((array) current($cmrecords));
-        foreach ($cmrecords as $cmrecord) {
-            $row = array();
-            $moduleofconcern = false;
-            foreach ($cmrecord as $key => $value) {
-                if ($moduleofconcern || ($key == 'id' && $value == $cms->id)) {
-                    $moduleofconcern = true;
-                    $row[] = '<b class="text-success">'.$value.'</b>';
-                    $cmtable->data = array();
-                    break;
-                } else {
-                    $row[] = $value;
-                }
-            }
-            $cmtable->data[] = $row;
-        }
+    if (!is_null($cms) && $cmtable = get_course_module_table($cms, true)) {
         echo html_writer::table($cmtable);
+    } else {
+        echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in course module table</b>';
     }
 
     // Display table of specific.
-    $moduletable = new html_table();
-    $moduleinstanceid = null;
-    if (!is_null($cms)) {
-        $modulename  = current($DB->get_records('modules', array('id' => $cms->module), '', 'name'))->name;
-        $moduleofconcernfound = false;
-        if ($modulerecords = $DB->get_records($modulename, array('course' => $cms->course))) {
-            $moduletable->head   = array_keys((array) current($modulerecords));
-            foreach ($modulerecords as $record) {
-                $row = array();
-                $moduleofconcern = false;
-                foreach ($record as $key => $value) {
-                    if ($moduleofconcern || ($key == 'id' && $value == $cms->instance)) {
-                        if (!$moduleofconvern) {
-                            $moduleinstanceid = $cms->instance;
-                        }
-                        $moduleofconcern = true;
-                        $moduleofconcernfound = true;
-                        $row[] = '<b class="text-success">'.$value.'</b>';
-                    } else {
-                        $row[] = $value;
-                    }
-                }
-                $moduletable->data[] = $row;
-            }
-        }
+    if ($moduletable = get_module_table($cms, true)) {
         echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)");
         echo html_writer::table($moduletable);
-        if (!$moduleofconcernfound) {
+    } else {
+        $urlparams  = array('action' => 'delete_module');
+        $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
+        $modulename = get_module_name($cms);
+        $customdata = array('cmid'          => $cms->id,
+                            'cminstanceid'  => $cms->instance,
+                            'cmname'        => $modulename);
 
-            $urlparams  = array('action' => 'delete_module');
-            $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
-            $customdata = array('cmid'          => $cms->id,
-                                'cminstanceid'  => $cms->instance,
-                                'cmname'        => $modulename);
-
-            $mform = new fix_delete_modules_form($actionurl, $customdata);
-            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table</b>';
-            $mform->display();
-        }
+        $mform = new fix_delete_modules_form($actionurl, $customdata);
+        echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)");
+        echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table</b>';
+        $mform->display();
     }
 
     // Display context table data for this module.
@@ -132,64 +78,29 @@ if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_c
     $moduleofconcernfound  = false;
     $modcontextid = null;
     if (!is_null($cms)
-        && $contextrecords = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $cms->id))) {
-        $contexttable->head = array_keys((array) current($contextrecords));
-        foreach ($contextrecords as $record) {
-            $modcontextid = $record->id;
-            $row = array();
-            foreach ($record as $key => $value) {
-                $moduleofconcernfound = true;
-                $row[] = '<b class="text-success">'.$value.'</b>';
-            }
-            $contexttable->data[] = $row;
-        }
+        && $contexttable = get_context_table($cms, true)) {
+
         echo html_writer::table($contexttable);
-    }
-    if (!$moduleofconcernfound) {
+    } else {
         echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in context table</b>';
     }
 
     // Display file table data for this module.
     $filestable = new html_table();
     echo $OUTPUT->heading(get_string('table_files', 'tool_fix_delete_modules'));
-    if (!is_null($cms) && !is_null($modcontextid)
-        && $filesrecords = $DB->get_records('files', array('contextid' => $modcontextid))) {
-        $filestable->head = array_keys((array) current($filesrecords));
-        foreach ($filesrecords as $record) {
-            $row = array();
-            foreach ($record as $key => $value) {
-                $row[] = $value;
-            }
-            $filestable->data[] = $row;
-        }
+    if ($filestable = get_files_table($cms, true)) {
         echo html_writer::table($filestable);
+    } else {
+        echo '<b>No File table records related to Module (cm id: '.$cms->id.' cm instance '.$cms->instance.').</b>';
     }
 
     // Display tool_recyclebin_course table data for this course.
     $recyclebintable = new html_table();
-    if (!is_null($cms)
-        && $recyclebinrecords = $DB->get_records('tool_recyclebin_course', array('courseid' => $cms->course))) {
-        $recyclebintable->head = array_keys((array) current($recyclebinrecords));
-        $moduleofconcernfound  = false;
-        foreach ($recyclebinrecords as $record) {
-            $row = array();
-            $moduleofconcern = false;
-            foreach ($record as $key => $value) {
-                if ($moduleofconcern || ($key == 'id' && $value == $cms->instance)) {
-                    $moduleofconcern = true;
-                    $moduleofconcernfound = true;
-                    $row[] = '<b class="text-danger">'.$value.'</b>';
-                } else {
-                    $row[] = $value;
-                }
-            }
-            $recyclebintable->data[] = $row;
-        }
-        echo $OUTPUT->heading(get_string('table_recyclebin', 'tool_fix_delete_modules'));
+    echo $OUTPUT->heading(get_string('table_recyclebin', 'tool_fix_delete_modules'));
+    if ($recyclebintable = get_recycle_table($cms, true)) {
         echo html_writer::table($recyclebintable);
-        if (!$moduleofconcernfound) {
-            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in tool_recyclebin_course table</b>';
-        }
+    } else {
+        echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in tool_recyclebin_course table</b>';
     }
 } else { // No course_module_delete task in adhoc task queue... Show "Everything's fine".
     echo '<b class="text-success">No course_delete_module tasks in queue</b>';

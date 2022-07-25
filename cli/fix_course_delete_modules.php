@@ -30,19 +30,35 @@ require_once($CFG->libdir.'/clilib.php');
 
 // Get the cli options.
 list($options, $unrecognized) = cli_get_params(array(
-    'help' => false
+    'courses' => false,
+    'fix'   => false,
+    'help'  => false
 ),
 array(
+    'c' => 'courses',
+    'f' => 'fix',
     'h' => 'help'
 ));
 
 $help =
 "
-Help message for tool_fix_delete_modules cli script.
+Checks and fixes incomplete course_delete_modules adhoc tasks.
 
 Please include a list of options and associated actions.
 
-Please include an example of usage.
+Avoid executing the script when another user may simultaneously edit any of the
+courses being checked (recommended to run in mainenance mode).
+
+Options:
+-c, --courses         List courses that need to be checked (comma-separated
+                      values or * for all). Required
+-f, --fix             Fix the mismatches in DB. If not specified check only and
+                      report problems to STDERR
+-h, --help            Print out this help
+
+Example:
+\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --courses=*
+\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --courses=2,3,4 --fix
 ";
 
 if ($unrecognized) {
@@ -53,4 +69,49 @@ if ($unrecognized) {
 if ($options['help']) {
     cli_writeln($help);
     die();
+}
+
+$courseslist = preg_split('/\s*,\s*/', $options['courses'], -1, PREG_SPLIT_NO_EMPTY);
+if (in_array('*', $courseslist)) {
+    $where = '';
+    $params = array();
+} else {
+    list($sql, $params) = $DB->get_in_or_equal($courseslist, SQL_PARAMS_NAMED, 'id');
+    $where = 'WHERE id '. $sql;
+}
+$coursescount = $DB->get_field_sql('SELECT count(id) FROM {course} '. $where, $params);
+
+if (!$coursescount) {
+    cli_error('No courses found');
+}
+echo "Checking $coursescount courses...\n\n";
+
+require_once($CFG->dirroot. '/course/lib.php');
+
+$problems = array();
+$courses = $DB->get_fieldset_sql('SELECT id FROM {course} '. $where, $params);
+foreach ($courses as $courseid) {
+    $errors = course_integrity_check($courseid, null, null, true, empty($options['fix']));
+    if ($errors) {
+        if (!empty($options['fix'])) {
+            // Reset the course cache to make sure cache is recalculated next time the course is viewed.
+            rebuild_course_cache($courseid, true);
+        }
+        foreach ($errors as $error) {
+            cli_problem($error);
+        }
+        $problems[] = $courseid;
+    } else {
+        echo "Course [$courseid] is OK\n";
+    }
+}
+if (!count($problems)) {
+    echo "\n...All courses are OK\n";
+} else {
+    if (!empty($options['fix'])) {
+        echo "\n...Found and fixed ".count($problems)." courses with problems". "\n";
+    } else {
+        echo "\n...Found ".count($problems)." courses with problems. To fix run:\n";
+        echo "\$sudo -u www-data /usr/bin/php admin/cli/fix_course_sequence.php --courses=".join(',', $problems)." --fix". "\n";
+    }
 }
