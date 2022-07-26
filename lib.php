@@ -319,7 +319,7 @@ function get_all_cms_from_adhoctask() {
     $customdatas = array();
     foreach ($adhoccustomdatas as $taskrecord) {
         $value = $taskrecord->customdata;
-        $customdatas[] = json_decode($value)->cms;
+        $customdatas[] = current(json_decode($value)->cms);
     }
 
     return $customdatas;

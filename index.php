@@ -61,6 +61,7 @@ if (!is_null($cmses) && !empty($cmses)) {
 
         // Display table of specific.
         if ($moduletable = get_module_table($cms, true)) {
+            $modulename = get_module_name($cms);
             echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)");
             echo html_writer::table($moduletable);
         } else {
