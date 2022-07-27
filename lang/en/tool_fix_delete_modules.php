@@ -26,12 +26,17 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['button_delete_mod_without_backup']  = 'Delete Module (no recycle bin)';
+$string['displaypage']         = 'Check & Fix Delete Modules';
 $string['pluginname']          = 'Fix Delete Modules';
 $string['table_adhoctasks']    = 'Adhoc tasks table';
 $string['table_context']       = 'Context table';
 $string['table_coursemodules'] = 'Course modules table';
-$string['table_files']         = 'Files table';
+$string['table_files']         = 'Files table stats';
+$string['table_grades']        = 'Grades data';
 $string['table_modules']       = 'Modules table';
+$string['table_modules_empty_explain']       = 'If there is no data record for the module here, it is not possible to backup the module to the recycle bin, but it is possible to wipe the remnant data of the module by clicking the button below. Then after the next adhoc task run, it should complete successfully.';
 $string['table_recyclebin']    = 'Course Recycle bin table';
-
-
+$string['setting_manage_general_title']   = 'Fix Delete Modules settings';
+$string['setting_manage_general_desc']    = 'Adjust which course_delete_module fix settings';
+$string['setting_minimumfaildelay_title'] = 'Minimum faildelay';
+$string['setting_minimumfaildelay_desc']  = 'Only show course_delete_module adhoc tasks with a minimum faildelay (in seconds)';

@@ -46,23 +46,42 @@ echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'))
 $cmses = get_all_cms_from_adhoctask();
 if (!is_null($cmses) && !empty($cmses)) {
     foreach ($cmses as $cms) {
-        echo $OUTPUT->heading('Course module: '.$cms->id);
+        echo $OUTPUT->heading('Course module: '.$cms->id, 4);
         $adhoctable = get_adhoctasks(true, $cms);
 
         echo html_writer::table($adhoctable);
 
         // Display Course Module table.
-        echo $OUTPUT->heading(get_string('table_coursemodules', 'tool_fix_delete_modules'));
+        echo $OUTPUT->heading(get_string('table_coursemodules', 'tool_fix_delete_modules'), 5);
         if (!is_null($cms) && $cmtable = get_course_module_table($cms, true)) {
             echo html_writer::table($cmtable);
         } else {
-            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in course module table</b>';
+            echo html_writer::tag('b', 'Module (cm id: '.$cms->id
+                                        .' cm instance '.$cms->instance
+                                        .') not found in course module table',
+                                  array('class' => "text-danger"));
+        }
+
+        // Display context table data for this module.
+        $contexttable = new html_table();
+        echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'), 5);
+        $moduleofconcernfound  = false;
+        $modcontextid = null;
+        if (!is_null($cms)
+            && $contexttable = get_context_table($cms, true)) {
+
+            echo html_writer::table($contexttable);
+        } else {
+            echo html_writer::tag('b', 'Module (cm id: '.$cms->id
+                                        .' cm instance '.$cms->instance
+                                        .') not found in the context table',
+                                  array('class' => "text-danger"));
         }
 
         // Display table of specific.
         if ($moduletable = get_module_table($cms, true)) {
             $modulename = get_module_name($cms);
-            echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)");
+            echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
             echo html_writer::table($moduletable);
         } else {
             $urlparams  = array('action' => 'delete_module');
@@ -73,44 +92,63 @@ if (!is_null($cmses) && !empty($cmses)) {
                                 'cmname'        => $modulename);
 
             $mform = new fix_delete_modules_form($actionurl, $customdata);
-            echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)");
-            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table</b>';
+            echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
+            echo html_writer::tag('b','Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table',
+                              array('class' => "text-danger"));
+            echo html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
             $mform->display();
         }
 
-        // Display context table data for this module.
-        $contexttable = new html_table();
-        echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'));
-        $moduleofconcernfound  = false;
-        $modcontextid = null;
-        if (!is_null($cms)
-            && $contexttable = get_context_table($cms, true)) {
-
-            echo html_writer::table($contexttable);
-        } else {
-            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in context table</b>';
-        }
+        echo html_writer::start_tag('hr', array('class' => 'fix_delete_modules_first_divider'));
+        echo html_writer::end_tag('hr');
 
         // Display file table data for this module.
         $filestable = new html_table();
-        echo $OUTPUT->heading(get_string('table_files', 'tool_fix_delete_modules'));
+        echo $OUTPUT->heading(get_string('table_files', 'tool_fix_delete_modules'), 5);
         if ($filestable = get_files_table($cms, true)) {
             echo html_writer::table($filestable);
         } else {
-            echo '<b>No File table records related to Module (cm id: '.$cms->id.' cm instance '.$cms->instance.').</b>';
+            echo html_writer::tag('b', 'No File table records related to Module'
+                                        .' (cm id: '.$cms->id
+                                        .' cm instance '.$cms->instance
+                                        .')',
+                                  array('class' => "text-danger"));
         }
+
+        // Display grades tables data for this module.
+        $gradestable = new html_table();
+        echo $OUTPUT->heading(get_string('table_grades', 'tool_fix_delete_modules'), 5);
+        if ($gradestable = get_grades_table($cms, true)) {
+            echo html_writer::table($gradestable);
+        } else {
+            echo html_writer::tag('b', 'No Grades data related to Module'
+                                        .' (cm id: '.$cms->id
+                                        .' cm instance '.$cms->instance
+                                        .')',
+                                  array('class' => "text-danger"));
+        }
+
+        echo html_writer::start_tag('hr', array('class' => 'fix_delete_modules_first_divider'));
+        echo html_writer::end_tag('hr');
 
         // Display tool_recyclebin_course table data for this course.
         $recyclebintable = new html_table();
-        echo $OUTPUT->heading(get_string('table_recyclebin', 'tool_fix_delete_modules'));
+        echo $OUTPUT->heading(get_string('table_recyclebin', 'tool_fix_delete_modules'), 5);
         if ($recyclebintable = get_recycle_table($cms, true)) {
             echo html_writer::table($recyclebintable);
         } else {
-            echo '<b class="text-danger">Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in tool_recyclebin_course table</b>';
+            echo html_writer::tag('b', 'Module (cm id: '.$cms->id
+                                    .' cm instance '.$cms->instance
+                                    .') not found in tool_recyclebin_course table',
+                                  array('class' => "text-danger"));
+
         }
+        echo html_writer::start_tag('hr', array('class' => 'fix_delete_modules_divider'));
+        echo html_writer::end_tag('hr');
     }
 } else { // No course_module_delete task in adhoc task queue... Show "Everything's fine".
-    echo '<b class="text-success">No course_delete_module tasks in queue</b>';
+    echo html_writer::tag('b', 'No course_delete_module tasks in queue',
+                              array('class' => "text-success"));
 }
 
 

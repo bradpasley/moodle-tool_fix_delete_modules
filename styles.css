@@ -1,0 +1,21 @@
+
+hr.fix_delete_modules_first_divider {
+    border: 2px!important;
+    border-top: 2px dashed#666666!important;
+    border-bottom: 2px!important;
+    width: 300px!important;
+}
+
+hr.fix_delete_modules_divider {
+    border: 3px !important;
+    border-top: 4px dotted green!important;
+    border-bottom: 3px !important;
+}
+
+#id_submit {
+    background-color: #dd4444!important;
+}
+
+.mform .fitem .felement {
+    margin-left: 0px!important;
+}

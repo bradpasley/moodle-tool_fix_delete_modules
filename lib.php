@@ -30,17 +30,31 @@ require_once($CFG->dirroot.'/blog/lib.php');
  * get_adhoctasks()
  * @param bool $htmloutput - htmloutput true for gui output, false for cli output
  * @param stdClass $cms- if not null, only get specific adhoctask
+ * @param int $climinfaildelay - optional (for CLI only)
  * @return html_table|array|bool - records of course_delete_module adhoc tasks.
  */
-function get_adhoctasks(bool $htmloutput = false, stdClass $cms = null) {
+function get_adhoctasks(bool $htmloutput = false, stdClass $cms = null, int $climinfaildelay = 0) {
     global $DB;
     if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'))) {
 
         if (!is_null($cms)) { // Filtered down to one adhoc task.
-            foreach ($adhocrecords as $adhocrecord) {
+            foreach ($adhocrecords as $adkey => $adhocrecord) {
+                $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
+                // Override for CLI.
+                if ($climinfaildelay != 0) {
+                    $minimumfaildelay = $climinfaildelay;
+                }
+                // Exclude adhoc tasks with faildelay below minimum config setting.
+                if (intval($adhocrecord->faildelay) < $minimumfaildelay) {
+                    unset($adhocrecords[$adkey]);
+                    continue;
+                }
                 if (json_decode($adhocrecord->customdata)->cms === $cms) {
                     $adhocrecords = array($adhocrecord);
                 }
+            }
+            if (count($adhocrecords) == 0) { // When there are no tasks with min faildelay.
+                return false;
             }
         }
         if ($htmloutput) { // HTML GUI output.
@@ -199,6 +213,91 @@ function get_files_table(stdClass $cms, bool $htmloutput) {
     if (!is_null($cms) && !is_null($modcontextid && $modcontextid)
         && $records = $DB->get_records('files', array('contextid' => $modcontextid))) {
 
+        // Get count of grades for this grade item & add to record.
+        $filecount = 0;
+        $componentfileareacounts = array();
+        $mimetypecounts = array();
+        foreach ($records as $rkey => $record) {
+            if ($record->filename != ".") { // Only count files.
+                $filecount++;
+                // Count component/filearea.
+                if (isset($componentfileareacounts[$record->component][$record->filearea])) {
+                    $componentfileareacounts[$record->component][$record->filearea] += 1;
+                } else {
+                    $componentfileareacounts[$record->component][$record->filearea] = 1;
+                }
+                // Count mimetype.
+                if (isset($mimetypecounts[$record->mimetype])) {
+                    $mimetypecounts[$record->mimetype] += 1;
+                } else {
+                    $mimetypecounts[$record->mimetype] = 1;
+                }
+            }
+        }
+
+        // Flatten into one table.
+        $records = array();
+        $records[] = (object) array('filecount' => "$filecount");
+        foreach ($componentfileareacounts as $componentkey => $componentcounts) {
+            foreach ($componentcounts as $fileareakey => $count) {
+                $records[] = (object) array("component/filearea: $componentkey/$fileareakey" => "$count");
+            }
+        }
+        foreach ($mimetypecounts as $mimetypekey => $count) {
+            $records[] = (object) array("mimetype: $mimetypekey" => "$count");
+        }
+
+        if ($htmloutput) { // HTML GUI output.
+            if (!$records) {
+                return false;
+            } else {
+                return get_htmltable_vertical($records, array("name", "count"));
+            }
+        } else { // CLI output.
+            $table   = array();
+            if (count($records) > 0 ) {
+                $table[] = array_keys((array) current($records));
+                foreach ($records as $record) {
+                    $row = (array) $record;
+                    $table[] = $row;
+                }
+                return $table;
+            } else {
+                return false;
+            }
+        }
+    }
+}
+
+/**
+ * get_grades_table()
+ *
+ * Get the file table related to the course module which is failing to be deleted.
+ *
+ * @param stdClass $cms - course module data
+ * @param bool $htmloutput - htmloutput true for gui output, false for cli output
+ *
+ * @return html_table|array|bool - records of course_delete_module adhoc tasks.
+ */
+function get_grades_table(stdClass $cms, bool $htmloutput) {
+
+    global $DB;
+
+    $modname = get_module_name($cms);
+
+    if (!is_null($cms) && $records = $DB->get_records('grade_items',
+                                                      array('itemmodule' => $modname,
+                                                            'iteminstance' => $cms->instance,
+                                                            'courseid' => $cms->course))) {
+
+        // Get count of grades for this grade item & add to record.
+        foreach ($records as $rkey => $record) {
+            $gradescount = get_grades_count($record->id);
+            $recordarray = (array) $record;
+            $recordarray = array('grades_count' => "$gradescount") + $recordarray;
+            $records[$rkey] = (object) $recordarray;
+        }
+
         if ($htmloutput) { // HTML GUI output.
             if (!$records) {
                 return false;
@@ -219,6 +318,20 @@ function get_files_table(stdClass $cms, bool $htmloutput) {
             }
         }
     }
+}
+
+/**
+ * get_grades_count()
+ *
+ * Get the count of grades related to the course module's gradeitem.
+ *
+ * @param int $gradeitemid - id of the gradeitem
+ *
+ * @return int - number of grades for the grade item
+ */
+function get_grades_count(int $gradeitemid) {
+    global $DB;
+    return $DB->count_records('grade_grades', array('itemid' => $gradeitemid));
 }
 
 /**
@@ -309,15 +422,24 @@ function get_module_name(stdClass $cms) {
 /**
  * get_all_cms_from_adhoctask()
  *
+ * @param int $climinfaildelay - optional, GUI will get from config
  * @return array|null - array of course module info from customdata field.
  */
 
-function get_all_cms_from_adhoctask() {
+function get_all_cms_from_adhoctask(int $climinfaildelay = 0) {
     global $DB;
 
-    $adhoccustomdatas = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'), '', 'customdata');
+    $adhoccustomdatas = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'), '', 'customdata, faildelay');
     $customdatas = array();
+    $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
+    if ($climinfaildelay != 0) { // Override config setting - for CLI.
+        $minimumfaildelay = $climinfaildelay;
+    }
     foreach ($adhoccustomdatas as $taskrecord) {
+        // Exclude adhoc tasks with faildelay below minimum config setting.
+        if (intval($taskrecord->faildelay) < $minimumfaildelay) {
+            continue;
+        }
         $value = $taskrecord->customdata;
         $customdatas[] = current(json_decode($value)->cms);
     }
@@ -348,6 +470,8 @@ function get_cms_from_adhoctask() {
 /**
  * get_all_affects_courseids()
  *
+ * used only in CLI
+ *
  * @param array $cmsarray
  * @return array|null - array of course module info from customdata field.
  */
@@ -361,7 +485,7 @@ function get_all_affects_courseids(array $cmsarray) {
 
     $courseids = array();
     foreach ($cmsarray as $cms) {
-        $courseids[] = (current($cms))->course;
+        $courseids[] = $cms->course;
     }
 
     $param = '';
@@ -415,7 +539,34 @@ function get_htmltable(array $records) {
 }
 
 /**
+ * get_htmltable()
+ *
+ * @param  array $records - records of table
+ * @param  array $columntitles - column titles
+ * @return html_table
+ */
+
+function get_htmltable_vertical(array $records, array $columntitles) {
+    $table = new html_table();
+    foreach ($columntitles as $title) {
+        $table->head[] = $title;
+    }
+    foreach ($records as $record) {
+        $row = array();
+        foreach ($record as $key => $value) {
+            $row[] = $key;
+            $row[] = $value;
+        }
+        $table->data[] = $row;
+    }
+
+    return $table;
+}
+
+/**
  * course_module_delete_issues()
+ *
+ * used on CLI only.
  *
  * @param  int $courseid - the course of which to check
  * @return array - strings explaining what type of issue exists
@@ -426,9 +577,8 @@ function course_module_delete_issues(int $courseid = null) {
     // Find adhoc task with courseid.
     $adhocdeletetasks = get_all_cms_from_adhoctask();
     $cms = null;
-    foreach ($adhocdeletetasks as $adhoctaskcms) {
-        $adhoctaskcms = current($adhoctaskcms);
-        if ($adhoctaskcms->course == $courseid) {
+    foreach ($adhocdeletetasks as $adkey => $adhoctaskcms) {
+        if (!is_null($courseid) && $adhoctaskcms->course == $courseid) {
             $cms = $adhoctaskcms;
         }
     }

@@ -31,12 +31,14 @@ require_once($CFG->libdir.'/clilib.php');
 // Get the cli options.
 list($options, $unrecognized) = cli_get_params(array(
     'courses' => false,
-    'fix'   => false,
-    'help'  => false
+    'fix'     => false,
+    'minimum' => false,
+    'help'    => false
 ),
 array(
     'c' => 'courses',
     'f' => 'fix',
+    'm' => 'minimum',
     'h' => 'help'
 ));
 
@@ -54,6 +56,7 @@ Options:
                       values or * for all). Required
 -f, --fix             Fix the mismatches in DB. If not specified check only and
                       report problems to STDERR
+-m, --minimum         Filter by the minimum faildelay field (in seconds)
 -h, --help            Print out this help
 
 Example:
@@ -69,6 +72,13 @@ if ($unrecognized) {
 if ($options['help']) {
     cli_writeln($help);
     die();
+}
+
+$minimumfaildelay = 0;
+if ($options['minimum']) {
+    if (is_numeric($options['minimum'])) {
+        $minimumfaildelay = intval($options['minimum']);
+    }
 }
 
 $courseslist = preg_split('/\s*,\s*/', $options['courses'], -1, PREG_SPLIT_NO_EMPTY);
@@ -91,7 +101,7 @@ require_once(__DIR__ . '/../lib.php');
 
 $problems   = array();
 $courses    = $DB->get_fieldset_sql('SELECT id FROM {course} '. $where, $params);
-$delcourses = get_all_affects_courseids(get_all_cms_from_adhoctask());
+$delcourses = get_all_affects_courseids(get_all_cms_from_adhoctask($minimumfaildelay));
 if (is_null($delcourses) || empty($delcourses)) {
     echo "\n...No courses have module delete tasks\n\n";
     die();
