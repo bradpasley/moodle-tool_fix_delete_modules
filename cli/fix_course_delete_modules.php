@@ -110,12 +110,12 @@ $courses    = array_intersect($delcourses, $courses);
 foreach ($courses as $courseid) {
     $errors = course_module_delete_issues($courseid);
     if ($errors) {
+        foreach ($errors as $error) {
+            cli_problem($error);
+        }
         if (!empty($options['fix'])) {
             // Delete the remnant data related to this module.
             force_delete_modules_of_course($courseid);
-        }
-        foreach ($errors as $error) {
-            cli_problem($error);
         }
         $problems[] = $courseid;
     } else {

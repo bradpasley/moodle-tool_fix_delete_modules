@@ -505,13 +505,12 @@ function get_all_affects_courseids(array $cmsarray) {
 function get_cms_of_course(int $courseid) {
     global $DB;
 
-    // Find adhoc task with courseid
+    // Find adhoc task with courseid.
     $adhocdeletetasks = get_all_cms_from_adhoctask();
     $cms = null;
     foreach ($adhocdeletetasks as $adhoctaskcms) {
-        $adhoctaskcms = current($adhoctaskcms);
         if ($adhoctaskcms->course == $courseid) {
-            $cms = $adhoctaskcms;
+            return $adhoctaskcms;
         }
     }
 
@@ -630,9 +629,10 @@ function force_delete_module_data(int $coursemoduleid, stdClass $cms) {
     global $DB;
 
     if (is_null($cms)) {
-        return ["Cannot find a course_module_delete adhoc task for courseid: $courseid"];
+        return ["Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid)."];
     }
 
+    echo "Fixing... Attempting to fix a deleted module (Course module id: $coursemoduleid).";
     // Get the course module.
     if (!$cm = $DB->get_record('course_modules', array('id' => $coursemoduleid))) {
         echo "Course Module instance (cmid $coursemoduleid) doesn't exist. Perhaps you already deleted it".PHP_EOL;
