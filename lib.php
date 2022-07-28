@@ -25,7 +25,6 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/blog/lib.php');
-require_login();
 
 /**
  * get_adhoctasks()
