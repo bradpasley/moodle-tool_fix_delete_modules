@@ -69,6 +69,8 @@ if ($action == 'delete_module') {
     $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
     echo get_string('deletemodule_returntomainsentence', 'tool_fix_delete_modules', $urlstring);
 
+    echo '<p><a href="index.php">Return to Fix Delete Modules Report page</a> and check the status.</p>';
+
     echo $OUTPUT->footer();
 } else {
     throw new moodle_exception('error:actionnotfound', 'block_teachercontact', $prevurl, $action);

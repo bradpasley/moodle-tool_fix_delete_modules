@@ -1014,14 +1014,15 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             'context'  => $modcontext,
             'objectid' => $cm->id,
             'other'    => array(
-                'modulename' => $modulename,
+                'modulename'   => $modulename,
                 'instanceid'   => $cm->instance,
             )
         ));
         $event->add_record_snapshot('course_modules', $cm);
         $event->trigger();
+        \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+        rebuild_course_cache($cm->course, true);
     }
-    rebuild_course_cache($cm->course, true);
 
     $datafields = '(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.')';
     $nextstring = get_string('deletemodule_success', 'tool_fix_delete_modules', $datafields);
