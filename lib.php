@@ -710,8 +710,11 @@ function force_delete_module_data(int $coursemoduleid, stdClass $cms) {
     echo 'Context data for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;;
 
     // Delete the module from the course_modules table.
-    $DB->delete_records('course_modules', array('id' => $cm->id));
-    echo 'Deleted Course Module record for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;;
+    if ($DB->delete_records('course_modules', array('id' => $cm->id))) {
+        echo 'Deleted Course Module record for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+    } else {
+        echo 'Deleted Course Module record: No record to delete for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+    }
 
     // Delete module from that section.
     if (!delete_mod_from_section($cm->id, $cm->section)) {
