@@ -1020,12 +1020,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         rebuild_course_cache($cm->course, true);
     }
 
-    $datafields = '(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.')';
-    $nextstring = get_string('deletemodule_success', 'tool_fix_delete_modules', $datafields);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
-    $textstring = array($nextstring.PHP_EOL);
-    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
-
     // Reset adhoc task to run asap. Works on Moodle 3.7+.
     if (function_exists('\core\task\manager::reschedule_or_queue_adhoc_task')) {
         if ($thisadhoctask = get_adhoctask_from_taskid($taskid)) {
