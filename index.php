@@ -42,7 +42,7 @@ echo $OUTPUT->header();
 // Header.
 echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'));
 
-// 1) Search current 'stuck' course_module_delete failure tasks
+// Display database state of course_delete_modules adhoc task related tables.
 $cmses = get_all_cms_from_adhoctask();
 if (!is_null($cmses) && !empty($cmses)) {
     foreach ($cmses as $cms) {
@@ -93,7 +93,9 @@ if (!is_null($cmses) && !empty($cmses)) {
 
             $mform = new fix_delete_modules_form($actionurl, $customdata);
             echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
-            echo html_writer::tag('b','Module (cm id: '.$cms->id.' cm instance '.$cms->instance.') not found in '.$modulename.' table',
+            echo html_writer::tag('b',
+                              'Module (cm id: '.$cms->id.' cm instance '.$cms->instance.')'
+                              .' not found in '.$modulename.' table',
                               array('class' => "text-danger"));
             echo html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
             $mform->display();
@@ -152,10 +154,7 @@ if (!is_null($cmses) && !empty($cmses)) {
 }
 
 
-// 2) Display table of these, including diagnosis
-
 echo $OUTPUT->footer();
 
-// 3) Buttons to dry run / run a fix
 
-// Extra functions: * track course_delete_modules when they run & log stack trace
+

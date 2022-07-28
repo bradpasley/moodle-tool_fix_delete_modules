@@ -25,6 +25,7 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/blog/lib.php');
+require_login();
 
 /**
  * get_adhoctasks()
@@ -429,7 +430,10 @@ function get_module_name(stdClass $cms) {
 function get_all_cms_from_adhoctask(int $climinfaildelay = 0) {
     global $DB;
 
-    $adhoccustomdatas = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'), '', 'customdata, faildelay');
+    $adhoccustomdatas = $DB->get_records('task_adhoc',
+                                         array('classname' => '\core_course\task\course_delete_modules'),
+                                               '',
+                                               'customdata, faildelay');
     $customdatas = array();
     $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
     if ($climinfaildelay != 0) { // Override config setting - for CLI.
@@ -456,7 +460,10 @@ function get_all_cms_from_adhoctask(int $climinfaildelay = 0) {
 function get_cms_from_adhoctask() {
     global $DB;
 
-    $adhoccustomdata = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'), '', 'customdata');
+    $adhoccustomdata = $DB->get_records('task_adhoc',
+                                        array('classname' => '\core_course\task\course_delete_modules'),
+                                              '',
+                                              'customdata');
     if ($adhoccustomdata && !is_null($adhoccustomdata)) {
         $value = current($adhoccustomdata)->customdata;
         $customdata = json_decode($value);
