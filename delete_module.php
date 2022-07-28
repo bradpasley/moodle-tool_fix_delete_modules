@@ -63,7 +63,66 @@ if ($action == 'delete_module') {
 
     echo $deleteoutput;
 
+<<<<<<< HEAD
     echo '<p><a href="index.php">Return to Fix Delete Modules Report page</a> and check the status.</p>';
+=======
+    // Delete associated blogs and blog tag instances.
+    blog_remove_associations_for_module($modcontext->id);
+    echo '<p><b>Deleted blogs for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+
+    // Delete completion and availability data; it is better to do this even if the
+    // features are not turned on, in case they were turned on previously (these will be
+    // very quick on an empty table).
+    $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
+    echo '<p><b>Deleted Module Completion data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+    $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
+                                                            'course' => $cm->course,
+                                                            'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
+    echo '<p><b>Deleted Module Completion Criteria data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+
+    // Delete all tag instances associated with the instance of this module.
+    \core_tag_tag::delete_instances('mod_' . $modulename, null, $modcontext->id);
+    \core_tag_tag::remove_all_item_tags('core', 'course_modules', $cm->id);
+    echo '<p><b>Deleted Tag data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+
+    // Notify the competency subsystem.
+    \core_competency\api::hook_course_module_deleted($cm);
+
+    // Delete the context.
+    \context_helper::delete_instance(CONTEXT_MODULE, $cm->id);
+    echo '<p><b>Context data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+
+    // Delete the module from the course_modules table.
+    if ($DB->delete_records('course_modules', array('id' => $cm->id))) {
+        echo 'Deleted Course Module record for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+    } else {
+        echo 'Deleted Course Module record: No record to delete for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+    }
+
+    // Delete module from that section.
+    if (!delete_mod_from_section($cm->id, $cm->section)) {
+        throw new moodle_exception('cannotdeletemodulefromsection', '', '', null,
+            "Cannot delete the module $modulename (instance) from section.");
+    }
+    echo '<p><b>Deleted Module From Section for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+
+    // Trigger event for course module delete action.
+    $event = \core\event\course_module_deleted::create(array(
+        'courseid' => $cm->course,
+        'context'  => $modcontext,
+        'objectid' => $cm->id,
+        'other'    => array(
+            'modulename'   => $modulename,
+            'instanceid'   => $cm->instance,
+        )
+    ));
+    $event->add_record_snapshot('course_modules', $cm);
+    $event->trigger();
+    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+    rebuild_course_cache($cm->course, true);
+
+    echo '<p><b class="text-success">SUCCESSFUL Deletion of Module and related data (cmid $cmid contextid '.$modcontext->id.')</b></p>';
+>>>>>>> 7ec8b32 (delete course_modules improvement m400)
 
     echo $OUTPUT->footer();
 } else {
