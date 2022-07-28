@@ -1,21 +1,25 @@
 
-hr.fix_delete_modules_first_divider {
-    border: 2px!important;
-    border-top: 2px dashed#666666!important;
-    border-bottom: 2px!important;
-    width: 300px!important;
+#page-admin-tool-fix_delete_modules-index hr.fix_delete_modules_first_divider {
+    border: 2px;
+    border-top: 2px dashed#666666;
+    border-bottom: 2px;
+    width: 300px;
 }
 
-hr.fix_delete_modules_divider {
-    border: 3px !important;
-    border-top: 4px dotted green!important;
-    border-bottom: 3px !important;
+#page-admin-tool-fix_delete_modules-index hr.fix_delete_modules_divider {
+    border: 3px;
+    border-top: 4px dotted green;
+    border-bottom: 3px;
 }
 
-#id_submit {
-    background-color: #dd4444!important;
+#page-admin-tool-fix_delete_modules-index #id_submit {
+    background-color: #dd4444;
 }
 
-.mform .fitem .felement {
-    margin-left: 0px!important;
+#page-admin-tool-fix_delete_modules-index .mform .fitem .felement {
+    margin-left: 0px;
+}
+
+#page-admin-tool-fix_delete_modules-index #fitem_id_submit div.col-md-3 {
+    max-width: 0;
 }
