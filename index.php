@@ -54,7 +54,11 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
             $cms = (array) $cmtask;
             $processedcms = get_cms_infos($cms);
         } else {
-            $cm = current($cmtask);
+            $cmids = array();
+            foreach ($cmtask as $cm) {
+                $cmids[] = $cm->id;
+            }
+            $processedcms = get_cms_infos($cmids, $cmtask);
         }
 
         // Prepare Course Module string.

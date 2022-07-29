@@ -444,7 +444,11 @@ function get_all_cmdelete_adhoctasks(int $climinfaildelay = 0) {
             continue;
         }
         $value = $taskrecord->customdata;
-        $customdatas[''.$taskrecord->id] = json_decode($value)->cms;
+        $cms   = json_decode($value)->cms;
+        if (is_array($cms) && count($cms) == 1) {
+            $cms = current($cms);
+        }
+        $customdatas[''.$taskrecord->id] = $cms;
     }
 
     return $customdatas;
@@ -526,38 +530,42 @@ function get_cms_of_course(int $courseid) {
  * get_cm_info()
  *
  * @param array $coursemoduleids
+ * @param array $cms - coursemodule data from adhoctask customdata field.
  * @return array|bool - array of cms' data or false if not available.
  */
 
-function get_cms_infos(array $coursemoduleids) {
+function get_cms_infos(array $coursemoduleids, array $cms) {
     global $DB;
 
-    // Find adhoc task with courseid.
-    $cm = null;
     // Get the course module data.
     list($sql, $params) = $DB->get_in_or_equal($coursemoduleids, SQL_PARAMS_NAMED, 'id');
     $where = 'WHERE id '. $sql;
-    if (!$cms = $DB->get_field_sql('SELECT * FROM {course_modules} '. $where, $params)) {
+    if (!$cmsrecord = $DB->get_records_sql('SELECT * FROM {course_modules} '. $where, $params)) {
         return false;
     }
 
     foreach ($coursemoduleids as $id) {
-        if (!array_key_exists($id, $cms)) {
-            $cms[$id] = array('id' => $id);
-        } else {
-            // Get the module context.
+        if (array_key_exists($id, $cmsrecord)) { // Don't process ids not in db.
+
+            // Add coursemodule db data if not already in $cms data.
+            foreach ($cmsrecord[$id] as $key => $value) {
+                if (!isset($cms[$id]->$key)) {
+                    $cms[$id]->$key = $value;
+                }
+            }
+
+            // Get the module context & add to cms data.
             $modulecontext = context_module::instance($id);
+            $cms[$id]->modulecontextid = ''.$modulecontext->id;
 
-            // Get the course module name.
-            $modulename = $DB->get_field('modules', 'name', array('id' => $cm->module), MUST_EXIST);
-
-            // Add to object.
-            $cms[$id]->modulecontext = $modulecontext;
-            $cms[$id]->modulename    = $modulename;
+            // Get the course module name & add to cms data.
+            if ($modulename = $DB->get_field('modules', 'name', array('id' => $cms[$id]->module), MUST_EXIST)) {
+                $cmsrecord[$id]->modulename = ''.$modulename;
+            }
         }
     }
 
-    return $cm;
+    return $cms;
 }
 
 
