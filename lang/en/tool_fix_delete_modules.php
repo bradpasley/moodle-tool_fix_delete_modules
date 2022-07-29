@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['button_delete_mod_without_backup']  = 'Delete Module (no recycle bin)';
+$string['button_separate_modules']           = 'Separate Into One Tasks per Module';
 $string['displaypage']         = 'Check & Fix Delete Modules';
 $string['pluginname']          = 'Fix Delete Modules';
 $string['table_adhoctasks']    = 'Adhoc tasks table';

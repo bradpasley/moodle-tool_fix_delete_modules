@@ -46,29 +46,32 @@ echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'))
 $cmtasks = get_all_cmdelete_adhoctasks();
 if (!is_null($cmtasks) && !empty($cmtasks)) {
     // Display each adhoc task in its own section.
-    foreach ($cmtasks as $cmtask) {
+    foreach ($cmtasks as $taskid => $cmtask) {
+        $cms = $cmtask;
 
-        // Some adhoc tasks are deleting multiple course modules.
-        if (count((array) $cmtask) > 1) {
-            $cms = array();
-            $cms = (array) $cmtask;
-            $processedcms = get_cms_infos($cms);
-        } else {
-            $cmids = array();
-            foreach ($cmtask as $cm) {
-                $cmids[] = $cm->id;
-            }
-            $processedcms = get_cms_infos($cmids, $cmtask);
-        }
+        // Some multi-module delete adhoc tasks don't contain all data.
+        $cms = get_cms_infos($cms);
 
         // Prepare Course Module string.
-        if (isset($cms->instance)) {
-            $cminfostring = 'cm id: '.$cms->id.' cm instance '.$cms->instance;
+        if (count($cms) > 2) {
+            $cminfostring = 'cmids: '.current($cms)->id.'...'.end($cms)->id
+                           .' cminstanceids: '.current($cms)->instance.'...'.end($cms)->instance;
+        } else if (count($cms) > 1) {
+            $cminfostring = 'cmids: '.current($cms)->id.' & '.end($cms)->id
+                           .' cminstanceids: '.current($cms)->instance.' & '.end($cms)->instance;
         } else {
-            $cminfostring = 'cm id: '.$cms->id;
+            if (isset($cms[0]->instance)) {
+                $cminfostring = 'cm id: '.current($cms)->id.' cm instance '.current($cms)->instance;
+            } else {
+                $cminfostring = 'cm id: '.current($cms)->id;
+            }
         }
-        echo $OUTPUT->heading('Course module: '.$cminfostring, 4);
-        $adhoctable = get_adhoctasks(true, $cms);
+
+        // Display heading of this adhoc task.
+        echo $OUTPUT->heading('Course module(s): '.$cminfostring, 4);
+
+        $originaltask = get_original_cmdelete_adhoctask($taskid);
+        $adhoctable = get_adhoctasks(true, $originaltask); // Display original adhoctask custom data.
 
         echo html_writer::table($adhoctable);
 
@@ -96,10 +99,8 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         }
 
         // Display table of specific.
-        if ($moduletable = get_module_table($cms, true)) {
-            $modulename = get_module_name($cms);
-            echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
-            echo html_writer::table($moduletable);
+        if ($moduletableshtml = get_module_table($cms, true)) {
+            echo $moduletableshtml;
         } else {
             $urlparams  = array('action' => 'delete_module');
             $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
@@ -124,8 +125,8 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         // Display file table data for this module.
         $filestable = new html_table();
         echo $OUTPUT->heading(get_string('table_files', 'tool_fix_delete_modules'), 5);
-        if ($filestable = get_files_table($cms, true)) {
-            echo html_writer::table($filestable);
+        if ($filestablehtml = get_files_table($cms, true)) {
+            echo $filestablehtml;
         } else {
             echo html_writer::tag('b', 'No File table records related to Module ('.$cminfostring.')',
                                   array('class' => "text-danger"));
@@ -134,8 +135,8 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         // Display grades tables data for this module.
         $gradestable = new html_table();
         echo $OUTPUT->heading(get_string('table_grades', 'tool_fix_delete_modules'), 5);
-        if ($gradestable = get_grades_table($cms, true)) {
-            echo html_writer::table($gradestable);
+        if ($gradestablehtml = get_grades_table($cms, true)) {
+            echo $gradestablehtml;
         } else {
             echo html_writer::tag('b', 'No Grades data related to Module ('.$cminfostring.')',
                                   array('class' => "text-danger"));

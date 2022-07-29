@@ -24,7 +24,7 @@
 require_once("$CFG->libdir/formslib.php");
 
 class fix_delete_modules_form extends moodleform {
-    //Add elements to form
+    // Add elements to form.
     public function definition() {
         global $CFG;
 
@@ -44,6 +44,25 @@ class fix_delete_modules_form extends moodleform {
         $mform->addElement('hidden', 'cmname', $this->_customdata['cmname']);
         $mform->setType('cmname', PARAM_ALPHAEXT);
 
+    }
+
+}
+
+class separate_delete_modules_form extends moodleform {
+    // Add elements to form.
+    public function definition() {
+        global $CFG;
+
+        $this->actionurl = new \moodle_url('/admin/tool/fix_delete_modules/separate_module.php', array(
+            'sesskey'          => sesskey()
+        ));
+
+        $mform = $this->_form; // Don't forget the underscore!
+
+        $mform->addElement('submit', 'submit',  get_string('button_separate_modules', 'tool_fix_delete_modules'));
+        $mform->addElement('hidden', 'action', 'delete_module');
+        $mform->setType('action', PARAM_ALPHAEXT);
+        $mform->addElement('hidden', 'taskid', $this->_customdata['taskid']);
     }
 
 }
