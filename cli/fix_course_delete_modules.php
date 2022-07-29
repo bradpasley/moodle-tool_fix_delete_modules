@@ -101,7 +101,7 @@ require_once(__DIR__ . '/../lib.php');
 
 $problems   = array();
 $courses    = $DB->get_fieldset_sql('SELECT id FROM {course} '. $where, $params);
-$delcourses = get_all_affects_courseids(get_all_cms_from_adhoctask($minimumfaildelay));
+$delcourses = get_all_affects_courseids(get_all_cmdelete_adhoctasks($minimumfaildelay));
 if (is_null($delcourses) || empty($delcourses)) {
     echo "\n...No courses have module delete tasks\n\n";
     die();

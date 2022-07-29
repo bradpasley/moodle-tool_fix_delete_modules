@@ -43,10 +43,27 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'));
 
 // Display database state of course_delete_modules adhoc task related tables.
-$cmses = get_all_cms_from_adhoctask();
-if (!is_null($cmses) && !empty($cmses)) {
-    foreach ($cmses as $cms) {
-        echo $OUTPUT->heading('Course module: '.$cms->id, 4);
+$cmtasks = get_all_cmdelete_adhoctasks();
+if (!is_null($cmtasks) && !empty($cmtasks)) {
+    // Display each adhoc task in its own section.
+    foreach ($cmtasks as $cmtask) {
+
+        // Some adhoc tasks are deleting multiple course modules.
+        if (count((array) $cmtask) > 1) {
+            $cms = array();
+            $cms = (array) $cmtask;
+            $processedcms = get_cms_infos($cms);
+        } else {
+            $cm = current($cmtask);
+        }
+
+        // Prepare Course Module string.
+        if (isset($cms->instance)) {
+            $cminfostring = 'cm id: '.$cms->id.' cm instance '.$cms->instance;
+        } else {
+            $cminfostring = 'cm id: '.$cms->id;
+        }
+        echo $OUTPUT->heading('Course module: '.$cminfostring, 4);
         $adhoctable = get_adhoctasks(true, $cms);
 
         echo html_writer::table($adhoctable);
@@ -56,9 +73,7 @@ if (!is_null($cmses) && !empty($cmses)) {
         if (!is_null($cms) && $cmtable = get_course_module_table($cms, true)) {
             echo html_writer::table($cmtable);
         } else {
-            echo html_writer::tag('b', 'Module (cm id: '.$cms->id
-                                        .' cm instance '.$cms->instance
-                                        .') not found in course module table',
+            echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in course module table',
                                   array('class' => "text-danger"));
         }
 
@@ -72,9 +87,7 @@ if (!is_null($cmses) && !empty($cmses)) {
 
             echo html_writer::table($contexttable);
         } else {
-            echo html_writer::tag('b', 'Module (cm id: '.$cms->id
-                                        .' cm instance '.$cms->instance
-                                        .') not found in the context table',
+            echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in the context table',
                                   array('class' => "text-danger"));
         }
 
@@ -94,7 +107,7 @@ if (!is_null($cmses) && !empty($cmses)) {
             $mform = new fix_delete_modules_form($actionurl, $customdata);
             echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
             echo html_writer::tag('b',
-                              'Module (cm id: '.$cms->id.' cm instance '.$cms->instance.')'
+                              'Module ('.$cminfostring.')'
                               .' not found in '.$modulename.' table',
                               array('class' => "text-danger"));
             echo html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
@@ -110,10 +123,7 @@ if (!is_null($cmses) && !empty($cmses)) {
         if ($filestable = get_files_table($cms, true)) {
             echo html_writer::table($filestable);
         } else {
-            echo html_writer::tag('b', 'No File table records related to Module'
-                                        .' (cm id: '.$cms->id
-                                        .' cm instance '.$cms->instance
-                                        .')',
+            echo html_writer::tag('b', 'No File table records related to Module ('.$cminfostring.')',
                                   array('class' => "text-danger"));
         }
 
@@ -123,10 +133,7 @@ if (!is_null($cmses) && !empty($cmses)) {
         if ($gradestable = get_grades_table($cms, true)) {
             echo html_writer::table($gradestable);
         } else {
-            echo html_writer::tag('b', 'No Grades data related to Module'
-                                        .' (cm id: '.$cms->id
-                                        .' cm instance '.$cms->instance
-                                        .')',
+            echo html_writer::tag('b', 'No Grades data related to Module ('.$cminfostring.')',
                                   array('class' => "text-danger"));
         }
 
@@ -139,9 +146,7 @@ if (!is_null($cmses) && !empty($cmses)) {
         if ($recyclebintable = get_recycle_table($cms, true)) {
             echo html_writer::table($recyclebintable);
         } else {
-            echo html_writer::tag('b', 'Module (cm id: '.$cms->id
-                                    .' cm instance '.$cms->instance
-                                    .') not found in tool_recyclebin_course table',
+            echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in tool_recyclebin_course table',
                                   array('class' => "text-danger"));
 
         }
