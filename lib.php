@@ -447,6 +447,9 @@ function get_all_cmdelete_adhoctasks(int $climinfaildelay = 0) {
         $cms   = json_decode($value)->cms;
         if (is_array($cms) && count($cms) == 1) {
             $cms = current($cms);
+            $cms = array(''.$cms->id => $cms);
+        } else {
+            $cms = (array) $cms;
         }
         $customdatas[''.$taskrecord->id] = $cms;
     }
