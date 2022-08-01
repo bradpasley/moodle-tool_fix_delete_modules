@@ -701,7 +701,7 @@ function get_cms_infos(array $adhoctask) {
 
             // Add coursemodule db data if not already in $cms data.
             foreach ($cmsrecord[$id] as $key => $value) {
-                if (isset($cms[$id]) && !isset($cms[$id]->$key)) {
+                if (!isset($cms[$id]->$key)) {
                     $cms[$id]->$key = $value;
                 }
             }
