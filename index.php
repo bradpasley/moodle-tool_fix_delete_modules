@@ -67,7 +67,7 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
         }
 
         // Display heading of this adhoc task.
-        echo $OUTPUT->heading('Course module(s): '.$cminfostring, 4);
+        echo $OUTPUT->heading(get_string('heading_coursemodules', 'tool_fix_delete_modules').': '.$cminfostring, 4);
         echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'), 5);
 
         $originaltaskdata = get_original_cmdelete_adhoctask_data($taskid);
@@ -85,7 +85,8 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
         if (!is_null($cms) && $cms && $cmtable = get_course_module_table($cms, true)) {
             echo html_writer::table($cmtable);
         } else {
-            echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in course module table',
+            echo html_writer::tag('b',
+                                  get_string('error_dne_coursemodules', 'tool_fix_delete_modules', $cminfostring),
                                   array('class' => "text-danger"));
         }
 
@@ -99,7 +100,8 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
 
             echo html_writer::table($contexttable);
         } else {
-            echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in the context table',
+            echo html_writer::tag('b',
+                                  get_string('error_dne_context', 'tool_fix_delete_modules', $cminfostring),
                                   array('class' => "text-danger"));
         }
 
@@ -120,9 +122,9 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
             $mform = new fix_delete_modules_form($actionurl, $customdata);
             echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
             echo html_writer::tag('b',
-                              'Module ('.$cminfostring.')'
-                              .' not found in '.$modulename.' table',
-                              array('class' => "text-danger"));
+                                  get_string('error_dne_moduleidinmoduletable', 'tool_fix_delete_modules', $cminfostring)
+                                  .get_string('error_dne_moduletable', 'tool_fix_delete_modules', $modulename),
+                                  array('class' => "text-danger"));
             echo html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
             $mform->display();
         }
@@ -138,7 +140,8 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
 
             echo $filestablehtml;
         } else {
-            echo html_writer::tag('b', 'No File table records related to Module ('.$cminfostring.')',
+            echo html_writer::tag('b',
+                                  get_string('error_dne_files', 'tool_fix_delete_modules', $cminfostring),
                                   array('class' => "text-danger"));
         }
 
@@ -150,7 +153,8 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
 
             echo $gradestablehtml;
         } else {
-            echo html_writer::tag('b', 'No Grades data related to Module ('.$cminfostring.')',
+            echo html_writer::tag('b',
+                                  get_string('error_dne_grades', 'tool_fix_delete_modules', $cminfostring),
                                   array('class' => "text-danger"));
         }
 
@@ -165,7 +169,8 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
 
             echo html_writer::table($recyclebintable);
         } else {
-            echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in tool_recyclebin_course table',
+            echo html_writer::tag('b',
+                                  get_string('error_dne_recyclebin', 'tool_fix_delete_modules', $cminfostring),
                                   array('class' => "text-danger"));
 
         }
@@ -173,7 +178,7 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
         echo html_writer::end_tag('hr');
     }
 } else { // No course_module_delete task in adhoc task queue... Show "Everything's fine".
-    echo html_writer::tag('b', 'No course_delete_module tasks in queue',
+    echo html_writer::tag('b', get_string('success_none_found', 'tool_fix_delete_modules'),
                               array('class' => "text-success"));
 }
 
