@@ -803,6 +803,20 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
 
     // Process this adhoc tasks's course module(s).
     $results = array();
+    foreach ($cms as $cm) {
+        // Prepare Task/Course Module string.
+        $stringtaskcms = get_coursemoduletask_string($cms, $taskid);
+
+        if (!$table = get_adhoctasks_table()) {
+            $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
+        }
+        if (!$table = get_course_module_table($cms, false)) {
+            $results[] = "course module table record ($stringtaskcms)".PHP_EOL;
+        }
+        if (!$table = get_module_tables($cms, $taskid[''.$cm->id], false)) {
+            $modulename = $cm->modulename;
+            $results[] = "$modulename table record for ($stringtaskcms) doesn't exist".PHP_EOL;
+        }
 
         if (!$table = get_adhoctasks_table()) {
             $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
