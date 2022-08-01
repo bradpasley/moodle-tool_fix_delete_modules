@@ -198,6 +198,7 @@ function get_module_tables(array $cms, int $taskid = 0, bool $htmloutput = false
         } else {
             $modulenames[$cm->modulename] = $cmarray;
         }
+
     }
 
     // Prepare SQL Query for each type of module table.
