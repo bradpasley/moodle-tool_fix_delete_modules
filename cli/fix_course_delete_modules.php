@@ -101,7 +101,7 @@ require_once(__DIR__ . '/../lib.php');
 
 $problems   = array();
 $courses    = $DB->get_fieldset_sql('SELECT id FROM {course} '. $where, $params);
-$delcourses = get_all_affects_courseids(get_all_cmdelete_adhoctasks($minimumfaildelay));
+$delcourses = get_all_affects_courseids(get_all_cmdelete_adhoctasks_data($minimumfaildelay));
 if (is_null($delcourses) || empty($delcourses)) {
     echo "\n...No courses have module delete tasks\n\n";
     die();
@@ -129,6 +129,6 @@ if (!count($problems)) {
         echo "\n...Found and fixed ".count($problems)." courses with problems". "\n";
     } else {
         echo "\n...Found ".count($problems)." courses with problems. To fix run:\n";
-        echo "\$sudo -u www-data /usr/bin/php admin/cli/fix_delete_modules.php --courses=".join(',', $problems)." --fix". "\n";
+        echo "\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --courses=".join(',', $problems)." --fix". "\n";
     }
 }

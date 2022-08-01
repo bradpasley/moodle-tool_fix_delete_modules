@@ -624,7 +624,9 @@ function get_all_affects_courseids(array $cmsarray) {
 
     $courseids = array();
     foreach ($cmsarray as $cms) {
-        $courseids[] = $cms->course;
+        foreach ($cms as $cm) {
+            $courseids[] = $cm->course;
+        }
     }
 
     if (empty($courseids)) {
@@ -650,10 +652,12 @@ function get_cms_of_course(int $courseid) {
 
     // Find adhoc task with courseid.
     $adhocdeletetasksdata = get_all_cmdelete_adhoctasks_data();
-    $cms = null;
+    $cms = array();
     foreach ($adhocdeletetasksdata as $adhoctaskcms) {
-        if ($adhoctaskcms->course == $courseid) {
-            return $adhoctaskcms;
+        foreach ($adhoctaskcms as $cm) {
+            if ($cm->course == $courseid) {
+                $cms[] = $cm;
+            }
         }
     }
 
@@ -691,7 +695,7 @@ function get_cms_infos(array $cms) {
 
             // Add coursemodule db data if not already in $cms data.
             foreach ($cmsrecord[$id] as $key => $value) {
-                if (!isset($cms[$id]->$key)) {
+                if (isset($cms[$id]) && !isset($cms[$id]->$key)) {
                     $cms[$id]->$key = $value;
                 }
             }
@@ -769,31 +773,53 @@ function course_module_delete_issues(int $courseid = null) {
 
     // Find adhoc task with courseid.
     $adhocdeletetasksdata = get_all_cmdelete_adhoctasks_data();
-    $cms = null;
+    $cmsdata = array();
+    $cmtaskids = array();
     foreach ($adhocdeletetasksdata as $adkey => $adhoctaskcms) {
-        if (!is_null($courseid) && $adhoctaskcms->course == $courseid) {
-            $cms = $adhoctaskcms;
+        foreach ($adhoctaskcms as $cm) {
+            if (!is_null($courseid) && $cm->course == $courseid) {
+                    $cmsdata[''.$cm->id] = $cm;
+                    $cmtaskids[''.$cm->id] = $adkey;
+            }
         }
     }
 
-    if (is_null($cms)) {
+    // Some multi-module delete adhoc tasks don't contain all data.
+    $cms = get_cms_infos($cmsdata);
+
+    if (is_null($cms) || empty(($cms))) {
         return ["Cannot find a course_module_delete adhoc task for courseid: $courseid"];
     }
 
+    // Prepare Course Module string.
+    if ($cms && count($cms) > 2) {
+        $cminfostring = 'cmids: '.current($cms)->id.'...'.end($cms)->id
+                       .' cminstanceids: '.current($cms)->instance.'...'.end($cms)->instance;
+    } else if ($cms && count($cms) > 1) {
+        $cminfostring = 'cmids: '.current($cms)->id.' & '.end($cms)->id
+                       .' cminstanceids: '.current($cms)->instance.' & '.end($cms)->instance;
+    } else {
+        if ($cms && isset(current($cms)->instance)) {
+            $cminfostring = 'cm id: '.current($cms)->id.' cminstanceid: '.current($cms)->instance;
+        } else {
+            $cminfostring = 'cm id: '.current($cmsdata)->id;
+        }
+    }
+
+    // Prepare output, for each course module.
     $results = array();
-    if (!get_adhoctasks_table()) {
-        $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
-    }
-    if (!get_course_module_table($cms, false)) {
-        $results[] = "course module table record for "
-                   ."(cm id: ".$cms->id.", cm instance: "
-                   .$cms->instance."table record doesn't exist)".PHP_EOL;
-    }
-    if (!get_module_tables($cms, false)) {
-        $modulename = get_module_name($cms);
-        $results[] = "module table ($modulename) record for "
-                   ."(cm id: ".$cms->id.", cm instance: "
-                   .$cms->instance." doesn't exist)".PHP_EOL;
+    foreach ($cms as $cm) {
+        if (!$table = get_adhoctasks_table()) {
+            $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
+        }
+        if (!$table = get_course_module_table($cms, false)) {
+            $results[] = "course module table record ($cminfostring)".PHP_EOL;
+        }
+        if (!$table = get_module_tables($cms, $cmtaskids[''.$cm->id], false)) {
+            $modulename = $cm->modulename;
+            $results[] = "$modulename table record for ($cminfostring) doesn't exist".PHP_EOL;
+        }
+
     }
 
     return $results;
@@ -803,11 +829,17 @@ function course_module_delete_issues(int $courseid = null) {
  * force_delete_modules_of_course()
  *
  * @param int $courseid - the courseid in which module id to be resolved.
- * @return bool - result of deletion
+ * @return bool - result of deletion: true = success, false = failure
  */
 function force_delete_modules_of_course(int $courseid) {
     $cms = get_cms_of_course($courseid);
-    return force_delete_module_data($cms->id, $cms);
+    $success = true;
+    foreach ($cms as $cm) {
+        if (!force_delete_module_data($cm->id, $cm)) {
+            $success = false;
+        }
+    }
+    return $success;
 }
 
 
@@ -823,7 +855,8 @@ function force_delete_module_data(int $coursemoduleid, stdClass $cms) {
     global $DB;
 
     if (is_null($cms)) {
-        return ["Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid)."];
+        echo "Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid).";
+        return false;
     }
 
     echo "Fixing... Attempting to fix a deleted module (Course module id: $coursemoduleid).";

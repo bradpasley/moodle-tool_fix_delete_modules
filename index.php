@@ -40,7 +40,7 @@ $renderer = $PAGE->get_renderer('core');
 echo $OUTPUT->header();
 
 // Header.
-echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'));
+echo $OUTPUT->heading(get_string('displaypage', 'tool_fix_delete_modules'));
 
 // Display database state of course_delete_modules adhoc task related tables.
 $cmstasksdata = get_all_cmdelete_adhoctasks_data();
@@ -68,6 +68,7 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
 
         // Display heading of this adhoc task.
         echo $OUTPUT->heading('Course module(s): '.$cminfostring, 4);
+        echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'), 5);
 
         $originaltaskdata = get_original_cmdelete_adhoctask_data($taskid);
         $adhoctable = get_adhoctasks_table(true, $originaltaskdata); // Display original adhoctask custom data.
