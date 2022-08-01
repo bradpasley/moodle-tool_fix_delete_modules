@@ -27,21 +27,21 @@ require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/blog/lib.php');
 
 /**
- * get_adhoctasks()
+ * get_adhoctasks_table()
  *
  * Get info for displaying info about the adhoc task.
  *
  * @param bool $htmloutput - htmloutput true for gui output, false for cli output
- * @param stdClass $cms - if not null, only get specific adhoctask.
+ * @param stdClass $customdata - if not null, only get specific adhoctask.
  * @param int $climinfaildelay - optional (for CLI only)
  * @return html_table|array|bool - records of course_delete_module adhoc tasks.
  */
-function get_adhoctasks(bool $htmloutput = false, stdClass $cms = null, int $climinfaildelay = 0) {
+function get_adhoctasks_table(bool $htmloutput = false, stdClass $customdatacms = null, int $climinfaildelay = 0) {
     global $DB;
     if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'))) {
 
-        if (!is_null($cms)) { // Filtered down to one adhoc task. TO BE DONE: ELSE.
-            //get_original_cmdelete_adhoctask
+        if (!is_null($customdatacms)) { // Filtered down to one adhoc task. TO BE DONE: ELSE.
+            // Get customdata.
             foreach ($adhocrecords as $adkey => $adhocrecord) {
                 $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
                 // Override for CLI.
@@ -53,7 +53,8 @@ function get_adhoctasks(bool $htmloutput = false, stdClass $cms = null, int $cli
                     unset($adhocrecords[$adkey]);
                     continue;
                 }
-                if (json_decode($adhocrecord->customdata)->cms === $cms) {
+                // Filter down to only param, if not null and matches.
+                if (isset($customdatacms) && json_decode($adhocrecord->customdata)->cms === $customdatacms) {
                     $adhocrecords = array($adhocrecord);
                 }
             }
@@ -101,6 +102,9 @@ function get_course_module_table(array $cms, bool $htmloutput) {
     foreach ($cms as $cm) {
         $cmids[] = $cm->id;
     }
+    if (empty($cmids)) {
+        return false;
+    }
 
     list($sqltail, $params) = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED, 'id');
     $where = 'WHERE id '. $sqltail;
@@ -132,16 +136,17 @@ function get_course_module_table(array $cms, bool $htmloutput) {
 }
 
 /**
- * get_module_table()
+ * get_module_tables()
  *
  * Get the table related to the course module which is failing to be deleted.
  *
  * @param array $cms - course modules data
+ * @param int $taskid - taskid assocaited with this module deletion.
  * @param bool $htmloutput - htmloutput true for gui output, false for cli output
  *
  * @return html_table|array|bool - records of course_delete_module adhoc tasks.
  */
-function get_module_table(array $cms, bool $htmloutput) {
+function get_module_tables(array $cms, int $taskid, bool $htmloutput) {
 
     global $DB, $OUTPUT;
 
@@ -154,18 +159,25 @@ function get_module_table(array $cms, bool $htmloutput) {
         if (!isset($cm->modulename)) {
             continue;
         }
-        if (!isset($modulenames[$cm->modulename])) {
-            $modulenames[$cm->modulename] = array($cm->instance);
+        // Push each module as [instance -> id] into array associated with its modulename.
+        $cmarray = array(''.$cm->instance => $cm->id);
+        if (isset($modulenames[$cm->modulename])) {
+            $modulenames[$cm->modulename] += $cmarray;
         } else {
-            array_push($modulenames[$cm->modulename], $cm->instance);
+            $modulenames[$cm->modulename] = $cmarray;
         }
+
     }
 
     // Prepare SQL Query for each type of module table.
     $outputtables = '';
     foreach ($modulenames as $modulename => $modulenameids) {
 
-        list($sqltail, $params) = $DB->get_in_or_equal($modulenameids, SQL_PARAMS_NAMED, 'instanceid');
+        if (empty(array_keys($modulenameids))) {
+            continue;
+        }
+
+        list($sqltail, $params) = $DB->get_in_or_equal(array_keys($modulenameids), SQL_PARAMS_NAMED, 'instanceid');
         $where = 'WHERE id '. $sqltail;
         $sqlhead = 'SELECT * FROM {'.$modulename.'} ';
 
@@ -173,10 +185,18 @@ function get_module_table(array $cms, bool $htmloutput) {
         if ($records = $DB->get_records_sql($sqlhead.$where, $params)) {
 
             if ($htmloutput) { // HTML GUI output.
+                // Display any lost modules and the button to process it.
+                $heading = $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
+                $buttons = '';
+                if ($lostcmids = get_any_lost_modules($modulenameids, $records)) {
+                    foreach ($lostcmids as $cmid) {
+                        $buttons .= get_html_fix_button_for_lost_modules($cmid, $modulename, $taskid);
+                    }
+                }
                 if (!$records) {
                     continue;
                 } else {
-                    $outputtables .= $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
+                    $outputtables .= $heading.$buttons;
                     $thistable     = get_htmltable($records);
                     $outputtables .= html_writer::table($thistable);
                 }
@@ -222,6 +242,10 @@ function get_context_table(array $cms, bool $htmloutput) {
     $cmids = array();
     foreach ($cms as $cm) {
         $cmids[] = $cm->id;
+    }
+
+    if (empty($cmids)) {
+        return false;
     }
 
     list($sqltail, $params) = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED, 'instanceid');
@@ -277,6 +301,10 @@ function get_files_table(array $cms, bool $htmloutput) {
         if (isset($cm->modulecontextid)) {
             $cmcontextids[] = $cm->modulecontextid;
         }
+    }
+
+    if (empty($cmcontextids)) {
+        return false;
     }
 
     list($sqltail, $params) = $DB->get_in_or_equal($cmcontextids, SQL_PARAMS_NAMED, 'contextid');
@@ -503,13 +531,13 @@ function get_module_name(stdClass $cms) {
 
 
 /**
- * get_all_cmdelete_adhoctasks()
+ * get_all_cmdelete_adhoctasks_data()
  *
  * @param int $climinfaildelay - optional, GUI will get from config
  * @return array|null - array of course module info from customdata field.
  */
 
-function get_all_cmdelete_adhoctasks(int $climinfaildelay = 0) {
+function get_all_cmdelete_adhoctasks_data(int $climinfaildelay = 0) {
     global $DB;
 
     $adhoccustomdatas = $DB->get_records('task_adhoc',
@@ -541,14 +569,14 @@ function get_all_cmdelete_adhoctasks(int $climinfaildelay = 0) {
 }
 
 /**
- * get_original_cmdelete_adhoctask()
+ * get_original_cmdelete_adhoctask_data()
  *
  * @param int $taskid
  * @param int $climinfaildelay - optional, GUI will get from config
  * @return array|null - course module info from customdata field.
  */
 
-function get_original_cmdelete_adhoctask(int $taskid, int $climinfaildelay = 0) {
+function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay = 0) {
     global $DB;
 
     $adhoccustomdata = $DB->get_record('task_adhoc',
@@ -567,8 +595,12 @@ function get_original_cmdelete_adhoctask(int $taskid, int $climinfaildelay = 0) 
             return null;
         }
         $value = $adhoccustomdata->customdata;
-        $customdata = json_decode($value);
-        return $customdata->cms;
+        $cms   = json_decode($value)->cms;
+        if (is_array($cms) && count($cms) == 1) {
+            $cms = current($cms);
+        }
+
+        return $cms;
     } else {
         return null;
     }
@@ -595,6 +627,10 @@ function get_all_affects_courseids(array $cmsarray) {
         $courseids[] = $cms->course;
     }
 
+    if (empty($courseids)) {
+        return false;
+    }
+
     $param = '';
     list($sql, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'id');
     $where = 'WHERE id '. $sql;
@@ -613,9 +649,9 @@ function get_cms_of_course(int $courseid) {
     global $DB;
 
     // Find adhoc task with courseid.
-    $adhocdeletetasks = get_all_cmdelete_adhoctasks();
+    $adhocdeletetasksdata = get_all_cmdelete_adhoctasks_data();
     $cms = null;
-    foreach ($adhocdeletetasks as $adhoctaskcms) {
+    foreach ($adhocdeletetasksdata as $adhoctaskcms) {
         if ($adhoctaskcms->course == $courseid) {
             return $adhoctaskcms;
         }
@@ -626,6 +662,8 @@ function get_cms_of_course(int $courseid) {
 
 /**
  * get_cm_info()
+ *
+ * get an array of cms data (split up clustered task customdata)
  *
  * @param array $cms - coursemodule data from adhoctask customdata field.
  * @return array|bool - array of cms' data or false if not available.
@@ -644,7 +682,7 @@ function get_cms_infos(array $cms) {
     list($sql, $params) = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED, 'id');
     $where = 'WHERE id '. $sql;
     if (!$cmsrecord = $DB->get_records_sql('SELECT * FROM {course_modules} '. $where, $params)) {
-        return false;
+        return $cms; // Return original.
     }
 
     // Process each coursemodule id which exists in the adhoc task's customdata.
@@ -730,9 +768,9 @@ function get_htmltable_vertical(array $records, array $columntitles) {
 function course_module_delete_issues(int $courseid = null) {
 
     // Find adhoc task with courseid.
-    $adhocdeletetasks = get_all_cmdelete_adhoctasks();
+    $adhocdeletetasksdata = get_all_cmdelete_adhoctasks_data();
     $cms = null;
-    foreach ($adhocdeletetasks as $adkey => $adhoctaskcms) {
+    foreach ($adhocdeletetasksdata as $adkey => $adhoctaskcms) {
         if (!is_null($courseid) && $adhoctaskcms->course == $courseid) {
             $cms = $adhoctaskcms;
         }
@@ -743,7 +781,7 @@ function course_module_delete_issues(int $courseid = null) {
     }
 
     $results = array();
-    if (!get_adhoctasks()) {
+    if (!get_adhoctasks_table()) {
         $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
     }
     if (!get_course_module_table($cms, false)) {
@@ -751,7 +789,7 @@ function course_module_delete_issues(int $courseid = null) {
                    ."(cm id: ".$cms->id.", cm instance: "
                    .$cms->instance."table record doesn't exist)".PHP_EOL;
     }
-    if (!get_module_table($cms, false)) {
+    if (!get_module_tables($cms, false)) {
         $modulename = get_module_name($cms);
         $results[] = "module table ($modulename) record for "
                    ."(cm id: ".$cms->id.", cm instance: "
@@ -888,4 +926,125 @@ function force_delete_module_data(int $coursemoduleid, stdClass $cms) {
 
     echo 'SUCCESSFUL Deletion of Module and related data (cmid $cmid contextid '.$modcontext->id.').'.PHP_EOL.PHP_EOL;
 
+}
+
+/**
+ * get_adhoctask_from_taskid()
+ *
+ * @param int $taskid - the taskid of a course_delete_modules adhoc task.
+ * @return \core\task\adhoc_task|bool - false if not found.
+ */
+function get_adhoctask_from_taskid(int $taskid) {
+    $thisadhoctask = null;
+    $cdmadhoctasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+    foreach ($cdmadhoctasks as $adhoctask) {
+        if ($adhoctask->get_id() == $taskid) {
+            $thisadhoctask = $adhoctask;
+        }
+    }
+    if (isset($thisadhoctask)) {
+        return $thisadhoctask;
+    } else {
+        return false;
+    }
+}
+
+
+/**
+ * get_any_lost_modules()
+ *
+ * A utility function to find any modules which do not have a
+ * record in their corresponding module table.
+ * Used within get_module_tables()
+ *
+ * returns
+ *
+ * @param array $moduleinstanceids
+ * @param array $moduletablerecords
+ * @return array|bool - course module ids, or false if no missing modules.
+ */
+function get_any_lost_modules(array $moduleinstanceids, array $moduletablerecords) {
+
+    $lostmoduleids = array();
+    foreach ($moduleinstanceids as $moduleid => $cmid) {
+        $moduleidfound = false;
+        foreach ($moduletablerecords as $record) {
+            if ($record->id == intval($moduleid)) {
+                $moduleidfound = true;
+            }
+        }
+        if (!$moduleidfound) {
+            array_push($lostmoduleids, $cmid);
+        }
+    }
+
+    if (empty($lostmoduleids)) {
+        return false;
+    } else {
+        return $lostmoduleids;
+    }
+}
+
+/**
+ * get_html_fix_button_for_lost_modules()
+ *
+ * Outputs HTML buttons for a module that is missing.
+ *
+ * @param int $coursemoduleid
+ * @param string $modulename
+ * @param int $taskid
+ * @return string - HTML output
+ */
+function get_html_fix_button_for_lost_modules(int $coursemoduleid, string $modulename, int $taskid) {
+
+    global $OUTPUT;
+
+    $htmloutput = '';
+
+    $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
+    $customdata = array('cmid'          => $coursemoduleid,
+                        'cmname'        => $modulename,
+                        'taskid'        => $taskid);
+
+    $mform = new fix_delete_modules_form($actionurl, $customdata);
+    $htmloutput .= html_writer::tag('b',
+                                    'Module (cmid: '.$coursemoduleid.')'
+                                    .' not found in '.$modulename.' table',
+                                    array('class' => "text-danger"));
+    $htmloutput .= html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
+    $button      = $mform->render();
+    $htmloutput .= $button;
+
+    return $htmloutput;
+}
+
+/**
+ * get_html_separate_button_for_clustered_tasks()
+ *
+ * Outputs HTML buttons for a clustered task.
+ *
+ * @param int $taskid
+ * @return string - HTML output
+ */
+function get_html_separate_button_for_clustered_tasks(int $taskid) {
+
+    global $OUTPUT;
+
+    $htmloutput = '';
+
+    $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/separate_module.php');
+    $params     = array('taskid' => $taskid);
+
+    $mform = new separate_delete_modules_form($actionurl, $params);
+    $htmloutput .= html_writer::tag('b',
+                                    'This Adhoc task (id: '.$taskid.') contains multiple course modules.'
+                                    .' Press the button below to separate these into multiple adhoc tasks.'
+                                    .' This will assist in reducing the complexity of the failed'
+                                    .' course_delete_modules task.',
+                                    array('class' => "text-danger"));
+    $htmloutput .= html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
+    $button      = $mform->render();
+    $htmloutput .= $button;
+
+    return $htmloutput;
 }

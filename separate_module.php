@@ -23,18 +23,17 @@
  */
 
 require_once(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir.'/gradelib.php');
-require_once($CFG->libdir.'/completionlib.php');
-require_once($CFG->dirroot.'/blog/lib.php');
+require_once(__DIR__ . '/lib.php');
 require_login();
 
 // Retrieve parameters.
 $action       = required_param('action', PARAM_ALPHANUMEXT);
-$taskid         = required_param('taskid', PARAM_INT);
+$taskid       = required_param('taskid', PARAM_INT);
 
 if ($action == 'separate_module') {
 
     $url = new moodle_url('/admin/tool/fix_delete_modules/separate_module.php');
+    $prevurl = new moodle_url('/admin/tool/fix_delete_modules/index.php');
     $PAGE->set_url($url);
     $PAGE->set_context(context_system::instance());
     $PAGE->set_title(get_string('pluginname', 'tool_fix_delete_modules'));
@@ -43,99 +42,54 @@ if ($action == 'separate_module') {
 
     echo $OUTPUT->header();
 
-    // Get the course module.
-    if (!$cm = $DB->get_record('task_adhoc', array('id' => $taskid))) {
-        echo "<p>Course Module instance (cmid $cmid) doesn't exist. Perhaps you already deleted it</p>";
-        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> after the adhoc task has been run again.</p>';
+    // Get the adhoc task data.
+    if (!$cm = $DB->get_record('task_adhoc', array('id' => $taskid, 'classname' => '\core_course\task\course_delete_modules'))) {
+        echo "<p>Adhoc Task #$taskid could not be found or is not a course_delete_modules task.</p>";
+        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
         return true;
     }
 
-    // Get the module context.
-    $modcontext = context_module::instance($cmid);
+    // Create individual adhoc tasks & remove original task.
+    if ($originaladhoctaskdata = get_original_cmdelete_adhoctask_data($taskid)) {
 
-    // Remove all module files in case modules forget to do that.
-    $fs = get_file_storage();
-    $fs->delete_area_files($modcontext->id);
+        $taskcount = 0;
+        // Create individual adhoc task for each module.
+        foreach ($originaladhoctaskdata as $cmid => $cmvalue) {
+            // Get the course module.
+            if (!$cm = $DB->get_record('course_modules', array('id' => $cmid))) {
+                continue; // Skip it; it might have been deleted already.
+            }
 
-    echo '<p><b>Files deleted for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+            // Update record, if not already updated.
+            $cm->deletioninprogress = '1';
+            $DB->update_record('course_modules', $cm);
 
-    // Delete events from calendar.
-    if ($events = $DB->get_records('event', array('instance' => $cm->instance, 'modulename' => $modulename))) {
-        $coursecontext = context_course::instance($cm->course);
-        foreach ($events as $event) {
-            $event->context = $coursecontext;
-            $calendarevent = calendar_event::load($event);
-            $calendarevent->delete();
+            // Create an adhoc task for the deletion of the course module. The task takes an array of course modules for removal.
+            $newdeletetask = new \core_course\task\course_delete_modules();
+            $newdeletetask->set_custom_data(array(
+                'cms' => array($cm),
+                'userid' => $USER->id,
+                'realuserid' => \core\session\manager::get_realuser()->id
+            ));
+
+            // Queue the task for the next run.
+            \core\task\manager::queue_adhoc_task($newdeletetask);
         }
-        if (count($event) > 0) {
-            echo '<p><b>'.count($events).' Calendar events for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
+        echo '<p><b class="text-success">$taskcount New Individual course_delete_module tasks have been created</b></p>';
+
+        // Remove old task.
+        if ($originaladhoctask = get_adhoctask_from_taskid($taskid)) {
+            \core\task\manager::adhoc_task_complete($originaladhoctask);
+
+            echo '<p><b class="text-success">Original course_delete_module task (#'.$taskid.') cleared</b></p>';
+        } else {
+            echo '<p><b class="text-danger">Original course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
         }
-    }
-
-    // Delete grade items, outcome items and grades attached to modules.
-    if ($gradeitems = grade_item::fetch_all(array('itemtype' => 'mod', 'itemmodule' => $modulename,
-                                                   'iteminstance' => $cm->instance, 'courseid' => $cm->course))) {
-        foreach ($gradeitems as $gradeitem) {
-            $gradeitem->delete('moddelete');
-        }
-        if (count($gradeitems) > 0) {
-            echo '<p><b>'.count($gradeitems).' Grade items for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
-        }
-    }
-
-    // Delete associated blogs and blog tag instances.
-    blog_remove_associations_for_module($modcontext->id);
-    echo '<p><b>Deleted blogs for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
-
-    // Delete completion and availability data; it is better to do this even if the
-    // features are not turned on, in case they were turned on previously (these will be
-    // very quick on an empty table).
-    $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
-    echo '<p><b>Deleted Module Completion data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
-    $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
-                                                            'course' => $cm->course,
-                                                            'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
-    echo '<p><b>Deleted Module Completion Criteria data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
-
-    // Delete all tag instances associated with the instance of this module.
-    \core_tag_tag::delete_instances('mod_' . $modulename, null, $modcontext->id);
-    \core_tag_tag::remove_all_item_tags('core', 'course_modules', $cm->id);
-    echo '<p><b>Deleted Tag data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
-
-    // Notify the competency subsystem.
-    \core_competency\api::hook_course_module_deleted($cm);
-
-    // Delete the context.
-    \context_helper::delete_instance(CONTEXT_MODULE, $cm->id);
-    echo '<p><b>Context data for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
-
-    // Delete the module from the course_modules table.
-    if ($DB->delete_records('course_modules', array('id' => $cm->id))) {
-        echo 'Deleted Course Module record for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     } else {
-        echo 'Deleted Course Module record: No record to delete for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+        echo '<p><b class="text-danger">course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
+        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     }
-
-    // Delete module from that section.
-    if (!delete_mod_from_section($cm->id, $cm->section)) {
-        throw new moodle_exception('cannotdeletemodulefromsection', '', '', null,
-            "Cannot delete the module $modulename (instance) from section.");
-    }
-    echo '<p><b>Deleted Module From Section for module cmid $cmid contextid '.$modcontext->id.'</b></p>';
-
-    // Trigger event for course module delete action.
-    $event = \core\event\course_module_deleted::create(array(
-        'courseid' => $cm->course,
-        'context'  => $modcontext,
-        'objectid' => $cm->id,
-        'other'    => array(
-            'modulename' => $modulename,
-            'instanceid'   => $cm->instance,
-        )
-    ));
-    $event->add_record_snapshot('course_modules', $cm);
-    $event->trigger();
-    rebuild_course_cache($cm->course, true);
 
     echo '<p><b class="text-success">SUCCESSFUL Deletion of Module and related data (cmid $cmid contextid '.$modcontext->id.')</b></p>';
 

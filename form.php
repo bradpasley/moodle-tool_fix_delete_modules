@@ -34,16 +34,16 @@ class fix_delete_modules_form extends moodleform {
 
         $mform = $this->_form; // Don't forget the underscore!
 
-        $mform->addElement('submit', 'submit',  get_string('button_delete_mod_without_backup', 'tool_fix_delete_modules'));
+        $mform->addElement('submit', 'submit',  get_string('button_delete_mod_without_backup', 'tool_fix_delete_modules')
+                                                .' #'.$this->_customdata['cmid']);
         $mform->addElement('hidden', 'action', 'delete_module');
         $mform->setType('action', PARAM_ALPHAEXT);
         $mform->addElement('hidden', 'cmid', $this->_customdata['cmid']);
         $mform->setType('cmid', PARAM_INT);
-        $mform->addElement('hidden', 'cminstanceid', $this->_customdata['cminstanceid']);
-        $mform->setType('cminstanceid', PARAM_INT);
         $mform->addElement('hidden', 'cmname', $this->_customdata['cmname']);
         $mform->setType('cmname', PARAM_ALPHAEXT);
-
+        $mform->addElement('hidden', 'taskid', $this->_customdata['taskid']);
+        $mform->setType('taskid', PARAM_INT);
     }
 
 }
@@ -59,10 +59,12 @@ class separate_delete_modules_form extends moodleform {
 
         $mform = $this->_form; // Don't forget the underscore!
 
-        $mform->addElement('submit', 'submit',  get_string('button_separate_modules', 'tool_fix_delete_modules'));
-        $mform->addElement('hidden', 'action', 'delete_module');
+        $mform->addElement('submit', 'submit',  get_string('button_separate_modules', 'tool_fix_delete_modules')
+                                                ." (Task id:".$this->_customdata['taskid'].')');
+        $mform->addElement('hidden', 'action', 'separate_module');
         $mform->setType('action', PARAM_ALPHAEXT);
         $mform->addElement('hidden', 'taskid', $this->_customdata['taskid']);
+        $mform->setType('taskid', PARAM_INT);
     }
 
 }

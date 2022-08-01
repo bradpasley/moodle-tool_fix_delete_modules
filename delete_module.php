@@ -31,8 +31,10 @@ require_login();
 // Retrieve parameters.
 $action       = required_param('action', PARAM_ALPHANUMEXT);
 $cmid         = required_param('cmid', PARAM_INT);
-$cminstanceid = required_param('cminstanceid', PARAM_INT);
 $modulename   = required_param('cmname', PARAM_ALPHAEXT);
+$taskid       = required_param('taskid', PARAM_INT);
+
+$prevurl = new moodle_url('/admin/tool/fix_delete_modules/index.php');
 
 if ($action == 'delete_module') {
 
@@ -139,7 +141,20 @@ if ($action == 'delete_module') {
     $event->trigger();
     rebuild_course_cache($cm->course, true);
 
-    echo '<p><b class="text-success">SUCCESSFUL Deletion of Module and related data (cmid $cmid contextid '.$modcontext->id.')</b></p>';
+    echo '<p><b class="text-success">SUCCESSFUL Deletion of Module and related data'
+         .' (cmid $cmid contextid '.$modcontext->id.')</b></p>';
+
+    // Reset adhoc task to run asap.
+    if ($thisadhoctask = get_adhoctask_from_taskid($taskid)) {
+        $thisadhoctask->set_fail_delay(0);
+        $thisadhoctask->set_next_run_time(time());
+        \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
+        echo '<p><b class="text-success">course_delete_module Adhoc task (id $taskid) set to run asap</b></p>';
+    } else {
+        echo '<p><b class="text-danger">course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
+        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+    }
+
 
     echo $OUTPUT->footer();
 } else {

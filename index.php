@@ -43,41 +43,45 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'));
 
 // Display database state of course_delete_modules adhoc task related tables.
-$cmtasks = get_all_cmdelete_adhoctasks();
-if (!is_null($cmtasks) && !empty($cmtasks)) {
+$cmstasksdata = get_all_cmdelete_adhoctasks_data();
+if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
     // Display each adhoc task in its own section.
-    foreach ($cmtasks as $taskid => $cmtask) {
-        $cms = $cmtask;
+    foreach ($cmstasksdata as $taskid => $cmsdata) {
 
         // Some multi-module delete adhoc tasks don't contain all data.
-        $cms = get_cms_infos($cms);
+        $cms = get_cms_infos($cmsdata);
 
         // Prepare Course Module string.
-        if (count($cms) > 2) {
+        if ($cms && count($cms) > 2) {
             $cminfostring = 'cmids: '.current($cms)->id.'...'.end($cms)->id
                            .' cminstanceids: '.current($cms)->instance.'...'.end($cms)->instance;
-        } else if (count($cms) > 1) {
+        } else if ($cms && count($cms) > 1) {
             $cminfostring = 'cmids: '.current($cms)->id.' & '.end($cms)->id
                            .' cminstanceids: '.current($cms)->instance.' & '.end($cms)->instance;
         } else {
-            if (isset($cms[0]->instance)) {
+            if ($cms && isset($cms[0]->instance)) {
                 $cminfostring = 'cm id: '.current($cms)->id.' cm instance '.current($cms)->instance;
             } else {
-                $cminfostring = 'cm id: '.current($cms)->id;
+                $cminfostring = 'cm id: '.current($cmsdata)->id;
             }
         }
 
         // Display heading of this adhoc task.
         echo $OUTPUT->heading('Course module(s): '.$cminfostring, 4);
 
-        $originaltask = get_original_cmdelete_adhoctask($taskid);
-        $adhoctable = get_adhoctasks(true, $originaltask); // Display original adhoctask custom data.
+        $originaltaskdata = get_original_cmdelete_adhoctask_data($taskid);
+        $adhoctable = get_adhoctasks_table(true, $originaltaskdata); // Display original adhoctask custom data.
 
         echo html_writer::table($adhoctable);
 
+        // Display separation button if there are multiple course modules in a task.
+        if ($cms && count($cms) > 1) {
+            echo get_html_separate_button_for_clustered_tasks($taskid);
+        }
+
         // Display Course Module table.
         echo $OUTPUT->heading(get_string('table_coursemodules', 'tool_fix_delete_modules'), 5);
-        if (!is_null($cms) && $cmtable = get_course_module_table($cms, true)) {
+        if (!is_null($cms) && $cms && $cmtable = get_course_module_table($cms, true)) {
             echo html_writer::table($cmtable);
         } else {
             echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in course module table',
@@ -89,7 +93,7 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'), 5);
         $moduleofconcernfound  = false;
         $modcontextid = null;
-        if (!is_null($cms)
+        if (!is_null($cms) && $cms
             && $contexttable = get_context_table($cms, true)) {
 
             echo html_writer::table($contexttable);
@@ -99,15 +103,18 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         }
 
         // Display table of specific.
-        if ($moduletableshtml = get_module_table($cms, true)) {
+        if (!is_null($cms) && $cms
+            && $moduletableshtml = get_module_tables($cms, $taskid, true)) {
+
             echo $moduletableshtml;
-        } else {
+        } else if (!is_null($cms) && $cms && count($cms) == 1) { // Offer if one module being processed.
+            $cm = current($cms);
             $urlparams  = array('action' => 'delete_module');
             $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
-            $modulename = get_module_name($cms);
-            $customdata = array('cmid'          => $cms->id,
-                                'cminstanceid'  => $cms->instance,
-                                'cmname'        => $modulename);
+            $modulename = get_module_name($cm);
+            $customdata = array('cmid'   => $cm->id,
+                                'cmname' => $modulename,
+                                'taskid' => $taskid);
 
             $mform = new fix_delete_modules_form($actionurl, $customdata);
             echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
@@ -125,7 +132,9 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         // Display file table data for this module.
         $filestable = new html_table();
         echo $OUTPUT->heading(get_string('table_files', 'tool_fix_delete_modules'), 5);
-        if ($filestablehtml = get_files_table($cms, true)) {
+        if (!is_null($cms) && $cms
+            && $filestablehtml = get_files_table($cms, true)) {
+
             echo $filestablehtml;
         } else {
             echo html_writer::tag('b', 'No File table records related to Module ('.$cminfostring.')',
@@ -135,7 +144,9 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         // Display grades tables data for this module.
         $gradestable = new html_table();
         echo $OUTPUT->heading(get_string('table_grades', 'tool_fix_delete_modules'), 5);
-        if ($gradestablehtml = get_grades_table($cms, true)) {
+        if (!is_null($cms) && $cms
+            && $gradestablehtml = get_grades_table($cms, true)) {
+
             echo $gradestablehtml;
         } else {
             echo html_writer::tag('b', 'No Grades data related to Module ('.$cminfostring.')',
@@ -148,7 +159,9 @@ if (!is_null($cmtasks) && !empty($cmtasks)) {
         // Display tool_recyclebin_course table data for this course.
         $recyclebintable = new html_table();
         echo $OUTPUT->heading(get_string('table_recyclebin', 'tool_fix_delete_modules'), 5);
-        if ($recyclebintable = get_recycle_table($cms, true)) {
+        if (!is_null($cms) && $cms
+            && $recyclebintable = get_recycle_table($cms, true)) {
+
             echo html_writer::table($recyclebintable);
         } else {
             echo html_writer::tag('b', 'Module ('.$cminfostring.') not found in tool_recyclebin_course table',
