@@ -108,7 +108,7 @@ if (is_null($delcourses) || empty($delcourses)) {
 }
 $courses    = array_intersect($delcourses, $courses);
 foreach ($courses as $courseid) {
-    $errors = course_module_delete_issues($courseid);
+    $errors = course_module_delete_issues($courseid, $minimumfaildelay);
     if ($errors) {
         foreach ($errors as $error) {
             cli_problem($error);

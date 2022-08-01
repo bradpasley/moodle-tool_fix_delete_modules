@@ -36,26 +36,36 @@ require_once($CFG->dirroot.'/blog/lib.php');
  * @param int $climinfaildelay - optional (for CLI only)
  * @return html_table|array|bool - records of course_delete_module adhoc tasks.
  */
-function get_adhoctasks_table(bool $htmloutput = false, stdClass $customdatacms = null, int $climinfaildelay = 0) {
+function get_adhoctasks_table(bool $htmloutput = false, stdClass $customdatacms = null, int $climinfaildelay = 60) {
     global $DB;
     if ($adhocrecords = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'))) {
 
         if (!is_null($customdatacms)) { // Filtered down to one adhoc task. TO BE DONE: ELSE.
             // Get customdata.
+            $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
+
+            // Override for CLI.
+            if ($climinfaildelay != 60) {
+                $minimumfaildelay = $climinfaildelay;
+            }
+
             foreach ($adhocrecords as $adkey => $adhocrecord) {
-                $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
-                // Override for CLI.
-                if ($climinfaildelay != 0) {
-                    $minimumfaildelay = $climinfaildelay;
-                }
+
                 // Exclude adhoc tasks with faildelay below minimum config setting.
                 if (intval($adhocrecord->faildelay) < $minimumfaildelay) {
                     unset($adhocrecords[$adkey]);
                     continue;
                 }
                 // Filter down to only param, if not null and matches.
-                if (isset($customdatacms) && json_decode($adhocrecord->customdata)->cms === $customdatacms) {
-                    $adhocrecords = array($adhocrecord);
+                $recordcustomdata = json_decode($adhocrecord->customdata)->cms;
+                $recordcmid = 0;
+                if (is_array($recordcustomdata) && count($recordcustomdata) == 1) {
+                    $recordcustomdata = current($recordcustomdata);
+                    $recordcmid = $recordcustomdata->id;
+                }
+
+                if (isset($customdatacms) && $recordcmid == $customdatacms->id) {
+                    $adhocrecords[] = $adhocrecord;
                 }
             }
             if (count($adhocrecords) == 0) { // When there are no tasks with min faildelay.
@@ -208,7 +218,7 @@ function get_module_tables(array $cms, int $taskid, bool $htmloutput) {
                         $row = (array) $record;
                         $table[] = $row;
                     }
-                    $outputtables .= PHP_EOL.PHP_EOL.$table;
+                    $outputtables .= get_texttable($table);
                 } else {
                     return false;
                 }
@@ -519,14 +529,14 @@ function get_context_id(stdClass $cms) {
  *
  * Get the name of the table related to the course module which is failing to be deleted.
  *
- * @param stdClass $cms - course module data
+ * @param stdClass $cm - course module data
  * @param bool $htmloutput - htmloutput true for gui output, false for cli output
  *
  * @return string
  */
-function get_module_name(stdClass $cms) {
+function get_module_name(stdClass $cm) {
     global $DB;
-    return current($DB->get_records('modules', array('id' => $cms->module), '', 'name'))->name;
+    return current($DB->get_records('modules', array('id' => $cm->module), '', 'name'))->name;
 }
 
 
@@ -537,7 +547,7 @@ function get_module_name(stdClass $cms) {
  * @return array|null - array of course module info from customdata field.
  */
 
-function get_all_cmdelete_adhoctasks_data(int $climinfaildelay = 0) {
+function get_all_cmdelete_adhoctasks_data(int $climinfaildelay = 60) {
     global $DB;
 
     $adhoccustomdatas = $DB->get_records('task_adhoc',
@@ -546,7 +556,7 @@ function get_all_cmdelete_adhoctasks_data(int $climinfaildelay = 0) {
                                                'id, customdata, faildelay');
     $customdatas = array();
     $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
-    if ($climinfaildelay != 0) { // Override config setting - for CLI.
+    if ($climinfaildelay != 60) { // Override config setting - for CLI.
         $minimumfaildelay = $climinfaildelay;
     }
     foreach ($adhoccustomdatas as $taskrecord) {
@@ -611,21 +621,23 @@ function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay 
  *
  * used only in CLI
  *
- * @param array $cmsarray
+ * @param array $taskcmsarray
  * @return array|null - array of course module info from customdata field.
  */
 
-function get_all_affects_courseids(array $cmsarray) {
+function get_all_affects_courseids(array $taskcmsarray) {
     global $DB;
 
-    if (is_null($cmsarray) || empty($cmsarray)) {
+    if (is_null($taskcmsarray) || empty($taskcmsarray)) {
         return null;
     }
 
     $courseids = array();
-    foreach ($cmsarray as $cms) {
-        foreach ($cms as $cm) {
-            $courseids[] = $cm->course;
+    foreach ($taskcmsarray as $cmstask) {
+        foreach ($cmstask as $cm) {
+            if (!in_array($cm->course, $courseids)) {
+                $courseids[] = $cm->course;
+            }
         }
     }
 
@@ -652,11 +664,11 @@ function get_cms_of_course(int $courseid) {
 
     // Find adhoc task with courseid.
     $adhocdeletetasksdata = get_all_cmdelete_adhoctasks_data();
-    $cms = array();
+    $cms = null;
     foreach ($adhocdeletetasksdata as $adhoctaskcms) {
         foreach ($adhoctaskcms as $cm) {
             if ($cm->course == $courseid) {
-                $cms[] = $cm;
+                return $cm;
             }
         }
     }
@@ -695,7 +707,7 @@ function get_cms_infos(array $cms) {
 
             // Add coursemodule db data if not already in $cms data.
             foreach ($cmsrecord[$id] as $key => $value) {
-                if (isset($cms[$id]) && !isset($cms[$id]->$key)) {
+                if (!isset($cms[$id]->$key)) {
                     $cms[$id]->$key = $value;
                 }
             }
@@ -712,6 +724,24 @@ function get_cms_infos(array $cms) {
     }
 
     return $cms;
+}
+
+/**
+ * get_texttable()
+ *
+ * @param array $arraytable
+ * @return string
+ */
+function get_texttable(array $arraytable) {
+    $outputtables = '';
+    foreach ($arraytable as $row) {
+        foreach ($row as $cell) {
+            $outputtables .= $cell.'\t';
+        }
+        $outputtables .= PHP_EOL;
+    }
+    $outputtables .= PHP_EOL;
+    return $outputtables;
 }
 
 
@@ -769,59 +799,37 @@ function get_htmltable_vertical(array $records, array $columntitles) {
  * @return array - strings explaining what type of issue exists
  */
 
-function course_module_delete_issues(int $courseid = null) {
+function course_module_delete_issues(int $courseid = null, int $climinfaildelay = 60) {
 
     // Find adhoc task with courseid.
-    $adhocdeletetasksdata = get_all_cmdelete_adhoctasks_data();
-    $cmsdata = array();
-    $cmtaskids = array();
-    foreach ($adhocdeletetasksdata as $adkey => $adhoctaskcms) {
-        foreach ($adhoctaskcms as $cm) {
-            if (!is_null($courseid) && $cm->course == $courseid) {
-                    $cmsdata[''.$cm->id] = $cm;
-                    $cmtaskids[''.$cm->id] = $adkey;
-            }
-        }
-    }
-
-    // Some multi-module delete adhoc tasks don't contain all data.
-    $cms = get_cms_infos($cmsdata);
-
-    if (is_null($cms) || empty(($cms))) {
-        return ["Cannot find a course_module_delete adhoc task for courseid: $courseid"];
-    }
-
-    // Prepare Course Module string.
-    if ($cms && count($cms) > 2) {
-        $cminfostring = 'cmids: '.current($cms)->id.'...'.end($cms)->id
-                       .' cminstanceids: '.current($cms)->instance.'...'.end($cms)->instance;
-    } else if ($cms && count($cms) > 1) {
-        $cminfostring = 'cmids: '.current($cms)->id.' & '.end($cms)->id
-                       .' cminstanceids: '.current($cms)->instance.' & '.end($cms)->instance;
-    } else {
-        if ($cms && isset(current($cms)->instance)) {
-            $cminfostring = 'cm id: '.current($cms)->id.' cminstanceid: '.current($cms)->instance;
-        } else {
-            $cminfostring = 'cm id: '.current($cmsdata)->id;
-        }
-    }
-
-    // Prepare output, for each course module.
+    $cmstasksdata = get_all_cmdelete_adhoctasks_data($climinfaildelay);
     $results = array();
-    foreach ($cms as $cm) {
-        if (!$table = get_adhoctasks_table()) {
-            $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
-        }
-        if (!$table = get_course_module_table($cms, false)) {
-            $results[] = "course module table record ($cminfostring)".PHP_EOL;
-        }
-        if (!$table = get_module_tables($cms, $cmtaskids[''.$cm->id], false)) {
-            $modulename = $cm->modulename;
-            $results[] = "$modulename table record for ($cminfostring) doesn't exist".PHP_EOL;
-        }
 
+    foreach ($cmstasksdata as $taskid => $adhoctaskcms) {
+        foreach ($adhoctaskcms as $cm) {
+            // If this $adhoctaskcms is associated with this courseid.
+            if (!is_null($courseid) && $cm->course == $courseid) {
+
+                $cms = get_cms_infos($adhoctaskcms);
+                if (!$table = get_adhoctasks_table(false, $cm, $climinfaildelay)) {
+                    $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
+                }
+                if (!$table = get_course_module_table($cms, false)) {
+                    $results[] = "course module table record for "
+                               ."(cm id: ".$cm->id.", cm instance: "
+                               .$cm->instance." table record doesn't exist)".PHP_EOL;
+                }
+                if (!$table = get_module_tables($cms, $taskid, false)) {
+                    $modulename = get_module_name($cm);
+                    $results[] = "taskid:$taskid: module table ($modulename) record for "
+                               ."(cm id: ".$cm->id.", cm instance: "
+                               .$cm->instance." doesn't exist)".PHP_EOL;
+                }
+
+            }
+
+        }
     }
-
     return $results;
 }
 
@@ -829,17 +837,11 @@ function course_module_delete_issues(int $courseid = null) {
  * force_delete_modules_of_course()
  *
  * @param int $courseid - the courseid in which module id to be resolved.
- * @return bool - result of deletion: true = success, false = failure
+ * @return bool - result of deletion
  */
 function force_delete_modules_of_course(int $courseid) {
     $cms = get_cms_of_course($courseid);
-    $success = true;
-    foreach ($cms as $cm) {
-        if (!force_delete_module_data($cm->id, $cm)) {
-            $success = false;
-        }
-    }
-    return $success;
+    return force_delete_module_data($cms->id, $cms);
 }
 
 
@@ -855,8 +857,7 @@ function force_delete_module_data(int $coursemoduleid, stdClass $cms) {
     global $DB;
 
     if (is_null($cms)) {
-        echo "Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid).";
-        return false;
+        return ["Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid)."];
     }
 
     echo "Fixing... Attempting to fix a deleted module (Course module id: $coursemoduleid).";
@@ -865,7 +866,7 @@ function force_delete_module_data(int $coursemoduleid, stdClass $cms) {
         echo "Course Module instance (cmid $coursemoduleid) doesn't exist. Perhaps you already deleted it".PHP_EOL;
         echo "Run the adhoc task to clear it off the list.".PHP_EOL.PHP_EOL;
         echo "\$sudo -u www-data /usr/bin/php admin/tool/task/cli/adhoc_task.php --execute".PHP_EOL;
-        die();
+        return false;
     }
     // Get the module context.
     $modcontext = context_module::instance($coursemoduleid);

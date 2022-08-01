@@ -44,7 +44,7 @@ if ($action == 'separate_module') {
 
     // Get the adhoc task data.
     if (!$cm = $DB->get_record('task_adhoc', array('id' => $taskid, 'classname' => '\core_course\task\course_delete_modules'))) {
-        echo "<p>Adhoc Task #$taskid could not be found or is not a course_delete_modules task.</p>";
+        echo "<p>Adhoc task id ".$taskid." could not be found or is not a course_delete_modules task.</p>";
         echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
         return true;
     }
@@ -54,7 +54,7 @@ if ($action == 'separate_module') {
 
         $taskcount = 0;
         // Create individual adhoc task for each module.
-        foreach ($originaladhoctaskdata as $cmid => $cmvalue) {
+      /*  foreach ($originaladhoctaskdata as $cmid => $cmvalue) {
             // Get the course module.
             if (!$cm = $DB->get_record('course_modules', array('id' => $cmid))) {
                 continue; // Skip it; it might have been deleted already.
@@ -76,14 +76,14 @@ if ($action == 'separate_module') {
             \core\task\manager::queue_adhoc_task($newdeletetask);
         }
         echo '<p><b class="text-success">$taskcount New Individual course_delete_module tasks have been created</b></p>';
-
+*/
         // Remove old task.
         if ($originaladhoctask = get_adhoctask_from_taskid($taskid)) {
             \core\task\manager::adhoc_task_complete($originaladhoctask);
 
-            echo '<p><b class="text-success">Original course_delete_module task (#'.$taskid.') cleared</b></p>';
+            echo '<p><b class="text-success">Original course_delete_module task (id '.$taskid.') cleared</b></p>';
         } else {
-            echo '<p><b class="text-danger">Original course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
+            echo '<p><b class="text-danger">Original course_delete_module Adhoc task (id '.$taskid.') could not be found.</b></p>';
         }
         echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     } else {
@@ -91,7 +91,7 @@ if ($action == 'separate_module') {
         echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     }
 
-    echo '<p><b class="text-success">SUCCESSFUL Deletion of Module and related data (cmid $cmid contextid '.$modcontext->id.')</b></p>';
+    echo '<p><b class="text-success">SUCCESSFUL Separation of Adhoc Tasks</b></p>';
 
     echo $OUTPUT->footer();
 } else {
