@@ -803,6 +803,20 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
 
     // Process this adhoc tasks's course module(s).
     $results = array();
+    foreach ($cms as $cm) {
+        // Prepare Task/Course Module string.
+        $stringtaskcms = get_coursemoduletask_string($cms, $taskid);
+
+        if (!$table = get_adhoctasks_table()) {
+            $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
+        }
+        if (!$table = get_course_module_table($cms, false)) {
+            $results[] = "course module table record ($stringtaskcms)".PHP_EOL;
+        }
+        if (!$table = get_module_tables($cms, $taskid[''.$cm->id], false)) {
+            $modulename = $cm->modulename;
+            $results[] = "$modulename table record for ($stringtaskcms) doesn't exist".PHP_EOL;
+        }
 
     // Prepare Task/Course Module string.
     $stringtaskcms = get_coursemoduletask_string($cms, $taskid);
@@ -1391,4 +1405,37 @@ function get_html_separate_button_for_clustered_tasks(int $taskid) {
     $htmloutput .= $button;
 
     return $htmloutput;
+}
+
+/**
+ * get_coursemoduletask_string()
+ *
+ * returns human readible string about one course_delete_module task.
+ *
+ * @param array $cmsdata - one or more coursemodule data in an array.
+ * @param int $taskid - the taskid of this task
+ * @return string
+ */
+function get_coursemoduletask_string(array $cmsdata, int $taskid) {
+
+    if ($cmsdata && count($cmsdata) > 2) {
+        $stringtaskcms = 'taskid: '.$taskid
+                        .'cmids: '.current($cmsdata)->id.'...'.end($cms)->id
+                        .' cminstanceids: '.current($cms)->instance.'...'.end($cms)->instance;
+    } else if ($cmsdata && count($cmsdata) > 1) {
+        $stringtaskcms = 'taskid: '.$taskid
+                        .'cmids: '.current($cmsdata)->id.' & '.end($cms)->id
+                        .' cminstanceids: '.current($cms)->instance.' & '.end($cms)->instance;
+    } else {
+        if ($cmsdata && isset(current($cmsdata)->instance)) {
+            $stringtaskcms = 'taskid: '.$taskid
+                            .'cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cms)->instance;
+        } else {
+            $stringtaskcms = 'taskid: '.$taskid
+                            .'cm id: '.current($cmsdata)->id;
+        }
+    }
+
+    return $stringtaskcms;
+
 }
