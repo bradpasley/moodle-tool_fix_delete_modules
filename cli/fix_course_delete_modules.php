@@ -32,13 +32,13 @@ require_once($CFG->libdir.'/clilib.php');
 list($options, $unrecognized) = cli_get_params(array(
     'courses' => false,
     'fix'     => false,
-    'minimum' => false,
+    'delaymin' => false,
     'help'    => false
 ),
 array(
     'c' => 'courses',
     'f' => 'fix',
-    'm' => 'minimum',
+    'd' => 'delaymin',
     'h' => 'help'
 ));
 
@@ -52,16 +52,16 @@ Avoid executing the script when another user may simultaneously edit any of the
 courses being checked (recommended to run in mainenance mode).
 
 Options:
--c, --courses         List courses that need to be checked (comma-separated
+-m, --modules         List modules that need to be checked (comma-separated
                       values or * for all). Required
+-d, --delaymin        Filter by the minimum faildelay field (in seconds)
 -f, --fix             Fix the mismatches in DB. If not specified check only and
                       report problems to STDERR
--m, --minimum         Filter by the minimum faildelay field (in seconds)
 -h, --help            Print out this help
 
 Example:
-\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --courses=*
-\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --courses=2,3,4 --fix
+\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --modules=*
+\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --modules=2,3,4 --fix
 ";
 
 if ($unrecognized) {
@@ -81,34 +81,43 @@ if ($options['minimum']) {
     }
 }
 
-$courseslist = preg_split('/\s*,\s*/', $options['courses'], -1, PREG_SPLIT_NO_EMPTY);
-if (in_array('*', $courseslist) || empty($courselist)) {
+$moduleslist = preg_split('/\s*,\s*/', $options['modules'], -1, PREG_SPLIT_NO_EMPTY);
+if (in_array('*', $moduleslist) || empty($moduleslist)) {
     $where = '';
     $params = array();
 } else {
-    list($sql, $params) = $DB->get_in_or_equal($courseslist, SQL_PARAMS_NAMED, 'id');
+    list($sql, $params) = $DB->get_in_or_equal($moduleslist, SQL_PARAMS_NAMED, 'id');
     $where = 'WHERE id '. $sql;
 }
-$coursescount = $DB->get_field_sql('SELECT count(id) FROM {course} '. $where, $params);
+$totalmodulescount = $DB->get_field_sql('SELECT count(id) FROM {course_modules}');
+$modulescount = $DB->get_field_sql('SELECT count(id) FROM {course_modules} '. $where, $params);
 
-if (!$coursescount) {
-    cli_error('No courses found');
+if (!$modulescount) {
+    cli_error('No modules found');
 }
-echo "Checking $coursescount courses...\n\n";
 
-require_once($CFG->dirroot. '/course/lib.php');
+$coursemoduledeletetasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+$coursemoduledeletetaskscount = count($coursemoduledeletetasks);
+
+$coursemodules = $DB->get_fieldset_sql('SELECT id FROM {course_modules} '. $where, $params);
+
+echo "Checking for $modulescount/$totalmodulescount modules in $coursemoduledeletetaskscount course_delete_module adhoc tasks...\n\n";
+
+$coursemodules = ($totalmodulescount == $modulescount) ? array() : $coursemodules;
+$cmsdata = get_all_cmdelete_adhoctasks_data($coursemodules, $minimumfaildelay);
+
 require_once(__DIR__ . '/../lib.php');
 
 $problems   = array();
-$courses    = $DB->get_fieldset_sql('SELECT id FROM {course} '. $where, $params);
-$delcourses = get_all_affects_courseids(get_all_cmdelete_adhoctasks_data($minimumfaildelay));
-if (is_null($delcourses) || empty($delcourses)) {
-    echo "\n...No courses have module delete tasks\n\n";
+if (is_null($cmsdata) || empty($cmsdata)) {
+    echo "\n...No modules are found in these adhoc tasks.";
+    echo "\n...Perhaps adjust the coursemodule & faildelay parameters.\n\n";
     die();
 }
-$courses    = array_intersect($delcourses, $courses);
-foreach ($courses as $courseid) {
-    $errors = course_module_delete_issues($courseid, $minimumfaildelay);
+
+foreach ($cmsdata as $taskid => $cms) {
+    echo "\n...Checking taskid $taskid.\n\n";
+    $errors = course_module_delete_issues($cms, $taskid);
     if ($errors) {
         foreach ($errors as $error) {
             cli_problem($error);
