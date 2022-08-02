@@ -1016,6 +1016,7 @@ function get_adhoctask_from_taskid(int $taskid) {
     foreach ($cdmadhoctasks as $adhoctask) {
         if ($adhoctask->get_id() == $taskid) {
             $thisadhoctask = $adhoctask;
+            break;
         }
     }
     if (isset($thisadhoctask)) {

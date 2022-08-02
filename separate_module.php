@@ -24,6 +24,7 @@
 
 require_once(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once($CFG->dirroot.'/lib/classes/task/logmanager.php');
 require_login();
 
 // Retrieve parameters.
@@ -49,7 +50,7 @@ if ($action == 'separate_module') {
 
         $taskcount = 0;
         // Create individual adhoc task for each module.
-      /*  foreach ($originaladhoctaskdata as $cmid => $cmvalue) {
+        foreach ($originaladhoctaskdata as $cmid => $cmvalue) {
             // Get the course module.
             if (!$cm = $DB->get_record('course_modules', array('id' => $cmid))) {
                 continue; // Skip it; it might have been deleted already.
@@ -70,11 +71,13 @@ if ($action == 'separate_module') {
             // Queue the task for the next run.
             \core\task\manager::queue_adhoc_task($newdeletetask);
         }
-        echo '<p><b class="text-success">$taskcount New Individual course_delete_module tasks have been created</b></p>';
-*/
+        echo '<p><b class="text-success">'.$taskcount.' New Individual course_delete_module tasks have been created</b></p>';
+
         // Remove old task.
         if ($originaladhoctask = get_adhoctask_from_taskid($taskid)) {
-            \core\task\manager::adhoc_task_complete($originaladhoctask);
+
+            // Delete the adhoc task record - it is finished.
+            $DB->delete_records('task_adhoc', array('id' => $taskid));
 
             echo '<p><b class="text-success">Original course_delete_module task (id '.$taskid.') cleared</b></p>';
         } else {
