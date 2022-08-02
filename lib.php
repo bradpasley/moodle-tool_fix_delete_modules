@@ -198,7 +198,6 @@ function get_module_tables(array $cms, int $taskid = 0, bool $htmloutput = false
         } else {
             $modulenames[$cm->modulename] = $cmarray;
         }
-
     }
 
     // Prepare SQL Query for each type of module table.
@@ -803,9 +802,6 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
 
     // Process this adhoc tasks's course module(s).
     $results = array();
-    foreach ($cms as $cm) {
-        // Prepare Task/Course Module string.
-        $stringtaskcms = get_coursemoduletask_string($cms, $taskid);
 
         if (!$table = get_adhoctasks_table()) {
             $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
@@ -1402,19 +1398,19 @@ function get_coursemoduletask_string(array $cmsdata, int $taskid) {
 
     if ($cmsdata && count($cmsdata) > 2) {
         $stringtaskcms = 'taskid: '.$taskid
-                        .'cmids: '.current($cmsdata)->id.'...'.end($cms)->id
-                        .' cminstanceids: '.current($cms)->instance.'...'.end($cms)->instance;
+                        .' cmids: '.current($cmsdata)->id.'...'.end($cmsdata)->id
+                        .' cminstanceids: '.current($cmsdata)->instance.'...'.end($cmsdata)->instance;
     } else if ($cmsdata && count($cmsdata) > 1) {
         $stringtaskcms = 'taskid: '.$taskid
-                        .'cmids: '.current($cmsdata)->id.' & '.end($cms)->id
-                        .' cminstanceids: '.current($cms)->instance.' & '.end($cms)->instance;
+                        .' cmids: '.current($cmsdata)->id.' & '.end($cmsdata)->id
+                        .' cminstanceids: '.current($cmsdata)->instance.' & '.end($cmsdata)->instance;
     } else {
         if ($cmsdata && isset(current($cmsdata)->instance)) {
             $stringtaskcms = 'taskid: '.$taskid
-                            .'cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cms)->instance;
+                            .'cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cmsdata)->instance;
         } else {
             $stringtaskcms = 'taskid: '.$taskid
-                            .'cm id: '.current($cmsdata)->id;
+                            .' cm id: '.current($cmsdata)->id;
         }
     }
 
