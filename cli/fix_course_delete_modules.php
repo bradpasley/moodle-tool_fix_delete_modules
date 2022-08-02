@@ -26,19 +26,21 @@
 define('CLI_SCRIPT', true);
 
 require(__DIR__.'/../../../../config.php');
+require(__DIR__.'/../lib.php');
+require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->libdir.'/clilib.php');
 
 // Get the cli options.
 list($options, $unrecognized) = cli_get_params(array(
-    'courses' => false,
-    'fix'     => false,
+    'fix'      => false,
     'delaymin' => false,
-    'help'    => false
+    'modules'  => false,
+    'help'     => false
 ),
 array(
-    'c' => 'courses',
     'f' => 'fix',
     'd' => 'delaymin',
+    'm' => 'modules',
     'h' => 'help'
 ));
 
@@ -75,9 +77,9 @@ if ($options['help']) {
 }
 
 $minimumfaildelay = 0;
-if ($options['minimum']) {
-    if (is_numeric($options['minimum'])) {
-        $minimumfaildelay = intval($options['minimum']);
+if ($options['delaymin']) {
+    if (is_numeric($options['delaymin'])) {
+        $minimumfaildelay = intval($options['delaymin']);
     }
 }
 
@@ -92,7 +94,7 @@ if (in_array('*', $moduleslist) || empty($moduleslist)) {
 $totalmodulescount = $DB->get_field_sql('SELECT count(id) FROM {course_modules}');
 $modulescount = $DB->get_field_sql('SELECT count(id) FROM {course_modules} '. $where, $params);
 
-if (!$modulescount) {
+if (!$modulescount && !$options['fix']) { // If "fix" is included, attempt to resolve.
     cli_error('No modules found');
 }
 
@@ -108,7 +110,7 @@ $cmsdata = get_all_cmdelete_adhoctasks_data($coursemodules, $minimumfaildelay);
 
 require_once(__DIR__ . '/../lib.php');
 
-$problems   = array();
+$problems = array();
 if (is_null($cmsdata) || empty($cmsdata)) {
     echo "\n...No modules are found in these adhoc tasks.";
     echo "\n...Perhaps adjust the coursemodule & faildelay parameters.\n\n";
@@ -117,16 +119,26 @@ if (is_null($cmsdata) || empty($cmsdata)) {
 
 foreach ($cmsdata as $taskid => $cms) {
     echo "\n...Checking taskid $taskid.\n\n";
-    $errors = course_module_delete_issues($cms, $taskid);
+    $errors = course_module_delete_issues($cms, $taskid, $minimumfaildelay);
     if ($errors) {
-        foreach ($errors as $error) {
-            cli_problem($error);
+        foreach ($errors as $errorcode => $errormessage) {
+            cli_problem($errormessage);
+            if ($errorcode != "adhoctasktable") {
+                $problems[] = $errorcode; // This should be a coursemoduleid.
+            }
         }
         if (!empty($options['fix'])) {
-            // Delete the remnant data related to this module.
-            force_delete_modules_of_course($courseid);
+
+            if (count($cms) > 1) {
+                // Separate into individual tasks. Adhoc Tasks need to be re-executed.
+                echo "WIP... Separating clustered adhoc task (taskid $taskid) into individualised module tasks.\n";
+            } else { // Delete the remnant data related to this singular module task.
+                echo "... Deleting remnant data for adhoc task (taskid $taskid).\n";
+                $cm = current($cms);
+                force_delete_module_data($cm);
+            }
+
         }
-        $problems[] = $courseid;
     } else {
         echo "Course [$courseid] is OK\n";
     }
@@ -138,6 +150,6 @@ if (!count($problems)) {
         echo "\n...Found and fixed ".count($problems)." courses with problems". "\n";
     } else {
         echo "\n...Found ".count($problems)." courses with problems. To fix run:\n";
-        echo "\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --courses=".join(',', $problems)." --fix". "\n";
+        echo "\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --modules=".join(',', $problems)." --fix". "\n";
     }
 }
