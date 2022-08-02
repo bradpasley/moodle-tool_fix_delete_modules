@@ -1407,7 +1407,7 @@ function get_coursemoduletask_string(array $cmsdata, int $taskid) {
     } else {
         if ($cmsdata && isset(current($cmsdata)->instance)) {
             $stringtaskcms = 'taskid: '.$taskid
-                            .'cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cmsdata)->instance;
+                            .' cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cmsdata)->instance;
         } else {
             $stringtaskcms = 'taskid: '.$taskid
                             .' cm id: '.current($cmsdata)->id;
