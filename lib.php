@@ -1150,3 +1150,315 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
 
     return $outputstring;
 }
+<<<<<<< HEAD
+=======
+
+/**
+ * get_adhoctask_from_taskid()
+ *
+ * @param int $taskid - the taskid of a course_delete_modules adhoc task.
+ * @return \core\task\adhoc_task|bool - false if not found.
+ */
+function get_adhoctask_from_taskid(int $taskid) {
+    $thisadhoctask = null;
+    $cdmadhoctasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+    foreach ($cdmadhoctasks as $adhoctask) {
+        if ($adhoctask->get_id() == $taskid) {
+            $thisadhoctask = $adhoctask;
+            break;
+        }
+    }
+    if (isset($thisadhoctask)) {
+        return $thisadhoctask;
+    } else {
+        return false;
+    }
+}
+
+
+/**
+ * get_any_lost_modules()
+ *
+ * A utility function to find any modules which do not have a
+ * record in their corresponding module table.
+ * Used within get_module_tables()
+ *
+ * returns
+ *
+ * @param array $moduleinstanceids
+ * @param array $moduletablerecords
+ * @return array|bool - course module ids, or false if no missing modules.
+ */
+function get_any_lost_modules(array $moduleinstanceids, array $moduletablerecords) {
+
+    $lostmoduleids = array();
+    foreach ($moduleinstanceids as $moduleid => $cmid) {
+        $moduleidfound = false;
+        foreach ($moduletablerecords as $record) {
+            if ($record->id == intval($moduleid)) {
+                $moduleidfound = true;
+            }
+        }
+        if (!$moduleidfound) {
+            array_push($lostmoduleids, $cmid);
+        }
+    }
+
+    if (empty($lostmoduleids)) {
+        return false;
+    } else {
+        return $lostmoduleids;
+    }
+}
+
+/**
+ * get_html_fix_button_for_lost_modules()
+ *
+ * Outputs HTML buttons for a module that is missing.
+ *
+ * @param int $coursemoduleid
+ * @param string $modulename
+ * @param int $taskid
+ * @return string - HTML output
+ */
+function get_html_fix_button_for_lost_modules(int $coursemoduleid, string $modulename, int $taskid) {
+
+    global $OUTPUT;
+
+    $htmloutput = '';
+
+    $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
+    $customdata = array('cmid'          => $coursemoduleid,
+                        'cmname'        => $modulename,
+                        'taskid'        => $taskid);
+
+    $mform = new fix_delete_modules_form($actionurl, $customdata);
+    $htmloutput .= html_writer::tag('b',
+                                    'Module (cmid: '.$coursemoduleid.')'
+                                    .' not found in '.$modulename.' table',
+                                    array('class' => "text-danger"));
+    $htmloutput .= html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
+    $button      = $mform->render();
+    $htmloutput .= $button;
+
+    return $htmloutput;
+}
+
+/**
+ * get_html_separate_button_for_clustered_tasks()
+ *
+ * Outputs HTML buttons for a clustered task.
+ *
+ * @param int $taskid
+ * @return string - HTML output
+ */
+function get_html_separate_button_for_clustered_tasks(int $taskid) {
+
+    global $OUTPUT;
+
+    $htmloutput = '';
+
+    $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/separate_module.php');
+    $params     = array('taskid' => $taskid);
+
+    $mform = new separate_delete_modules_form($actionurl, $params);
+    $htmloutput .= html_writer::tag('b',
+                                    'This Adhoc task (id: '.$taskid.') contains multiple course modules.'
+                                    .' Press the button below to separate these into multiple adhoc tasks.'
+                                    .' This will assist in reducing the complexity of the failed'
+                                    .' course_delete_modules task.',
+                                    array('class' => "text-danger"));
+    $htmloutput .= html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
+    $button      = $mform->render();
+    $htmloutput .= $button;
+
+    return $htmloutput;
+}
+
+/**
+ * get_coursemoduletask_string()
+ *
+ * returns human readible string about one course_delete_module task.
+ *
+ * @param array $cmsdata - one or more coursemodule data in an array.
+ * @param int $taskid - the taskid of this task
+ * @return string
+ */
+function get_coursemoduletask_string(array $cmsdata, int $taskid) {
+
+    if ($cmsdata && count($cmsdata) > 2) {
+        $stringtaskcms = 'taskid: '.$taskid
+                        .' cmids: '.current($cmsdata)->id.'...'.end($cmsdata)->id
+                        .' cminstanceids: '.current($cmsdata)->instance.'...'.end($cmsdata)->instance;
+    } else if ($cmsdata && count($cmsdata) > 1) {
+        $stringtaskcms = 'taskid: '.$taskid
+                        .' cmids: '.current($cmsdata)->id.' & '.end($cmsdata)->id
+                        .' cminstanceids: '.current($cmsdata)->instance.' & '.end($cmsdata)->instance;
+    } else {
+        if ($cmsdata && isset(current($cmsdata)->instance)) {
+            $stringtaskcms = 'taskid: '.$taskid
+                            .' cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cmsdata)->instance;
+        } else {
+            $stringtaskcms = 'taskid: '.$taskid
+                            .' cm id: '.current($cmsdata)->id;
+        }
+    }
+
+    return $stringtaskcms;
+
+}
+
+/**
+ * get_adhoctask_from_taskid()
+ *
+ * @param int $taskid - the taskid of a course_delete_modules adhoc task.
+ * @return \core\task\adhoc_task|bool - false if not found.
+ */
+function get_adhoctask_from_taskid(int $taskid) {
+    $thisadhoctask = null;
+    $cdmadhoctasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+    foreach ($cdmadhoctasks as $adhoctask) {
+        if ($adhoctask->get_id() == $taskid) {
+            $thisadhoctask = $adhoctask;
+        }
+    }
+    if (isset($thisadhoctask)) {
+        return $thisadhoctask;
+    } else {
+        return false;
+    }
+}
+
+
+/**
+ * get_any_lost_modules()
+ *
+ * A utility function to find any modules which do not have a
+ * record in their corresponding module table.
+ * Used within get_module_tables()
+ *
+ * returns
+ *
+ * @param array $moduleinstanceids
+ * @param array $moduletablerecords
+ * @return array|bool - course module ids, or false if no missing modules.
+ */
+function get_any_lost_modules(array $moduleinstanceids, array $moduletablerecords) {
+
+    $lostmoduleids = array();
+    foreach ($moduleinstanceids as $moduleid => $cmid) {
+        $moduleidfound = false;
+        foreach ($moduletablerecords as $record) {
+            if ($record->id == intval($moduleid)) {
+                $moduleidfound = true;
+            }
+        }
+        if (!$moduleidfound) {
+            array_push($lostmoduleids, $cmid);
+        }
+    }
+
+    if (empty($lostmoduleids)) {
+        return false;
+    } else {
+        return $lostmoduleids;
+    }
+}
+
+/**
+ * get_html_fix_button_for_lost_modules()
+ *
+ * Outputs HTML buttons for a module that is missing.
+ *
+ * @param int $coursemoduleid
+ * @param string $modulename
+ * @param int $taskid
+ * @return string - HTML output
+ */
+function get_html_fix_button_for_lost_modules(int $coursemoduleid, string $modulename, int $taskid) {
+
+    global $OUTPUT;
+
+    $htmloutput = '';
+
+    $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
+    $customdata = array('cmid'          => $coursemoduleid,
+                        'cmname'        => $modulename,
+                        'taskid'        => $taskid);
+
+    $mform = new fix_delete_modules_form($actionurl, $customdata);
+    $htmloutput .= html_writer::tag('b',
+                                    'Module (cmid: '.$coursemoduleid.')'
+                                    .' not found in '.$modulename.' table',
+                                    array('class' => "text-danger"));
+    $htmloutput .= html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
+    $button      = $mform->render();
+    $htmloutput .= $button;
+
+    return $htmloutput;
+}
+
+/**
+ * get_html_separate_button_for_clustered_tasks()
+ *
+ * Outputs HTML buttons for a clustered task.
+ *
+ * @param int $taskid
+ * @return string - HTML output
+ */
+function get_html_separate_button_for_clustered_tasks(int $taskid) {
+
+    global $OUTPUT;
+
+    $htmloutput = '';
+
+    $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/separate_module.php');
+    $params     = array('taskid' => $taskid);
+
+    $mform = new separate_delete_modules_form($actionurl, $params);
+    $htmloutput .= html_writer::tag('b',
+                                    'This Adhoc task (id: '.$taskid.') contains multiple course modules.'
+                                    .' Press the button below to separate these into multiple adhoc tasks.'
+                                    .' This will assist in reducing the complexity of the failed'
+                                    .' course_delete_modules task.',
+                                    array('class' => "text-danger"));
+    $htmloutput .= html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
+    $button      = $mform->render();
+    $htmloutput .= $button;
+
+    return $htmloutput;
+}
+
+/**
+ * get_coursemoduletask_string()
+ *
+ * returns human readible string about one course_delete_module task.
+ *
+ * @param array $cmsdata - one or more coursemodule data in an array.
+ * @param int $taskid - the taskid of this task
+ * @return string
+ */
+function get_coursemoduletask_string(array $cmsdata, int $taskid) {
+
+    if ($cmsdata && count($cmsdata) > 2) {
+        $stringtaskcms = 'taskid: '.$taskid
+                        .' cmids: '.current($cmsdata)->id.'...'.end($cmsdata)->id
+                        .' cminstanceids: '.current($cmsdata)->instance.'...'.end($cmsdata)->instance;
+    } else if ($cmsdata && count($cmsdata) > 1) {
+        $stringtaskcms = 'taskid: '.$taskid
+                        .' cmids: '.current($cmsdata)->id.' & '.end($cmsdata)->id
+                        .' cminstanceids: '.current($cmsdata)->instance.' & '.end($cmsdata)->instance;
+    } else {
+        if ($cmsdata && isset(current($cmsdata)->instance)) {
+            $stringtaskcms = 'taskid: '.$taskid
+                            .' cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cmsdata)->instance;
+        } else {
+            $stringtaskcms = 'taskid: '.$taskid
+                            .' cm id: '.current($cmsdata)->id;
+        }
+    }
+
+    return $stringtaskcms;
+
+}
+>>>>>>> 99ffc7d (CLI output formatting & param improvement)
