@@ -52,26 +52,14 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
         $cms = get_cms_infos($cmsdata);
 
         // Prepare Course Module string.
-        if ($cms && count($cms) > 2) {
-            $cminfostring = 'cmids: '.current($cms)->id.'...'.end($cms)->id
-                           .' cminstanceids: '.current($cms)->instance.'...'.end($cms)->instance;
-        } else if ($cms && count($cms) > 1) {
-            $cminfostring = 'cmids: '.current($cms)->id.' & '.end($cms)->id
-                           .' cminstanceids: '.current($cms)->instance.' & '.end($cms)->instance;
-        } else {
-            if ($cms && isset($cms[0]->instance)) {
-                $cminfostring = 'cm id: '.current($cms)->id.' cm instance '.current($cms)->instance;
-            } else {
-                $cminfostring = 'cm id: '.current($cmsdata)->id;
-            }
-        }
+        $cminfostring = get_coursemoduletask_string($cms, $taskid);
 
         // Display heading of this adhoc task.
         echo $OUTPUT->heading(get_string('heading_coursemodules', 'tool_fix_delete_modules').': '.$cminfostring, 4);
         echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'), 5);
 
         //$originaltaskdata = get_original_cmdelete_adhoctask_data($taskid);
-        $adhoctable = get_adhoctasks_table(true, $taskid); // Display original adhoctask custom data.
+        $adhoctable = get_adhoctasks_table($taskid, true); // Display original adhoctask custom data.
 
         echo html_writer::table($adhoctable);
 
