@@ -91,6 +91,14 @@ if (in_array('*', $moduleslist) || empty($moduleslist)) {
     list($sql, $params) = $DB->get_in_or_equal($moduleslist, SQL_PARAMS_NAMED, 'id');
     $where = 'WHERE id '. $sql;
 }
+
+// Require --fix to also have the --modules param (with specific modules listed).
+if ($options['fix'] && (!$options['modules'] || empty($params))) {
+    cli_error("fix_course_delete_modules.php '--fix' requires '--modules=[coursemoduleids]'.");
+    cli_writeln($help);
+    die();
+}
+
 $totalmodulescount = $DB->get_field_sql('SELECT count(id) FROM {course_modules}');
 $modulescount = $DB->get_field_sql('SELECT count(id) FROM {course_modules} '. $where, $params);
 
@@ -118,9 +126,10 @@ if (is_null($cmsdata) || empty($cmsdata)) {
 }
 
 foreach ($cmsdata as $taskid => $cms) {
-    echo "\n...Checking taskid $taskid.\n\n";
+    echo "\n...Checking taskid $taskid... ";
     $errors = course_module_delete_issues($cms, $taskid, $minimumfaildelay);
     if ($errors) {
+        echo "PROBLEM\n";
         foreach ($errors as $errorcode => $errormessage) {
             cli_problem($errormessage);
             if ($errorcode != "adhoctasktable") {
@@ -140,11 +149,11 @@ foreach ($cmsdata as $taskid => $cms) {
 
         }
     } else {
-        echo "Course [$courseid] is OK\n";
+        echo "OK";
     }
 }
 if (!count($problems)) {
-    echo "\n...All courses are OK\n";
+    echo "\n...All course_delete_module Adhoc Tasks are OK\n";
 } else {
     if (!empty($options['fix'])) {
         echo "\n...Found and fixed ".count($problems)." courses with problems". "\n";

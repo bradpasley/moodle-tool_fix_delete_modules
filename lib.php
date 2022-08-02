@@ -814,7 +814,7 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
     }
     if ($failedcmids = get_module_tables($cms, $taskid, false, true)) {
         foreach ($failedcmids as $cmid) {
-            $moduleerrormessage = "No record exists in associated module table record for (cmid: $cmid) task: ($stringtaskcms)".PHP_EOL;
+            $moduleerrormessage = "No record exists in associated module table record for (cmid: $cmid) task: ($stringtaskcms)";
             if (isset($results["$cmid"])) {
                 $results["$cmid"] = $results["$cmid"].$moduleerrormessage;
             } else {
@@ -1116,7 +1116,7 @@ function get_coursemoduletask_string(array $cmsdata, int $taskid) {
     } else {
         if ($cmsdata && isset(current($cmsdata)->instance)) {
             $stringtaskcms = 'taskid: '.$taskid
-                            .'cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cmsdata)->instance;
+                            .' cm id: '.current($cmsdata)->id.' cminstanceid: '.current($cmsdata)->instance;
         } else {
             $stringtaskcms = 'taskid: '.$taskid
                             .' cm id: '.current($cmsdata)->id;
