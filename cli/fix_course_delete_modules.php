@@ -144,7 +144,7 @@ foreach ($cmsdata as $taskid => $cms) {
             } else { // Delete the remnant data related to this singular module task.
                 echo "... Deleting remnant data for adhoc task (taskid $taskid).\n";
                 $cm = current($cms);
-                force_delete_module_data($cm);
+                force_delete_module_data($cm, $taskid);
             }
 
         }

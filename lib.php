@@ -23,7 +23,8 @@
 
 use core\session\exception;
 
-require_once(__DIR__ . '/../../../config.php');
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/blog/lib.php');
@@ -201,7 +202,9 @@ function get_module_tables(array $cms, int $taskid = 0, bool $htmloutput = false
 
         if (empty(array_keys($modulenameids))) {
             if ($returnfailedcmids) {
-                array_push($failedcmids, array_values($modulenameids));
+                foreach (array_values($modulenameids) as $cmid) {
+                    $failedcmids[] = $cmid;
+                }
             }
             continue;
         }
@@ -247,6 +250,10 @@ function get_module_tables(array $cms, int $taskid = 0, bool $htmloutput = false
                 } else {
                     return false;
                 }
+            }
+        } else {
+            foreach (array_values($modulenameids) as $cmid) {
+                $failedcmids[] = $cmid;
             }
         }
     }
@@ -826,50 +833,42 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
     return $results;
 }
 
-///**
-// * force_delete_modules_of_course()
-// *
-// * @param array $cms - array of coursemoduledata
-// * @return bool - result of deletion: true = success, false = failure
-// */
-//function force_delete_modules_of_course(array $cms) {
-//    $success = true;
-//    foreach ($cms as $cm) {
-//        if (!force_delete_module_data($cm->id, $cm)) {
-//            $success = false;
-//        }
-//    }
-//    return $success;
-//}
-
 
 /**
  * force_delete_module_data()
  *
  * @param stdClass $cm - cm data
- * @return bool - result of deletion
+ * @param int $taskid
+ * @param bool $ishtmloutput - true if GUI, false if CLI
+ * @return string|bool - stringoutput or false if failed.
  */
 
-function force_delete_module_data(stdClass $coursemodule) {
+function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ishtmloutput = false) {
     global $DB;
 
     $coursemoduleid = $coursemodule->id;
 
+    $outputstring = '';
     if (is_null($coursemodule)) {
-        return ["Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid).\n"];
+        $outputstring = "Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid).";
+        $outputstring = $ishtmloutput ? "<p><b>$outputstring</b></p>" : array($outputstring.PHP_EOL);
+        return $outputstring;
     }
 
-    echo "Fixing... Attempting to fix a deleted module (Course module id: $coursemoduleid).\n";
+    $nextstring = "Fixing... Attempting to fix a deleted module (Course module id: $coursemoduleid).";
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     // Get the course module.
     if (!$cm = $DB->get_record('course_modules', array('id' => $coursemoduleid))) {
-        echo "Course Module instance (cmid $coursemoduleid) doesn't exist. Attempting to delete other data".PHP_EOL;
+        $nextstring = "Course Module instance (cmid $coursemoduleid) doesn't exist. Attempting to delete other data";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
         $cm = $coursemodule; // Attempt with param data.
     }
     // Get the module context.
     try {
         $modcontext = context_module::instance($coursemoduleid);
     } catch (dml_missing_record_exception $e) {
-        echo "Context instance for course module (cmid $coursemoduleid) doesn't exist. Attempting to delete other data".PHP_EOL;
+        $nextstring = "Context instance for course module (cmid $coursemoduleid) doesn't exist. Attempting to delete other data";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
         $modcontext = false;
     }
 
@@ -880,7 +879,8 @@ function force_delete_module_data(stdClass $coursemodule) {
     if ($modcontext) {
         $fs = get_file_storage();
         $fs->delete_area_files($modcontext->id);
-        echo 'Files deleted for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+        $nextstring = 'Files deleted for module cmid $coursemoduleid contextid '.$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Delete events from calendar.
@@ -892,7 +892,9 @@ function force_delete_module_data(stdClass $coursemodule) {
             $calendarevent->delete();
         }
         if (count($event) > 0) {
-            echo count($events).' Calendar events for module cmid $cmid modulename '.$modulename.' instance '.$cm->instance.'.';
+            $nextstring = count($events).' Calendar events for module '
+                          ."cmid $coursemoduleid modulename '.$modulename.' instance ".$cm->instance.'.';
+            $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
         }
     }
 
@@ -903,31 +905,38 @@ function force_delete_module_data(stdClass $coursemodule) {
             $gradeitem->delete('moddelete');
         }
         if (count($gradeitems) > 0) {
-            echo count($gradeitems).' Grade items for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;;
+            $nextstring = count($gradeitems)." Grade items for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+            $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
         }
     }
 
     // Delete associated blogs and blog tag instances.
     if ($modcontext) {
         blog_remove_associations_for_module($modcontext->id);
-        echo 'Deleted blogs for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;;
+        $nextstring = "Deleted blogs for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Delete completion and availability data; it is better to do this even if the
     // features are not turned on, in case they were turned on previously (these will be
     // very quick on an empty table).
     $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
-    echo 'Deleted Module Completion data for module cmid $cmid.'.PHP_EOL;;
+    $nextstring = "Deleted Module Completion data for module cmid $coursemoduleid.";
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
                                                             'course' => $cm->course,
                                                             'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
-    echo 'Deleted Module Completion Criteria data for module cmid $cmid, courseid '.$cm->course.'.'.PHP_EOL;
+
+    $nextstring = "Deleted Module Completion Criteria data for module cmid $coursemoduleid, courseid ".$cm->course.'.';
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
 
     // Delete all tag instances associated with the instance of this module.
     if ($modcontext) {
         \core_tag_tag::delete_instances('mod_' . $modulename, null, $modcontext->id);
         \core_tag_tag::remove_all_item_tags('core', 'course_modules', $cm->id);
-        echo 'Deleted Tag data for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;;
+
+        $nextstring = "Deleted Tag data for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Notify the competency subsystem.
@@ -936,21 +945,27 @@ function force_delete_module_data(stdClass $coursemodule) {
     // Delete the context.
     if ($modcontext) {
         \context_helper::delete_instance(CONTEXT_MODULE, $cm->id);
-        echo 'Context data for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;;
+        $nextstring = "Context data for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Delete the module from the course_modules table.
     if ($DB->delete_records('course_modules', array('id' => $cm->id))) {
-        echo 'Deleted Course Module record for module cmid $cmid.'.PHP_EOL;
+        $nextstring = "Deleted Course Module record for module cmid $coursemoduleid.";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     } else {
-        echo 'Deleted Course Module record: No record to delete for module cmid $cmid contextid '.$modcontext->id.'.'.PHP_EOL;
+        $nextstring = "Deleted Course Module record: No record to delete for "
+                      ."module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Delete module from that section.
     if (!delete_mod_from_section($cm->id, $cm->section)) {
-        echo "Could not delete the module (cmid ".$cm->id.") from section (".$cm->section.").".PHP_EOL;
+        $nextstring = "Could not delete the module (cmid $coursemoduleid) from section (".$cm->section.").";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     } else {
-        echo "Deleted the module (cmid ".$cm->id.") from section (".$cm->section.").".PHP_EOL;
+        $nextstring = "Deleted the module (cmid $coursemoduleid) from section (".$cm->section.").";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Trigger event for course module delete action.
@@ -969,8 +984,24 @@ function force_delete_module_data(stdClass $coursemodule) {
     }
     rebuild_course_cache($cm->course, true);
 
-    echo 'SUCCESSFUL Deletion of Module and related data '
-         .'(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.').'.PHP_EOL.PHP_EOL;
+    $nextstring = 'SUCCESSFUL Deletion of Module and related data '
+                 .'(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.').'.PHP_EOL;
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+
+    // Reset adhoc task to run asap. Works on Moodle 3.7+.
+    if (function_exists('\core\task\manager::reschedule_or_queue_adhoc_task')) {
+        if ($thisadhoctask = get_adhoctask_from_taskid($taskid)) {
+            $thisadhoctask->set_fail_delay(0);
+            $thisadhoctask->set_next_run_time(time());
+            \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
+            echo '<p><b class="text-success">course_delete_module Adhoc task (id $taskid) set to run asap</b></p>';
+        } else {
+            echo '<p><b class="text-danger">course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
+            echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+        }
+    }
+
+    return $outputstring;
 }
 
 /**

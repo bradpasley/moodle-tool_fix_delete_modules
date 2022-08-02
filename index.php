@@ -58,7 +58,6 @@ if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
         echo $OUTPUT->heading(get_string('heading_coursemodules', 'tool_fix_delete_modules').': '.$cminfostring, 4);
         echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'), 5);
 
-        //$originaltaskdata = get_original_cmdelete_adhoctask_data($taskid);
         $adhoctable = get_adhoctasks_table($taskid, true); // Display original adhoctask custom data.
 
         echo html_writer::table($adhoctable);
