@@ -198,7 +198,6 @@ function get_module_tables(array $cms, int $taskid = 0, bool $htmloutput = false
         } else {
             $modulenames[$cm->modulename] = $cmarray;
         }
-
     }
 
     // Prepare SQL Query for each type of module table.
@@ -803,9 +802,6 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
 
     // Process this adhoc tasks's course module(s).
     $results = array();
-    foreach ($cms as $cm) {
-        // Prepare Task/Course Module string.
-        $stringtaskcms = get_coursemoduletask_string($cms, $taskid);
 
         if (!$table = get_adhoctasks_table()) {
             $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
