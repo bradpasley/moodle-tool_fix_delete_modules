@@ -636,10 +636,10 @@ function get_all_cmdelete_adhoctasks_data(array $coursemoduleids = array(), int 
  *
  * @param int $taskid
  * @param int $climinfaildelay - optional, GUI will get from config
- * @return array|null - course module info from customdata field.
+ * @return array|bool - course module info from customdata field.
  */
 
-function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay = 0) {
+function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay = 60) {
     global $DB;
 
     $adhoccustomdata = $DB->get_record('task_adhoc',
@@ -648,14 +648,14 @@ function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay 
                                               'id, customdata, faildelay',
                                             IGNORE_MISSING);
     $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
-    if ($climinfaildelay != 0) { // Override config setting - for CLI.
+    if ($climinfaildelay != 60) { // Override config setting - for CLI.
         $minimumfaildelay = $climinfaildelay;
     }
 
     if ($adhoccustomdata && !is_null($adhoccustomdata)) {
         // Skip filtered task.
         if (intval($adhoccustomdata->faildelay) < $minimumfaildelay) {
-            return null;
+            return false;
         }
         $value = $adhoccustomdata->customdata;
         $cms   = json_decode($value)->cms;
@@ -665,7 +665,7 @@ function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay 
 
         return $cms;
     } else {
-        return null;
+        return false;
     }
 }
 

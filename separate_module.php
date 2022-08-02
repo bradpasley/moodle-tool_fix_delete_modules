@@ -43,12 +43,7 @@ if ($action == 'separate_module') {
     echo $OUTPUT->header();
 
     // Get the adhoc task data.
-    if (!$cm = $DB->get_record('task_adhoc', array('id' => $taskid, 'classname' => '\core_course\task\course_delete_modules'))) {
-        echo "<p>Adhoc task id ".$taskid." could not be found or is not a course_delete_modules task.</p>";
-        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
-        return true;
-    }
-
+    //if ($cm = $DB->get_record('task_adhoc', array('id' => $taskid, 'classname' => '\core_course\task\course_delete_modules'))) {
     // Create individual adhoc tasks & remove original task.
     if ($originaladhoctaskdata = get_original_cmdelete_adhoctask_data($taskid)) {
 
@@ -87,7 +82,7 @@ if ($action == 'separate_module') {
         }
         echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     } else {
-        echo '<p><b class="text-danger">course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
+        echo '<p><b class="text-danger">Adhoc task course_delete_module (id '.$taskid.') could not be found.</b></p>';
         echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     }
 
