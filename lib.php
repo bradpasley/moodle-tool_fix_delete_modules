@@ -1154,6 +1154,72 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
 =======
 
 /**
+ * separate_clustered_task_into_modules()
+ *
+ * @param array $clusteredadhoctask - a course_delete_module adhoc task
+ *                                    containing multiple course modules.
+ * @param int   $taskid - original task id.
+ * @param bool  $ishtmloutput - true = HTML output, false = plaintext output
+ *
+ * @return string - either HTML (GUI) or plain text (CLI)
+ */
+
+function separate_clustered_task_into_modules(array $clusteredadhoctask, int $taskid, bool $ishtmloutput = false) {
+
+    global $DB, $USER;
+
+    $taskcount = 0;
+    $outputstring = '';
+    // Create individual adhoc task for each module.
+    foreach ($clusteredadhoctask as $cmid => $cmvalue) {
+        // Get the course module.
+        if (!$cm = $DB->get_record('course_modules', array('id' => $cmid))) {
+            continue; // Skip it; it might have been deleted already.
+        }
+
+        // Update record, if not already updated.
+        $cm->deletioninprogress = '1';
+        $DB->update_record('course_modules', $cm);
+
+        // Create an adhoc task for the deletion of the course module. The task takes an array of course modules for removal.
+        $newdeletetask = new \core_course\task\course_delete_modules();
+        $mainadminid = get_admin()->id;
+        $newdeletetask->set_custom_data(array(
+            'cms' => array($cm),
+            'userid' => $mainadminid,    // Set user to main admin.
+            'realuserid' => $mainadminid // Set user to main admin.
+        ));
+
+        // Queue the task for the next run.
+        \core\task\manager::queue_adhoc_task($newdeletetask);
+        $taskcount++;
+    }
+    $nextstring = $taskcount.' new individual course_delete_module Tasks have been created';
+    $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
+                                     : $nextstring.PHP_EOL;
+
+    // Remove old task.
+    if ($DB->delete_records('task_adhoc', array('id' => $taskid))) {
+        $nextstring = 'Original course_delete_module task (id '.$taskid.') deleted';
+        $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
+                                         : $nextstring.PHP_EOL;
+    } else {
+        $nextstring = 'Original course_delete_module Adhoc task (id '.$taskid.') could not be found.';
+        $outputstring .= $ishtmloutput ? '<p><b class="text-danger">'.$nextstring.'</b></p>'
+                                         : $nextstring.PHP_EOL;
+    }
+    $htmlstring = '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+    $clistring  = PHP_EOL.'Process these new adhoc tasks by running the adhoctask CLI command:'.PHP_EOL
+                 .'\$sudo -u www-data /usr/bin/php admin/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
+                 .'Then re-run this script to check if any modules remain incomplete.'.PHP_EOL
+                 .'\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php'.PHP_EOL;
+
+    $outputstring .= $ishtmloutput ? $htmlstring : $clistring.PHP_EOL;
+
+    return $outputstring;
+}
+
+/**
  * get_adhoctask_from_taskid()
  *
  * @param int $taskid - the taskid of a course_delete_modules adhoc task.
