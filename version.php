@@ -27,6 +27,10 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_fix_delete_modules';
 $plugin->release = '0.1.0';
+<<<<<<< HEAD
 $plugin->version = 2022080401;
+=======
+$plugin->version = 2022080100;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 $plugin->requires = 2018051700;
 $plugin->maturity = MATURITY_BETA;
