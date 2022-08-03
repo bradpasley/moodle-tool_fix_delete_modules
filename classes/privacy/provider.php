@@ -15,17 +15,34 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Privacy Subsystem for tool_fix_course_delete_modules
+ * implementing null_provider.
  *
  * @package     tool_fix_delete_modules
+ * @subpackage  privacy
  * @copyright   2022 Brad Pasley <brad.pasley@catalyst-au.net>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace tool_fix_delete_modules\privacy;
 
-$plugin->component = 'tool_fix_delete_modules';
-$plugin->release = '0.1.0';
-$plugin->version = 2022080100;
-$plugin->requires = 2018051700;
-$plugin->maturity = MATURITY_ALPHA;
+/**
+ * Privacy Subsystem for tool_fix_course_delete_modules
+ * implementing null_provider.
+ *
+ * @package    tool_beacon
+ * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class provider implements \core_privacy\local\metadata\null_provider {
+
+    /**
+     * Get the language string identifier with the component's language
+     * file to explain why this plugin stores no data.
+     *
+     * @return  string
+     */
+    public static function get_reason() : string {
+        return 'privacy:metadata';
+    }
+}

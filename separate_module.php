@@ -23,48 +23,33 @@
  */
 
 require_once(__DIR__ . '/../../../config.php');
-require_once(__DIR__.'/lib.php');
-require_once($CFG->libdir.'/gradelib.php');
-require_once($CFG->libdir.'/completionlib.php');
-require_once($CFG->dirroot.'/blog/lib.php');
+require_once(__DIR__ . '/lib.php');
+require_once($CFG->dirroot.'/lib/classes/task/logmanager.php');
 require_login();
 
 // Retrieve parameters.
 $action       = required_param('action', PARAM_ALPHANUMEXT);
-$cmid         = required_param('cmid', PARAM_INT);
-$modulename   = required_param('cmname', PARAM_ALPHAEXT);
 $taskid       = required_param('taskid', PARAM_INT);
 
-$prevurl = new moodle_url('/admin/tool/fix_delete_modules/index.php');
+if ($action == 'separate_module') {
 
-if ($action == 'delete_module') {
-
-    $url = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
+    $url = new moodle_url('/admin/tool/fix_delete_modules/separate_module.php');
+    $prevurl = new moodle_url('/admin/tool/fix_delete_modules/index.php');
     $PAGE->set_url($url);
     $PAGE->set_context(context_system::instance());
     $PAGE->set_title(get_string('pluginname', 'tool_fix_delete_modules'));
-    $PAGE->set_heading(get_string('pluginname', 'tool_fix_delete_modules'). " - deleting module");
+    $PAGE->set_heading(get_string('pluginname', 'tool_fix_delete_modules'). " - separating module tasks");
     $renderer = $PAGE->get_renderer('core');
 
     echo $OUTPUT->header();
 
-    $cm = new stdClass();
-    $cmsdata = get_all_cmdelete_adhoctasks_data(array($cmid));
-    foreach ($cmsdata as $cmtaskid => $taskdata) {
-        $taskdata = get_cms_infos($taskdata);
-        foreach ($taskdata as $coursemoduleid => $cmdata) {
-            if ($coursemoduleid == $cmid) {
-                $cm = $cmdata;
-                break;
-            }
-        }
+    // Create individual adhoc tasks & remove original task.
+    if ($originaladhoctaskdata = get_original_cmdelete_adhoctask_data($taskid)) {
+        echo separate_clustered_task_into_modules($originaladhoctaskdata, $taskid, true);
+    } else {
+        echo '<p><b class="text-danger">Adhoc task course_delete_module (id '.$taskid.') could not be found.</b></p>';
+        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     }
-    $deleteoutput = force_delete_module_data($cm, $taskid, true);
-
-    echo $deleteoutput;
-
-    echo '<p><a href="index.php">Return to Fix Delete Modules Report page</a> and check the status.</p>';
-
     echo $OUTPUT->footer();
 } else {
     throw new moodle_exception('error:actionnotfound', 'block_teachercontact', $prevurl, $action);
