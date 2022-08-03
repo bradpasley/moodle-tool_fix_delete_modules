@@ -168,7 +168,11 @@ function get_course_module_table(array $cms, bool $htmloutput, bool $returnfaile
  * @param array $cms - course modules data
  * @param int $taskid - taskid associated with this module deletion. (only used for GUI)
  * @param bool $htmloutput - htmloutput true for gui output, false for cli output
+<<<<<<< HEAD
  * @param bool $returnfailedcmids - instead of returning a table, return array of failed cmids.
+=======
+ * @param bool $returnfailedcmid - instead of returning a table, return array of failed cmids.
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
  *
  * @return html_table|array|bool - records of course_delete_module adhoc tasks.
  */
@@ -567,6 +571,10 @@ function get_context_id(stdClass $cms) {
  * Get the name of the table related to the course module which is failing to be deleted.
  *
  * @param stdClass $cm - course module data
+<<<<<<< HEAD
+=======
+ * @param bool $htmloutput - htmloutput true for gui output, false for cli output
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
  *
  * @return string
  */
@@ -583,6 +591,10 @@ function get_module_name(stdClass $cm) {
  * @param int $climinfaildelay - CLI optional, GUI will get from config
  * @return array|null - array of course module info from customdata field.
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 function get_all_cmdelete_adhoctasks_data(array $coursemoduleids = array(), int $climinfaildelay = 60) {
     global $DB;
 
@@ -639,6 +651,10 @@ function get_all_cmdelete_adhoctasks_data(array $coursemoduleids = array(), int 
  * @param int $climinfaildelay - optional, GUI will get from config
  * @return array|bool - course module info from customdata field.
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay = 60) {
     global $DB;
 
@@ -677,6 +693,10 @@ function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay 
  * @param array $adhoctask - coursemodule data from adhoctask customdata field.
  * @return array|bool - array of cms' data or false if not available.
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 function get_cms_infos(array $adhoctask) {
     global $DB;
 
@@ -793,9 +813,17 @@ function get_htmltable_vertical(array $records, array $columntitles) {
  */
 function course_module_delete_issues(array $adhoctask, int $taskid, int $minimumfaildelay) {
 
+<<<<<<< HEAD
     // Some multi-module delete adhoc tasks don't contain all data.
     $cms = get_cms_infos($adhoctask);
 
+=======
+function course_module_delete_issues(array $adhoctask, int $taskid, int $minimumfaildelay) {
+
+    // Some multi-module delete adhoc tasks don't contain all data.
+    $cms = get_cms_infos($adhoctask);
+
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     if (is_null($cms) || empty(($cms))) {
         return ["Cannot find a course_module_delete adhoc task for taskid: $taskid".PHP_EOL];
     }
@@ -833,11 +861,19 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
 /**
  * force_delete_module_data()
  *
+<<<<<<< HEAD
  * @param stdClass $coursemodule - cm data
+=======
+ * @param stdClass $cm - cm data
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
  * @param int $taskid
  * @param bool $ishtmloutput - true if GUI, false if CLI
  * @return string|bool - stringoutput or false if failed.
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ishtmloutput = false) {
     global $DB;
 
@@ -845,6 +881,7 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
 
     $outputstring = '';
     if (is_null($coursemodule)) {
+<<<<<<< HEAD
         $outputstring = get_string('deletemodule_error_nullcoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
         $htmlstring   = html_writer::tag('p', $outputstring, array('class' => "text-danger"));
         $outputstring = $ishtmloutput ? $htmlstring : array($outputstring.PHP_EOL);
@@ -862,16 +899,34 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
+=======
+        $outputstring = "Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid).";
+        $outputstring = $ishtmloutput ? "<p><b>$outputstring</b></p>" : array($outputstring.PHP_EOL);
+        return $outputstring;
+    }
+
+    $nextstring = "Fixing... Attempting to fix a deleted module (Course module id: $coursemoduleid).";
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+    // Get the course module.
+    if (!$cm = $DB->get_record('course_modules', array('id' => $coursemoduleid))) {
+        $nextstring = "Course Module instance (cmid $coursemoduleid) doesn't exist. Attempting to delete other data";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
         $cm = $coursemodule; // Attempt with param data.
     }
     // Get the module context.
     try {
         $modcontext = context_module::instance($coursemoduleid);
     } catch (dml_missing_record_exception $e) {
+<<<<<<< HEAD
         $nextstring = get_string('deletemodule_error_dnemodcontext', 'tool_fix_delete_modules', $coursemoduleid);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+        $nextstring = "Context instance for course module (cmid $coursemoduleid) doesn't exist. Attempting to delete other data";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
         $modcontext = false;
     }
 
@@ -882,10 +937,15 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     if ($modcontext) {
         $fs = get_file_storage();
         $fs->delete_area_files($modcontext->id);
+<<<<<<< HEAD
         $nextstring = get_string('deletemodule_filesdeleted', 'tool_fix_delete_modules', $modcontext->id);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+        $nextstring = 'Files deleted for module cmid $coursemoduleid contextid '.$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     }
 
     // Delete events from calendar.
@@ -897,11 +957,17 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             $calendarevent->delete();
         }
         if (count($event) > 0) {
+<<<<<<< HEAD
             $nextstring = "($modulename:instanceid:".$cm->instance."): "
                           .get_string('deletemodule_calendareventsdeleted', 'tool_fix_delete_modules', count($events));
             $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
             $textstring = array($nextstring.PHP_EOL);
             $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+            $nextstring = count($events).' Calendar events for module '
+                          ."cmid $coursemoduleid modulename '.$modulename.' instance ".$cm->instance.'.';
+            $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
         }
     }
 
@@ -912,27 +978,38 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             $gradeitem->delete('moddelete');
         }
         if (count($gradeitems) > 0) {
+<<<<<<< HEAD
             $nextstring = "(modcontextid: ".$modcontext->id." cmid:".$coursemoduleid."): "
                           .get_string('deletemodule_gradeitemsdeleted', 'tool_fix_delete_modules', count($gradeitems));
             $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
             $textstring = array($nextstring.PHP_EOL);
             $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+            $nextstring = count($gradeitems)." Grade items for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+            $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
         }
     }
 
     // Delete associated blogs and blog tag instances.
     if ($modcontext) {
         blog_remove_associations_for_module($modcontext->id);
+<<<<<<< HEAD
         $nextstring = get_string('deletemodule_blogsdeleted', 'tool_fix_delete_modules', $modcontext->id);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+        $nextstring = "Deleted blogs for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     }
 
     // Delete completion and availability data; it is better to do this even if the
     // features are not turned on, in case they were turned on previously (these will be
     // very quick on an empty table).
     $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
+<<<<<<< HEAD
     $nextstring = get_string('deletemodule_completionsdeleted', 'tool_fix_delete_modules', $modcontext->id);
     $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
     $textstring = array($nextstring.PHP_EOL);
@@ -945,16 +1022,31 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
     $textstring = array($nextstring.PHP_EOL);
     $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+    $nextstring = "Deleted Module Completion data for module cmid $coursemoduleid.";
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+    $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
+                                                            'course' => $cm->course,
+                                                            'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
+
+    $nextstring = "Deleted Module Completion Criteria data for module cmid $coursemoduleid, courseid ".$cm->course.'.';
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 
     // Delete all tag instances associated with the instance of this module.
     if ($modcontext) {
         \core_tag_tag::delete_instances('mod_' . $modulename, null, $modcontext->id);
         \core_tag_tag::remove_all_item_tags('core', 'course_modules', $cm->id);
 
+<<<<<<< HEAD
         $nextstring = get_string('deletemodule_tagsdeleted', 'tool_fix_delete_modules', $modcontext->id);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+        $nextstring = "Deleted Tag data for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     }
 
     // Notify the competency subsystem.
@@ -963,15 +1055,21 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     // Delete the context.
     if ($modcontext) {
         \context_helper::delete_instance(CONTEXT_MODULE, $cm->id);
+<<<<<<< HEAD
 
         $nextstring = get_string('deletemodule_contextdeleted', 'tool_fix_delete_modules', $modcontext->id);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+        $nextstring = "Context data for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     }
 
     // Delete the module from the course_modules table.
     if ($DB->delete_records('course_modules', array('id' => $cm->id))) {
+<<<<<<< HEAD
         $nextstring = get_string('deletemodule_coursemoduledeleted', 'tool_fix_delete_modules', $cm->id);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
@@ -981,10 +1079,19 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+        $nextstring = "Deleted Course Module record for module cmid $coursemoduleid.";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+    } else {
+        $nextstring = "Deleted Course Module record: No record to delete for "
+                      ."module cmid $coursemoduleid contextid ".$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     }
 
     // Delete module from that section.
     if (!delete_mod_from_section($cm->id, $cm->section)) {
+<<<<<<< HEAD
         $nextstring = get_string('deletemodule_error_failmodsectiondelete', 'tool_fix_delete_modules', $cm->section);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
         $textstring = array($nextstring.PHP_EOL);
@@ -994,6 +1101,13 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+=======
+        $nextstring = "Could not delete the module (cmid $coursemoduleid) from section (".$cm->section.").";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+    } else {
+        $nextstring = "Deleted the module (cmid $coursemoduleid) from section (".$cm->section.").";
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     }
 
     // Trigger event for course module delete action.
@@ -1003,12 +1117,17 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             'context'  => $modcontext,
             'objectid' => $cm->id,
             'other'    => array(
+<<<<<<< HEAD
                 'modulename'   => $modulename,
+=======
+                'modulename' => $modulename,
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
                 'instanceid'   => $cm->instance,
             )
         ));
         $event->add_record_snapshot('course_modules', $cm);
         $event->trigger();
+<<<<<<< HEAD
         \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
         rebuild_course_cache($cm->course, true);
     }
@@ -1039,6 +1158,18 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
 
     return $outputstring;
 }
+=======
+    }
+    rebuild_course_cache($cm->course, true);
+
+    $nextstring = 'SUCCESSFUL Deletion of Module and related data '
+                 .'(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.').'.PHP_EOL;
+    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+
+    return $outputstring;
+}
+
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 /**
  * separate_clustered_task_into_modules()
  *
@@ -1049,17 +1180,24 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
  *
  * @return string - either HTML (GUI) or plain text (CLI)
  */
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
 function separate_clustered_task_into_modules(array $clusteredadhoctask, int $taskid, bool $ishtmloutput = false) {
 
     global $DB, $USER;
 
     $taskcount = 0;
     $outputstring = '';
+<<<<<<< HEAD
     $nextstring = get_string('separatetask_attemptfix', 'tool_fix_delete_modules', $taskid);
     $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-dark"));
     $textstring = array($nextstring.PHP_EOL);
     $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
+=======
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
     // Create individual adhoc task for each module.
     foreach ($clusteredadhoctask as $cmid => $cmvalue) {
         // Get the course module.
@@ -1084,6 +1222,7 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
         \core\task\manager::queue_adhoc_task($newdeletetask);
         $taskcount++;
     }
+<<<<<<< HEAD
     $nextstring = get_string('separatetask_taskscreatedcount', 'tool_fix_delete_modules', $taskcount);
     $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
     $textstring = array($nextstring.PHP_EOL);
@@ -1109,6 +1248,25 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
     $htmlstring = get_string('separatetask_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
     $clistring  = PHP_EOL.'Process these new adhoc tasks by running the adhoctask CLI command:'.PHP_EOL
                  .'\$sudo -u www-data /usr/bin/php admin/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
+=======
+    $nextstring = $taskcount.' new individual course_delete_module Tasks have been created';
+    $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
+                                     : $nextstring.PHP_EOL;
+
+    // Remove old task.
+    if ($DB->delete_records('task_adhoc', array('id' => $taskid))) {
+        $nextstring = 'Original course_delete_module task (id '.$taskid.') deleted';
+        $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
+                                         : $nextstring.PHP_EOL;
+    } else {
+        $nextstring = 'Original course_delete_module Adhoc task (id '.$taskid.') could not be found.';
+        $outputstring .= $ishtmloutput ? '<p><b class="text-danger">'.$nextstring.'</b></p>'
+                                         : $nextstring.PHP_EOL;
+    }
+    $htmlstring = '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+    $clistring  = PHP_EOL.'Process these new adhoc tasks by running the adhoctask CLI command:'.PHP_EOL
+                 .'\$sudo -u www-data /usr/bin/php admin/tool/task/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
+>>>>>>> 5ec1a29 (Added functionality to separate adhoc tasks with multiple course-modules (#1))
                  .'Then re-run this script to check if any modules remain incomplete.'.PHP_EOL
                  .'\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php'.PHP_EOL;
 
