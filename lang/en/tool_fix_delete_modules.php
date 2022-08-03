@@ -37,6 +37,7 @@ $string['error_dne_moduleidinmoduletable']   = 'Module ({$a}) ';
 $string['error_dne_recyclebin']              = 'Module ({$a}) records not found in the recyclebin table';
 $string['heading_coursemodules']             = 'Course module(s)';
 $string['pluginname']                        = 'Fix Delete Modules';
+$string['privacy:metadata']                  = 'The tool_fix_course_delete_modules plugin does not store any personal data.';
 $string['table_adhoctasks']                  = 'Adhoc tasks table';
 $string['table_context']                     = 'Context table';
 $string['table_coursemodules']               = 'Course modules table';
