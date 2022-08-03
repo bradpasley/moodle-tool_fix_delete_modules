@@ -55,15 +55,16 @@ courses being checked (recommended to run in mainenance mode).
 
 Options:
 -m, --modules         List modules that need to be checked (comma-separated
-                      values or * for all). Required
+                      values or * for all). Required for fixing modules.
 -d, --delaymin        Filter by the minimum faildelay field (in seconds)
--f, --fix             Fix the mismatches in DB. If not specified check only and
-                      report problems to STDERR
+-f, --fix             Fix the incomplete course_delete_module adhoc tasks.
+                      To fix modules '--modules' must be explicitly specified which modules.
+                      To fix clustered tasks, use '--fix=separate'.
 -h, --help            Print out this help
 
 Example:
-\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --modules=*
-\$sudo -u www-data /usr/bin/php admin/cli/fix_course_delete_modules.php --modules=2,3,4 --fix
+\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --modules=*
+\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --modules=2,3,4 --fix
 ";
 
 if ($unrecognized) {
@@ -93,8 +94,11 @@ if (in_array('*', $moduleslist) || empty($moduleslist)) {
 }
 
 // Require --fix to also have the --modules param (with specific modules listed).
-if ($options['fix'] && (!$options['modules'] || empty($params))) {
-    cli_error("fix_course_delete_modules.php '--fix' requires '--modules=[coursemoduleids]'.");
+$isfix                     = $options['fix'];
+$isfixclusteredtask        = $isfix && $options['fix'] === "separate";
+$isfixwithmodulesspecified = $isfix && $options['modules'] && !empty($params);
+if ($isfix && !$isfixclusteredtask && !$isfixwithmodulesspecified) {
+    cli_error("fix_course_delete_modules.php '--fix' requires '--fix=separate' or '--modules=[coursemoduleids]'.");
     cli_writeln($help);
     die();
 }
@@ -111,7 +115,8 @@ $coursemoduledeletetaskscount = count($coursemoduledeletetasks);
 
 $coursemodules = $DB->get_fieldset_sql('SELECT id FROM {course_modules} '. $where, $params);
 
-echo "Checking for $modulescount/$totalmodulescount modules in $coursemoduledeletetaskscount course_delete_module adhoc tasks...\n\n";
+echo "Checking for $modulescount/$totalmodulescount modules"
+    ." in $coursemoduledeletetaskscount course_delete_module adhoc tasks...\n\n";
 
 $coursemodules = ($totalmodulescount == $modulescount) ? array() : $coursemodules;
 $cmsdata = get_all_cmdelete_adhoctasks_data($coursemodules, $minimumfaildelay);
@@ -125,40 +130,75 @@ if (is_null($cmsdata) || empty($cmsdata)) {
     die();
 }
 
+$allerrors = array();
 foreach ($cmsdata as $taskid => $cms) {
+    $errors = array();
     echo "\n...Checking taskid $taskid... ";
-    $errors = course_module_delete_issues($cms, $taskid, $minimumfaildelay);
+    // Check if this task has multiple course modules aka 'clustered task'.
+    if (count($cms) > 1) {
+        $errors['clusteredtask'] = "This Adhoc task (id: $taskid) contains multiple course modules."
+                                   ." Separating this into individualised adhoc tasks (one per module)"
+                                   ." will assist in reducing the complexity of the failed course_delete_modules task.";
+    } else { // Process module issues on individualised tasks only.
+        $errors = course_module_delete_issues($cms, $taskid, $minimumfaildelay);
+    }
     if ($errors) {
         echo "PROBLEM\n";
         foreach ($errors as $errorcode => $errormessage) {
             cli_problem($errormessage);
-            if ($errorcode != "adhoctasktable") {
+            if (!in_array($errorcode,  array("adhoctasktable", "clusteredtask"))) {
                 $problems[] = $errorcode; // This should be a coursemoduleid.
             }
         }
         if (!empty($options['fix'])) {
 
-            if (count($cms) > 1) {
+            if (count($cms) > 1 || in_array("clusteredtask", array_keys($errors))) {
                 // Separate into individual tasks. Adhoc Tasks need to be re-executed.
-                echo "WIP... Separating clustered adhoc task (taskid $taskid) into individualised module tasks.\n";
+                echo "... Separating clustered adhoc task (taskid $taskid) into individualised module tasks.\n";
+                echo separate_clustered_task_into_modules($cms, $taskid);
             } else { // Delete the remnant data related to this singular module task.
                 echo "... Deleting remnant data for adhoc task (taskid $taskid).\n";
                 $cm = current($cms);
-                force_delete_module_data($cm, $taskid);
+                echo force_delete_module_data($cm, $taskid);
             }
 
         }
     } else {
         echo "OK";
     }
+    $allerrors += $errors;
 }
-if (!count($problems)) {
+if (!count($allerrors)) {
     echo "\n...All course_delete_module Adhoc Tasks are OK\n";
 } else {
-    if (!empty($options['fix'])) {
-        echo "\n...Found and fixed ".count($problems)." courses with problems". "\n";
-    } else {
-        echo "\n...Found ".count($problems)." courses with problems. To fix run:\n";
-        echo "\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --modules=".join(',', $problems)." --fix". "\n";
+    $haserroradhoctable  = in_array("adhoctasktable", array_keys($allerrors));
+    $haserrorclustertask = in_array("clusteredtask", array_keys($allerrors));
+    if (!empty($options['fix'])) { // Fix option was included.
+        if ($haserroradhoctable) {
+            echo "\n...Attempted to fix but Adhoc Task could not be found.\n";
+        }
+        if ($haserroradhoctable) {
+            echo "\n...Found clustered Adhoc Task. Separated into multiple tasks to simplify issue.\n";
+        }
+        if (!$haserroradhoctable && !$haserrorclustertask) {
+            echo "\n...Found and fixed ".count($problems)." course_delete_modules adhoc task with problems". "\n";
+            echo PHP_EOL.'Now, run the adhoctask CLI command:'.PHP_EOL
+                 .'\$sudo -u www-data /usr/bin/php admin/cli/adhoc_task.php --execute'.PHP_EOL;
+        }
+    } else { // Only "Check".
+        if ($haserroradhoctable) {
+            echo "\n...Attempted to check but Adhoc Task could not be found.\n";
+        }
+        if ($haserrorclustertask) {
+            echo "\n...Found clustered Adhoc Task (i.e. containining multiple modules). To fix, run:\n";
+            echo "\$sudo -u www-data /usr/bin/php"
+                ." admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --fix=separate\n";
+        }
+        if (!$haserroradhoctable && !$haserrorclustertask) {
+            echo "\n...Found ".count($problems)." course_delete_module adhoc task problem(s). To fix, run:\n";
+            echo "\$sudo -u www-data /usr/bin/php"
+                ." admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --modules="
+                .join(',', $problems)." --fix\n";
+        }
     }
 }
