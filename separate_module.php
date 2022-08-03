@@ -43,54 +43,13 @@ if ($action == 'separate_module') {
 
     echo $OUTPUT->header();
 
-    // Get the adhoc task data.
-    //if ($cm = $DB->get_record('task_adhoc', array('id' => $taskid, 'classname' => '\core_course\task\course_delete_modules'))) {
     // Create individual adhoc tasks & remove original task.
     if ($originaladhoctaskdata = get_original_cmdelete_adhoctask_data($taskid)) {
-
-        $taskcount = 0;
-        // Create individual adhoc task for each module.
-        foreach ($originaladhoctaskdata as $cmid => $cmvalue) {
-            // Get the course module.
-            if (!$cm = $DB->get_record('course_modules', array('id' => $cmid))) {
-                continue; // Skip it; it might have been deleted already.
-            }
-
-            // Update record, if not already updated.
-            $cm->deletioninprogress = '1';
-            $DB->update_record('course_modules', $cm);
-
-            // Create an adhoc task for the deletion of the course module. The task takes an array of course modules for removal.
-            $newdeletetask = new \core_course\task\course_delete_modules();
-            $newdeletetask->set_custom_data(array(
-                'cms' => array($cm),
-                'userid' => $USER->id,
-                'realuserid' => \core\session\manager::get_realuser()->id
-            ));
-
-            // Queue the task for the next run.
-            \core\task\manager::queue_adhoc_task($newdeletetask);
-        }
-        echo '<p><b class="text-success">'.$taskcount.' New Individual course_delete_module tasks have been created</b></p>';
-
-        // Remove old task.
-        if ($originaladhoctask = get_adhoctask_from_taskid($taskid)) {
-
-            // Delete the adhoc task record - it is finished.
-            $DB->delete_records('task_adhoc', array('id' => $taskid));
-
-            echo '<p><b class="text-success">Original course_delete_module task (id '.$taskid.') cleared</b></p>';
-        } else {
-            echo '<p><b class="text-danger">Original course_delete_module Adhoc task (id '.$taskid.') could not be found.</b></p>';
-        }
-        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+        echo separate_clustered_task_into_modules($originaladhoctaskdata, $taskid, true);
     } else {
         echo '<p><b class="text-danger">Adhoc task course_delete_module (id '.$taskid.') could not be found.</b></p>';
         echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
     }
-
-    echo '<p><b class="text-success">SUCCESSFUL Separation of Adhoc Tasks</b></p>';
-
     echo $OUTPUT->footer();
 } else {
     throw new moodle_exception('error:actionnotfound', 'block_teachercontact', $prevurl, $action);
