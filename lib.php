@@ -859,6 +859,7 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $outputstring = get_string('deletemodule_error_nullcoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
         $htmlstring   = html_writer::tag('p', $outputstring, array('class' => "text-danger"));
         $outputstring = $ishtmloutput ? $htmlstring : array($outputstring.PHP_EOL);
+
         return $outputstring;
     }
 
@@ -876,8 +877,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $outputstring = get_string('deletemodule_error_nullcoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
         $htmlstring   = html_writer::tag('p', $outputstring, array('class' => "text-danger"));
         $outputstring = $ishtmloutput ? $htmlstring : array($outputstring.PHP_EOL);
-
-        return $outputstring;
     }
 
     $nextstring = get_string('deletemodule_attemptfix', 'tool_fix_delete_modules', $coursemoduleid);
@@ -886,9 +885,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     // Get the course module.
     if (!$cm = $DB->get_record('course_modules', array('id' => $coursemoduleid))) {
-        $nextstring = "Course Module instance (cmid $coursemoduleid) doesn't exist. Attempting to delete other data";
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
-
         $nextstring = get_string('deletemodule_error_dnecoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
         $textstring = array($nextstring.PHP_EOL);
@@ -964,7 +960,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
-
     }
 
     // Delete completion and availability data; it is better to do this even if the
