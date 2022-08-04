@@ -1127,6 +1127,11 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
 
     $taskcount = 0;
     $outputstring = '';
+    $nextstring = get_string('separatetask_attemptfix', 'tool_fix_delete_modules', $taskid);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-dark"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+
     // Create individual adhoc task for each module.
     foreach ($clusteredadhoctask as $cmid => $cmvalue) {
         // Get the course module.
@@ -1151,21 +1156,29 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
         \core\task\manager::queue_adhoc_task($newdeletetask);
         $taskcount++;
     }
-    $nextstring = $taskcount.' new individual course_delete_module Tasks have been created';
-    $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
-                                     : $nextstring.PHP_EOL;
+    $nextstring = get_string('separatetask_taskscreatedcount', 'tool_fix_delete_modules', $taskcount);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
     // Remove old task.
     if ($DB->delete_records('task_adhoc', array('id' => $taskid))) {
-        $nextstring = 'Original course_delete_module task (id '.$taskid.') deleted';
-        $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
-                                         : $nextstring.PHP_EOL;
+        $nextstring = get_string('separatetask_originaltaskdeleted', 'tool_fix_delete_modules', $taskid);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     } else {
-        $nextstring = 'Original course_delete_module Adhoc task (id '.$taskid.') could not be found.';
-        $outputstring .= $ishtmloutput ? '<p><b class="text-danger">'.$nextstring.'</b></p>'
-                                         : $nextstring.PHP_EOL;
+        $nextstring = get_string('separatetask_error_failedtaskdelete', 'tool_fix_delete_modules', $taskid);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
-    $htmlstring = '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+    $nextstring = get_string('separatetask_error_failedtaskdelete', 'tool_fix_delete_modules', $taskid);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+
+    $mainurl    = new moodle_url(__DIR__.'index.php');
+    $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
+    $htmlstring = get_string('separatetask_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
     $clistring  = PHP_EOL.'Process these new adhoc tasks by running the adhoctask CLI command:'.PHP_EOL
                  .'\$sudo -u www-data /usr/bin/php admin/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
                  .'Then re-run this script to check if any modules remain incomplete.'.PHP_EOL
