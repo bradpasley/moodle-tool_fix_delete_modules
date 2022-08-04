@@ -973,8 +973,8 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
         $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
-        'course' => $cm->course,
-        'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
+                                                                'course' => $cm->course,
+                                                                'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
         $nextstring = get_string('deletemodule_completioncriteriadeleted', 'tool_fix_delete_modules', $cm->course);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
