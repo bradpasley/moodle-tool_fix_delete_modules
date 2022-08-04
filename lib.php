@@ -17,7 +17,8 @@
 /**
  * @package     tool_fix_delete_modules
  * @category    admin
- * @copyright   2022 Brad Pasley <brad.pasley@catalyst-au.net>
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -851,25 +852,33 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
 
     $outputstring = '';
     if (is_null($coursemodule)) {
-        $outputstring = "Fixing... ERROR: Cannot retrieve info about the course module (Course module id: $coursemoduleid).";
-        $outputstring = $ishtmloutput ? "<p><b>$outputstring</b></p>" : array($outputstring.PHP_EOL);
+        $outputstring = get_string('deletemodule_error_nullcoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
+        $htmlstring   = html_writer::tag('p', $outputstring, array('class' => "text-danger"));
+        $outputstring = $ishtmloutput ? $htmlstring : array($outputstring.PHP_EOL);
         return $outputstring;
     }
 
-    $nextstring = "Fixing... Attempting to fix a deleted module (Course module id: $coursemoduleid).";
-    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+    $nextstring = get_string('deletemodule_attemptfix', 'tool_fix_delete_modules', $coursemoduleid);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-dark"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     // Get the course module.
     if (!$cm = $DB->get_record('course_modules', array('id' => $coursemoduleid))) {
-        $nextstring = "Course Module instance (cmid $coursemoduleid) doesn't exist. Attempting to delete other data";
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_error_dnecoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+
         $cm = $coursemodule; // Attempt with param data.
     }
     // Get the module context.
     try {
         $modcontext = context_module::instance($coursemoduleid);
     } catch (dml_missing_record_exception $e) {
-        $nextstring = "Context instance for course module (cmid $coursemoduleid) doesn't exist. Attempting to delete other data";
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_error_dnemodcontext', 'tool_fix_delete_modules', $coursemoduleid);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
         $modcontext = false;
     }
 
@@ -880,8 +889,10 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     if ($modcontext) {
         $fs = get_file_storage();
         $fs->delete_area_files($modcontext->id);
-        $nextstring = 'Files deleted for module cmid $coursemoduleid contextid '.$modcontext->id.'.';
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_filesdeleted', 'tool_fix_delete_modules', $modcontext->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
 
     // Delete events from calendar.
@@ -893,9 +904,11 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             $calendarevent->delete();
         }
         if (count($event) > 0) {
-            $nextstring = count($events).' Calendar events for module '
-                          ."cmid $coursemoduleid modulename '.$modulename.' instance ".$cm->instance.'.';
-            $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+            $nextstring = "($modulename:instanceid:".$cm->instance."): "
+                          .get_string('deletemodule_calendareventsdeleted', 'tool_fix_delete_modules', count($events));
+            $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+            $textstring = array($nextstring.PHP_EOL);
+            $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
         }
     }
 
@@ -906,38 +919,49 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             $gradeitem->delete('moddelete');
         }
         if (count($gradeitems) > 0) {
-            $nextstring = count($gradeitems)." Grade items for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
-            $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+            $nextstring = "(modcontextid: ".$modcontext->id." cmid:".$coursemoduleid."): "
+                          .get_string('deletemodule_gradeitemsdeleted', 'tool_fix_delete_modules', count($gradeitems));
+            $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+            $textstring = array($nextstring.PHP_EOL);
+            $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
         }
     }
 
     // Delete associated blogs and blog tag instances.
     if ($modcontext) {
         blog_remove_associations_for_module($modcontext->id);
-        $nextstring = "Deleted blogs for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_blogsdeleted', 'tool_fix_delete_modules', $modcontext->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
 
     // Delete completion and availability data; it is better to do this even if the
     // features are not turned on, in case they were turned on previously (these will be
     // very quick on an empty table).
     $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
-    $nextstring = "Deleted Module Completion data for module cmid $coursemoduleid.";
-    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+    $nextstring = get_string('deletemodule_completionsdeleted', 'tool_fix_delete_modules', $modcontext->id);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+
     $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
                                                             'course' => $cm->course,
                                                             'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
-
-    $nextstring = "Deleted Module Completion Criteria data for module cmid $coursemoduleid, courseid ".$cm->course.'.';
-    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+    $nextstring = get_string('deletemodule_completioncriteriadeleted', 'tool_fix_delete_modules', $cm->course);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
     // Delete all tag instances associated with the instance of this module.
     if ($modcontext) {
         \core_tag_tag::delete_instances('mod_' . $modulename, null, $modcontext->id);
         \core_tag_tag::remove_all_item_tags('core', 'course_modules', $cm->id);
 
-        $nextstring = "Deleted Tag data for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_tagsdeleted', 'tool_fix_delete_modules', $modcontext->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
 
     // Notify the competency subsystem.
@@ -946,27 +970,37 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     // Delete the context.
     if ($modcontext) {
         \context_helper::delete_instance(CONTEXT_MODULE, $cm->id);
-        $nextstring = "Context data for module cmid $coursemoduleid contextid ".$modcontext->id.'.';
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+
+        $nextstring = get_string('deletemodule_contextdeleted', 'tool_fix_delete_modules', $modcontext->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
 
     // Delete the module from the course_modules table.
     if ($DB->delete_records('course_modules', array('id' => $cm->id))) {
-        $nextstring = "Deleted Course Module record for module cmid $coursemoduleid.";
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_coursemoduledeleted', 'tool_fix_delete_modules', $cm->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     } else {
-        $nextstring = "Deleted Course Module record: No record to delete for "
-                      ."module cmid $coursemoduleid contextid ".$modcontext->id.'.';
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_error_failcmoduledelete', 'tool_fix_delete_modules', $cm->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
 
     // Delete module from that section.
     if (!delete_mod_from_section($cm->id, $cm->section)) {
-        $nextstring = "Could not delete the module (cmid $coursemoduleid) from section (".$cm->section.").";
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_error_failmodsectiondelete', 'tool_fix_delete_modules', $cm->section);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     } else {
-        $nextstring = "Deleted the module (cmid $coursemoduleid) from section (".$cm->section.").";
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
+        $nextstring = get_string('deletemodule_modsectiondelete', 'tool_fix_delete_modules', $cm->section);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
 
     // Trigger event for course module delete action.
@@ -985,22 +1019,29 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     }
     rebuild_course_cache($cm->course, true);
 
-    $nextstring = 'SUCCESSFUL Deletion of Module and related data '
-                 .'(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.').'.PHP_EOL;
-    $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
-
     // Reset adhoc task to run asap. Works on Moodle 3.7+.
     if (function_exists('\core\task\manager::reschedule_or_queue_adhoc_task')) {
         if ($thisadhoctask = get_adhoctask_from_taskid($taskid)) {
             $thisadhoctask->set_fail_delay(0);
             $thisadhoctask->set_next_run_time(time());
             \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
-            echo '<p><b class="text-success">course_delete_module Adhoc task (id $taskid) set to run asap</b></p>';
+
+            $nextstring = get_string('deletemodule_rescheduletasksuccess', 'tool_fix_delete_modules', $taskid);
+            $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+            $textstring = array($nextstring.PHP_EOL);
+            $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
         } else {
-            echo '<p><b class="text-danger">course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
-            echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+            $nextstring = get_string('deletemodule_error_failrescheduletask', 'tool_fix_delete_modules', $taskid);
+            $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+            $textstring = array($nextstring.PHP_EOL);
+            $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
         }
     }
+    $datafields = '(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.')';
+    $nextstring = get_string('deletemodule_success', 'tool_fix_delete_modules', $datafields);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
     return $outputstring;
 }
@@ -1022,6 +1063,11 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
 
     $taskcount = 0;
     $outputstring = '';
+    $nextstring = get_string('separatetask_attemptfix', 'tool_fix_delete_modules', $taskid);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-dark"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+
     // Create individual adhoc task for each module.
     foreach ($clusteredadhoctask as $cmid => $cmvalue) {
         // Get the course module.
@@ -1046,23 +1092,31 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
         \core\task\manager::queue_adhoc_task($newdeletetask);
         $taskcount++;
     }
-    $nextstring = $taskcount.' new individual course_delete_module Tasks have been created';
-    $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
-                                     : $nextstring.PHP_EOL;
+    $nextstring = get_string('separatetask_taskscreatedcount', 'tool_fix_delete_modules', $taskcount);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
     // Remove old task.
     if ($DB->delete_records('task_adhoc', array('id' => $taskid))) {
-        $nextstring = 'Original course_delete_module task (id '.$taskid.') deleted';
-        $outputstring .= $ishtmloutput ? '<p><b class="text-success">'.$nextstring.'</b></p>'
-                                         : $nextstring.PHP_EOL;
+        $nextstring = get_string('separatetask_originaltaskdeleted', 'tool_fix_delete_modules', $taskid);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     } else {
-        $nextstring = 'Original course_delete_module Adhoc task (id '.$taskid.') could not be found.';
-        $outputstring .= $ishtmloutput ? '<p><b class="text-danger">'.$nextstring.'</b></p>'
-                                         : $nextstring.PHP_EOL;
+        $nextstring = get_string('separatetask_error_failedtaskdelete', 'tool_fix_delete_modules', $taskid);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
-    $htmlstring = '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+    $nextstring = get_string('separatetask_error_failedtaskdelete', 'tool_fix_delete_modules', $taskid);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+
+    $mainurl    = new moodle_url(__DIR__.'index.php');
+    $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
+    $htmlstring = get_string('separatetask_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
     $clistring  = PHP_EOL.'Process these new adhoc tasks by running the adhoctask CLI command:'.PHP_EOL
-                 .'\$sudo -u www-data /usr/bin/php admin/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
+                 .'\$sudo -u www-data /usr/bin/php admin/tool/task/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
                  .'Then re-run this script to check if any modules remain incomplete.'.PHP_EOL
                  .'\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php'.PHP_EOL;
 
