@@ -803,39 +803,6 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
     // Process this adhoc tasks's course module(s).
     $results = array();
 
-        if (!$table = get_adhoctasks_table()) {
-            $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
-        }
-        if (!$table = get_course_module_table($cms, false)) {
-            $results[] = "course module table record ($stringtaskcms)".PHP_EOL;
-        }
-        if (!$table = get_module_tables($cms, $taskid[''.$cm->id], false)) {
-            $modulename = $cm->modulename;
-            $results[] = "$modulename table record for ($stringtaskcms) doesn't exist".PHP_EOL;
-        }
-
-        if (!$table = get_adhoctasks_table()) {
-            $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
-        }
-        if (!$table = get_course_module_table($cms, false)) {
-            $results[] = "course module table record ($stringtaskcms)".PHP_EOL;
-        }
-        if (!$table = get_module_tables($cms, $taskid[''.$cm->id], false)) {
-            $modulename = $cm->modulename;
-            $results[] = "$modulename table record for ($stringtaskcms) doesn't exist".PHP_EOL;
-        }
-
-        if (!$table = get_adhoctasks_table()) {
-            $results[] = "adhoc task record table record doesn't exist".PHP_EOL;
-        }
-        if (!$table = get_course_module_table($cms, false)) {
-            $results[] = "course module table record ($stringtaskcms)".PHP_EOL;
-        }
-        if (!$table = get_module_tables($cms, $taskid[''.$cm->id], false)) {
-            $modulename = $cm->modulename;
-            $results[] = "$modulename table record for ($stringtaskcms) doesn't exist".PHP_EOL;
-        }
-
     // Prepare Task/Course Module string.
     $stringtaskcms = get_coursemoduletask_string($cms, $taskid);
 
@@ -1120,7 +1087,6 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
         \core\task\manager::queue_adhoc_task($newdeletetask);
         $taskcount++;
     }
-
     $nextstring = get_string('separatetask_taskscreatedcount', 'tool_fix_delete_modules', $taskcount);
     $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
     $textstring = array($nextstring.PHP_EOL);
