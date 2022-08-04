@@ -19,11 +19,10 @@
  *
  * @package     tool_fix_delete_modules
  * @category    upgrade
- * @copyright   2022 Brad Pasley <brad.pasley@catalyst-au.net>
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Execute tool_fix_delete_modules upgrade from the given old version.
