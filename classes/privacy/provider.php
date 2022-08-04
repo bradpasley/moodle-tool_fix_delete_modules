@@ -20,7 +20,8 @@
  *
  * @package     tool_fix_delete_modules
  * @subpackage  privacy
- * @copyright   2022 Brad Pasley <brad.pasley@catalyst-au.net>
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,8 +31,9 @@ namespace tool_fix_delete_modules\privacy;
  * Privacy Subsystem for tool_fix_course_delete_modules
  * implementing null_provider.
  *
- * @package    tool_beacon
- * @copyright  2020 Tom Dickman <tomdickman@catalyst-au.net>
+ * @package    tool_fix_delete_modules
+ * @author     Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright  Catalyst IT, 2022
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\null_provider {
