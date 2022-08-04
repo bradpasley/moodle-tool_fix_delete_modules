@@ -54,6 +54,7 @@ $string['error_dne_grades']                        = 'Module ({{$a}}) records no
 $string['error_dne_moduletable']                   = 'record not found in {{$a}} table';
 $string['error_dne_moduleidinmoduletable']         = 'Module ({{$a}}) ';
 $string['error_dne_recyclebin']                    = 'Module ({{$a}}) records not found in the recyclebin table';
+$string['error_actionnotfound']                    = 'Invalid form action: {{$a}}.';
 $string['heading_coursemodules']                   = 'Course module(s)';
 $string['pluginname']                              = 'Fix Delete Modules';
 $string['privacy:metadata']                        = 'The tool_fix_course_delete_modules plugin does not store any personal data.';
