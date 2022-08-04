@@ -1104,8 +1104,6 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
-    $nextstring = get_string('separatetask_error_failedtaskdelete', 'tool_fix_delete_modules', $taskid);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
 
     $mainurl    = new moodle_url(__DIR__.'index.php');
     $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
