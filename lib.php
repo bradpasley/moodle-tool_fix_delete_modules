@@ -1019,12 +1019,23 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             $thisadhoctask->set_fail_delay(0);
             $thisadhoctask->set_next_run_time(time());
             \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
-            echo '<p><b class="text-success">course_delete_module Adhoc task (id $taskid) set to run asap</b></p>';
+
+            $nextstring = get_string('deletemodule_rescheduletasksuccess', 'tool_fix_delete_modules', $taskid);
+            $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+            $textstring = array($nextstring.PHP_EOL);
+            $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
         } else {
-            echo '<p><b class="text-danger">course_delete_module Adhoc task (id $taskid) could not be found.</b></p>';
-            echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+            $nextstring = get_string('deletemodule_error_failrescheduletask', 'tool_fix_delete_modules', $taskid);
+            $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+            $textstring = array($nextstring.PHP_EOL);
+            $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
         }
     }
+    $datafields = '(cmid '.$coursemoduleid.' cminstance '.$cm->instance.' courseid '.$cm->course.')';
+    $nextstring = get_string('deletemodule_success', 'tool_fix_delete_modules', $datafields);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
     return $outputstring;
 }
