@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Library file; functions used throughout the plugin.
+ *
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
@@ -166,7 +168,7 @@ function get_course_module_table(array $cms, bool $htmloutput, bool $returnfaile
  * @param array $cms - course modules data
  * @param int $taskid - taskid associated with this module deletion. (only used for GUI)
  * @param bool $htmloutput - htmloutput true for gui output, false for cli output
- * @param bool $returnfailedcmid - instead of returning a table, return array of failed cmids.
+ * @param bool $returnfailedcmids - instead of returning a table, return array of failed cmids.
  *
  * @return html_table|array|bool - records of course_delete_module adhoc tasks.
  */
@@ -542,9 +544,8 @@ function get_recycle_table(array $cms, bool $htmloutput) {
  * Get the contextid of the module in question.
  *
  * @param stdClass $cms - course module data
- * @param int|bool contextid of module
  *
- * @return int
+ * @return int|bool contextid of module
  */
 function get_context_id(stdClass $cms) {
     global $DB;
@@ -566,7 +567,6 @@ function get_context_id(stdClass $cms) {
  * Get the name of the table related to the course module which is failing to be deleted.
  *
  * @param stdClass $cm - course module data
- * @param bool $htmloutput - htmloutput true for gui output, false for cli output
  *
  * @return string
  */
@@ -583,7 +583,6 @@ function get_module_name(stdClass $cm) {
  * @param int $climinfaildelay - CLI optional, GUI will get from config
  * @return array|null - array of course module info from customdata field.
  */
-
 function get_all_cmdelete_adhoctasks_data(array $coursemoduleids = array(), int $climinfaildelay = 60) {
     global $DB;
 
@@ -640,7 +639,6 @@ function get_all_cmdelete_adhoctasks_data(array $coursemoduleids = array(), int 
  * @param int $climinfaildelay - optional, GUI will get from config
  * @return array|bool - course module info from customdata field.
  */
-
 function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay = 60) {
     global $DB;
 
@@ -679,7 +677,6 @@ function get_original_cmdelete_adhoctask_data(int $taskid, int $climinfaildelay 
  * @param array $adhoctask - coursemodule data from adhoctask customdata field.
  * @return array|bool - array of cms' data or false if not available.
  */
-
 function get_cms_infos(array $adhoctask) {
     global $DB;
 
@@ -744,10 +741,9 @@ function get_texttable(array $arraytable) {
 /**
  * get_htmltable()
  *
- * @param  array - records of table
+ * @param array $records - records of table
  * @return html_table
  */
-
 function get_htmltable(array $records) {
     $table = new html_table();
     $table->head = array_keys((array) current($records));
@@ -768,7 +764,6 @@ function get_htmltable(array $records) {
  * @param  array $columntitles - column titles
  * @return html_table
  */
-
 function get_htmltable_vertical(array $records, array $columntitles) {
     $table = new html_table();
     foreach ($columntitles as $title) {
@@ -796,7 +791,6 @@ function get_htmltable_vertical(array $records, array $columntitles) {
  * @param int $minimumfaildelay - minimum faildelay of tasks.
  * @return array - array of [coursemoduleid => explaination string]
  */
-
 function course_module_delete_issues(array $adhoctask, int $taskid, int $minimumfaildelay) {
 
     // Some multi-module delete adhoc tasks don't contain all data.
@@ -839,12 +833,11 @@ function course_module_delete_issues(array $adhoctask, int $taskid, int $minimum
 /**
  * force_delete_module_data()
  *
- * @param stdClass $cm - cm data
+ * @param stdClass $coursemodule - cm data
  * @param int $taskid
  * @param bool $ishtmloutput - true if GUI, false if CLI
  * @return string|bool - stringoutput or false if failed.
  */
-
 function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ishtmloutput = false) {
     global $DB;
 
@@ -1027,7 +1020,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
 
     return $outputstring;
 }
-
 /**
  * separate_clustered_task_into_modules()
  *
@@ -1038,7 +1030,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
  *
  * @return string - either HTML (GUI) or plain text (CLI)
  */
-
 function separate_clustered_task_into_modules(array $clusteredadhoctask, int $taskid, bool $ishtmloutput = false) {
 
     global $DB, $USER;

@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Form classes for tool_fix_delete_modules
+ *
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
@@ -26,9 +28,22 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once("$CFG->libdir/formslib.php");
 
+/**
+ * fix_delete_modules_form
+ *
+ * @package    tool_fix_delete_modules
+ * @author     Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright  Catalyst IT, 2022
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class fix_delete_modules_form extends moodleform {
-    // Add elements to form.
+    /**
+     * definition()
+     *
+     * defines the form.
+     */
     public function definition() {
+        // Add elements to form.
         global $CFG;
 
         $this->actionurl = new \moodle_url('/admin/tool/fix_delete_modules/delete_module.php', array(
@@ -51,9 +66,23 @@ class fix_delete_modules_form extends moodleform {
 
 }
 
+/**
+ * separate_delete_modules_form Form Class.
+ *
+ * @package    tool_fix_delete_modules
+ * @author     Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright  Catalyst IT, 2022
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class separate_delete_modules_form extends moodleform {
-    // Add elements to form.
+
+    /**
+     * definition()
+     *
+     * defines the form.
+     */
     public function definition() {
+        // Add elements to form.
         global $CFG;
 
         $this->actionurl = new \moodle_url('/admin/tool/fix_delete_modules/separate_module.php', array(
