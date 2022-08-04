@@ -36,7 +36,8 @@ $cmid         = required_param('cmid', PARAM_INT);
 $modulename   = required_param('cmname', PARAM_ALPHAEXT);
 $taskid       = required_param('taskid', PARAM_INT);
 
-$prevurl = new moodle_url('/admin/tool/fix_delete_modules/index.php');
+$prevurl   = new moodle_url('/admin/tool/fix_delete_modules/index.php');
+$mainurl   = $prevurl;
 
 if ($action == 'delete_module') {
 
@@ -71,5 +72,5 @@ if ($action == 'delete_module') {
 
     echo $OUTPUT->footer();
 } else {
-    throw new moodle_exception('error:actionnotfound', 'block_teachercontact', $prevurl, $action);
+    throw new moodle_exception('error_actionnotfound', 'tool_fix_delete_modules', $prevurl, $action);
 }

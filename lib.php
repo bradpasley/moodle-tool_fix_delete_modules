@@ -859,7 +859,24 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $outputstring = get_string('deletemodule_error_nullcoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
         $htmlstring   = html_writer::tag('p', $outputstring, array('class' => "text-danger"));
         $outputstring = $ishtmloutput ? $htmlstring : array($outputstring.PHP_EOL);
+
         return $outputstring;
+    }
+
+    $nextstring = get_string('deletemodule_attemptfix', 'tool_fix_delete_modules', $coursemoduleid);
+    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-dark"));
+    $textstring = array($nextstring.PHP_EOL);
+    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+    // Get the course module.
+    if (!$cm = $DB->get_record('course_modules', array('id' => $coursemoduleid))) {
+        $nextstring = get_string('deletemodule_error_dnecoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+
+        $outputstring = get_string('deletemodule_error_nullcoursemodule', 'tool_fix_delete_modules', $coursemoduleid);
+        $htmlstring   = html_writer::tag('p', $outputstring, array('class' => "text-danger"));
+        $outputstring = $ishtmloutput ? $htmlstring : array($outputstring.PHP_EOL);
     }
 
     $nextstring = get_string('deletemodule_attemptfix', 'tool_fix_delete_modules', $coursemoduleid);
@@ -883,6 +900,7 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+
         $modcontext = false;
     }
 
@@ -893,10 +911,14 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     if ($modcontext) {
         $fs = get_file_storage();
         $fs->delete_area_files($modcontext->id);
+
         $nextstring = get_string('deletemodule_filesdeleted', 'tool_fix_delete_modules', $modcontext->id);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+
+        $nextstring = 'Files deleted for module cmid $coursemoduleid contextid '.$modcontext->id.'.';
+        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Delete events from calendar.
@@ -943,19 +965,21 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     // Delete completion and availability data; it is better to do this even if the
     // features are not turned on, in case they were turned on previously (these will be
     // very quick on an empty table).
-    $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
-    $nextstring = get_string('deletemodule_completionsdeleted', 'tool_fix_delete_modules', $modcontext->id);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
-    $textstring = array($nextstring.PHP_EOL);
-    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+    if ($modcontext) {
+        $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
+        $nextstring = get_string('deletemodule_completionsdeleted', 'tool_fix_delete_modules', $modcontext->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
-    $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
-                                                            'course' => $cm->course,
-                                                            'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
-    $nextstring = get_string('deletemodule_completioncriteriadeleted', 'tool_fix_delete_modules', $cm->course);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
-    $textstring = array($nextstring.PHP_EOL);
-    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+        $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
+        'course' => $cm->course,
+        'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
+        $nextstring = get_string('deletemodule_completioncriteriadeleted', 'tool_fix_delete_modules', $cm->course);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+    }
 
     // Delete all tag instances associated with the instance of this module.
     if ($modcontext) {
@@ -1014,14 +1038,15 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
             'context'  => $modcontext,
             'objectid' => $cm->id,
             'other'    => array(
-                'modulename' => $modulename,
+                'modulename'   => $modulename,
                 'instanceid'   => $cm->instance,
             )
         ));
         $event->add_record_snapshot('course_modules', $cm);
         $event->trigger();
+        \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+        rebuild_course_cache($cm->course, true);
     }
-    rebuild_course_cache($cm->course, true);
 
     // Reset adhoc task to run asap. Works on Moodle 3.7+.
     if (function_exists('\core\task\manager::reschedule_or_queue_adhoc_task')) {
@@ -1049,6 +1074,7 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
 
     return $outputstring;
 }
+
 /**
  * separate_clustered_task_into_modules()
  *
@@ -1111,14 +1137,12 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
-    $nextstring = get_string('separatetask_error_failedtaskdelete', 'tool_fix_delete_modules', $taskid);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
 
     $mainurl    = new moodle_url(__DIR__.'index.php');
     $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
     $htmlstring = get_string('separatetask_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
     $clistring  = PHP_EOL.'Process these new adhoc tasks by running the adhoctask CLI command:'.PHP_EOL
-                 .'\$sudo -u www-data /usr/bin/php admin/tool/task/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
+                 .'\$sudo -u www-data /usr/bin/php admin/cli/adhoc_task.php --execute'.PHP_EOL.PHP_EOL
                  .'Then re-run this script to check if any modules remain incomplete.'.PHP_EOL
                  .'\$sudo -u www-data /usr/bin/php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php'.PHP_EOL;
 
