@@ -943,19 +943,21 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     // Delete completion and availability data; it is better to do this even if the
     // features are not turned on, in case they were turned on previously (these will be
     // very quick on an empty table).
-    $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
-    $nextstring = get_string('deletemodule_completionsdeleted', 'tool_fix_delete_modules', $modcontext->id);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
-    $textstring = array($nextstring.PHP_EOL);
-    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+    if ($modcontext) {
+        $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
+        $nextstring = get_string('deletemodule_completionsdeleted', 'tool_fix_delete_modules', $modcontext->id);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
 
-    $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
-                                                            'course' => $cm->course,
-                                                            'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
-    $nextstring = get_string('deletemodule_completioncriteriadeleted', 'tool_fix_delete_modules', $cm->course);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
-    $textstring = array($nextstring.PHP_EOL);
-    $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+        $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
+        'course' => $cm->course,
+        'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
+        $nextstring = get_string('deletemodule_completioncriteriadeleted', 'tool_fix_delete_modules', $cm->course);
+        $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
+        $textstring = array($nextstring.PHP_EOL);
+        $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
+    }
 
     // Delete all tag instances associated with the instance of this module.
     if ($modcontext) {
@@ -1050,6 +1052,7 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
 
     return $outputstring;
 }
+
 /**
  * separate_clustered_task_into_modules()
  *
@@ -1113,8 +1116,6 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
     }
-    $nextstring = get_string('separatetask_error_failedtaskdelete', 'tool_fix_delete_modules', $taskid);
-    $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
 
     $mainurl    = new moodle_url(__DIR__.'index.php');
     $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
