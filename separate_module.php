@@ -18,7 +18,8 @@
  *
  * @package     tool_fix_delete_modules
  * @category    admin
- * @copyright   2022 Brad Pasley <brad.pasley@catalyst-au.net>
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -47,8 +48,12 @@ if ($action == 'separate_module') {
     if ($originaladhoctaskdata = get_original_cmdelete_adhoctask_data($taskid)) {
         echo separate_clustered_task_into_modules($originaladhoctaskdata, $taskid, true);
     } else {
-        echo '<p><b class="text-danger">Adhoc task course_delete_module (id '.$taskid.') could not be found.</b></p>';
-        echo '<p>Refresh <a href="index.php">Fix Delete Modules Report page</a> and check the status.</p>';
+        $errorstring = get_string('separatetask_error_dnfadhoctask', 'tool_fix_delete_modules', $taskid);
+        echo html_writer::tag('p', $errorstring, array('class' => "text-danger"));
+
+        $mainurl   = new moodle_url(__DIR__.'index.php');
+        $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
+        echo get_string('separatetask_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
     }
     echo $OUTPUT->footer();
 } else {

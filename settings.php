@@ -19,7 +19,8 @@
  *
  * @package     tool_fix_delete_modules
  * @category    admin
- * @copyright   2022 Brad Pasley <brad.pasley@catalyst-au.net>
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -45,14 +46,6 @@ if ($hassiteconfig) {
         $fieldsize = 10,
         $maxlength = 8
     ));
-
-    //$ADMIN->add(
-    //    'development',
-    //    new admin_externalpage(
-    //        'tool_fix_delete_modules', get_string('pluginname', 'tool_fix_delete_modules'),
-    //        new moodle_url('/admin/tool/fix_delete_modules/index.php')
-    //    )
-    //);
 
     // Prepare settings / report section.
     $section = 'toolfixdeletemodules';
