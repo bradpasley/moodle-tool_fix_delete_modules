@@ -1128,7 +1128,6 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
 
     return $outputstring;
 }
-
 /**
  * separate_clustered_task_into_modules()
  *
@@ -1139,7 +1138,6 @@ function separate_clustered_task_into_modules(array $clusteredadhoctask, int $ta
  *
  * @return string - either HTML (GUI) or plain text (CLI)
  */
-
 function separate_clustered_task_into_modules(array $clusteredadhoctask, int $taskid, bool $ishtmloutput = false) {
 
     global $DB, $USER;
