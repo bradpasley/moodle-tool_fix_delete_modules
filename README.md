@@ -34,7 +34,8 @@ probably doesn't need to be viewed.
 ### CLI ###
 The "faildelay" filter can also be modified via a param.
 Instructions of how to use the CLI can be found in the help page:
-$ php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php
+
+    $ php admin/tool/fix_delete_modules/cli/fix_course_delete_modules.php --help
 
 ## Branches ##
 
