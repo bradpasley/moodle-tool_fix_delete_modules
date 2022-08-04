@@ -66,6 +66,7 @@ if ($action == 'delete_module') {
     echo $deleteoutput;
 
     // Return to main page link.
+    $mainurl    = new moodle_url(__DIR__.'index.php');
     $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
     echo get_string('deletemodule_returntomainsentence', 'tool_fix_delete_modules', $urlstring);
 
