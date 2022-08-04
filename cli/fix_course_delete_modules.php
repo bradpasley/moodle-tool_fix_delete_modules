@@ -184,7 +184,7 @@ if (!count($allerrors)) {
         if (!$haserroradhoctable && !$haserrorclustertask) {
             echo "\n...Found and fixed ".count($problems)." course_delete_modules adhoc task with problems". "\n";
             echo PHP_EOL.'Now, run the adhoctask CLI command:'.PHP_EOL
-                 .'\$sudo -u www-data /usr/bin/php admin/cli/adhoc_task.php --execute'.PHP_EOL;
+                 .'\$sudo -u www-data /usr/bin/php admin/tool/task/cli/adhoc_task.php --execute'.PHP_EOL;
         }
     } else { // Only "Check".
         if ($haserroradhoctable) {
