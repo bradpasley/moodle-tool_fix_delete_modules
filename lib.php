@@ -1079,7 +1079,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
 
     return $outputstring;
 }
-
 /**
  * separate_clustered_task_into_modules()
  *
