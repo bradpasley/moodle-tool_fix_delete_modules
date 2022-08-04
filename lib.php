@@ -893,7 +893,6 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-danger"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
-
         $modcontext = false;
     }
 
@@ -904,14 +903,10 @@ function force_delete_module_data(stdClass $coursemodule, int $taskid, bool $ish
     if ($modcontext) {
         $fs = get_file_storage();
         $fs->delete_area_files($modcontext->id);
-
         $nextstring = get_string('deletemodule_filesdeleted', 'tool_fix_delete_modules', $modcontext->id);
         $htmlstring = html_writer::tag('p', $nextstring, array('class' => "text-success"));
         $textstring = array($nextstring.PHP_EOL);
         $outputstring .= $ishtmloutput ? $htmlstring : $textstring;
-
-        $nextstring = 'Files deleted for module cmid $coursemoduleid contextid '.$modcontext->id.'.';
-        $outputstring .= $ishtmloutput ? "<p><b>$nextstring</b></p>" : $nextstring.PHP_EOL;
     }
 
     // Delete events from calendar.
