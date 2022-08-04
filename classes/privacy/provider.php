@@ -15,8 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Privacy Subsystem for tool_fix_course_delete_modules
- * implementing null_provider.
+ * Privacy Subsystem for tool_fix_course_delete_modules implementing null_provider.
  *
  * @package     tool_fix_delete_modules
  * @subpackage  privacy
@@ -28,8 +27,7 @@
 namespace tool_fix_delete_modules\privacy;
 
 /**
- * Privacy Subsystem for tool_fix_course_delete_modules
- * implementing null_provider.
+ * Privacy Subsystem for tool_fix_course_delete_modules implementing null_provider.
  *
  * @package    tool_fix_delete_modules
  * @author     Brad Pasley <brad.pasley@catalyst-au.net>
