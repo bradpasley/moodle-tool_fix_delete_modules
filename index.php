@@ -28,7 +28,8 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->libdir.'/moodlelib.php');
 require_once(__DIR__.'/form.php');
-require_once(__DIR__.'/lib.php');
+
+use tool_fix_delete_modules\reporter as reporter;
 require_login();
 
 admin_externalpage_setup('tool_fix_delete_modules');
@@ -45,133 +46,35 @@ echo $OUTPUT->header();
 // Header.
 echo $OUTPUT->heading(get_string('displaypage', 'tool_fix_delete_modules'));
 
-// Display database state of course_delete_modules adhoc task related tables.
-$cmstasksdata = get_all_cmdelete_adhoctasks_data();
-if (!is_null($cmstasksdata) && !empty($cmstasksdata)) {
-    // Display each adhoc task in its own section.
-    foreach ($cmstasksdata as $taskid => $cmsdata) {
+// Display content of report/diagnosis/fix content.
+$minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
+$reporter = new reporter(true, $minimumfaildelay);
 
-        // Some multi-module delete adhoc tasks don't contain all data.
-        $cms = get_cms_infos($cmsdata);
+$pagesubtitle = get_string('displaypage-subtitle', 'tool_fix_delete_modules');
+$reports      = $reporter->get_tables_report();
+$diagnoses    = $reporter->get_diagnosis();
+if ($reports == '') { // No report means no adhoc tasks in queue.
+    $diagnoses = html_writer::tag('p',
+                                  get_string('success_none_found', 'tool_fix_delete_modules'),
+                                  array("class" => "text-success"));
+}
+if ($diagnoses == '') { // No diagnoses means no issues with queued adhoc tasks.
+    $diagnoses = html_writer::tag('p',
+                                  get_string('success_no_issues', 'tool_fix_delete_modules'),
+                                  array("class" => "text-success"));
+}
+$maindata  = ['pagesubtitle' => $pagesubtitle,
+              'reports' => $reports,
+              'diagnoses' => $diagnoses];
+$output = $OUTPUT->render_from_template('tool_fix_delete_modules/main_elements', $maindata);
 
-        // Prepare Course Module string.
-        $cminfostring = get_coursemoduletask_string($cms, $taskid);
-
-        // Display heading of this adhoc task.
-        echo $OUTPUT->heading(get_string('heading_coursemodules', 'tool_fix_delete_modules').': '.$cminfostring, 4);
-        echo $OUTPUT->heading(get_string('table_adhoctasks', 'tool_fix_delete_modules'), 5);
-
-        $adhoctable = get_adhoctasks_table($taskid, true); // Display original adhoctask custom data.
-
-        echo html_writer::table($adhoctable);
-
-        // Display separation button if there are multiple course modules in a task.
-        if ($cms && count($cms) > 1) {
-            echo get_html_separate_button_for_clustered_tasks($taskid);
-        }
-
-        // Display Course Module table.
-        echo $OUTPUT->heading(get_string('table_coursemodules', 'tool_fix_delete_modules'), 5);
-        if (!is_null($cms) && $cms && $cmtable = get_course_module_table($cms, true)) {
-            echo html_writer::table($cmtable);
-        } else {
-            echo html_writer::tag('b',
-                                  get_string('error_dne_coursemodules', 'tool_fix_delete_modules', $cminfostring),
-                                  array('class' => "text-danger"));
-        }
-
-        // Display context table data for this module.
-        $contexttable = new html_table();
-        echo $OUTPUT->heading(get_string('table_context', 'tool_fix_delete_modules'), 5);
-        $moduleofconcernfound  = false;
-        $modcontextid = null;
-        if (!is_null($cms) && $cms
-            && $contexttable = get_context_table($cms, true)) {
-
-            echo html_writer::table($contexttable);
-        } else {
-            echo html_writer::tag('b',
-                                  get_string('error_dne_context', 'tool_fix_delete_modules', $cminfostring),
-                                  array('class' => "text-danger"));
-        }
-
-        // Display table of specific.
-        if (!is_null($cms) && $cms
-            && $moduletableshtml = get_module_tables($cms, $taskid, true)) {
-
-            echo $moduletableshtml;
-        } else if (!is_null($cms) && $cms && count($cms) == 1) { // Offer if one module being processed.
-            $cm = current($cms);
-            $urlparams  = array('action' => 'delete_module');
-            $actionurl  = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
-            $modulename = get_module_name($cm);
-            $customdata = array('cmid'   => $cm->id,
-                                'cmname' => $modulename,
-                                'taskid' => $taskid);
-
-            $mform = new fix_delete_modules_form($actionurl, $customdata);
-            echo $OUTPUT->heading(get_string('table_modules', 'tool_fix_delete_modules')." ($modulename)", 5);
-            echo html_writer::tag('b',
-                                  get_string('error_dne_moduleidinmoduletable', 'tool_fix_delete_modules', $cminfostring)
-                                  .get_string('error_dne_moduletable', 'tool_fix_delete_modules', $modulename),
-                                  array('class' => "text-danger"));
-            echo html_writer::tag('p', get_string('table_modules_empty_explain', 'tool_fix_delete_modules'));
-            $mform->display();
-        }
-
-        echo html_writer::start_tag('hr', array('class' => 'fix_delete_modules_first_divider'));
-        echo html_writer::end_tag('hr');
-
-        // Display file table data for this module.
-        $filestable = new html_table();
-        echo $OUTPUT->heading(get_string('table_files', 'tool_fix_delete_modules'), 5);
-        if (!is_null($cms) && $cms
-            && $filestablehtml = get_files_table($cms, true)) {
-
-            echo $filestablehtml;
-        } else {
-            echo html_writer::tag('b',
-                                  get_string('error_dne_files', 'tool_fix_delete_modules', $cminfostring),
-                                  array('class' => "text-danger"));
-        }
-
-        // Display grades tables data for this module.
-        $gradestable = new html_table();
-        echo $OUTPUT->heading(get_string('table_grades', 'tool_fix_delete_modules'), 5);
-        if (!is_null($cms) && $cms
-            && $gradestablehtml = get_grades_table($cms, true)) {
-
-            echo $gradestablehtml;
-        } else {
-            echo html_writer::tag('b',
-                                  get_string('error_dne_grades', 'tool_fix_delete_modules', $cminfostring),
-                                  array('class' => "text-danger"));
-        }
-
-        echo html_writer::start_tag('hr', array('class' => 'fix_delete_modules_first_divider'));
-        echo html_writer::end_tag('hr');
-
-        // Display tool_recyclebin_course table data for this course.
-        $recyclebintable = new html_table();
-        echo $OUTPUT->heading(get_string('table_recyclebin', 'tool_fix_delete_modules'), 5);
-        if (!is_null($cms) && $cms
-            && $recyclebintable = get_recycle_table($cms, true)) {
-
-            echo html_writer::table($recyclebintable);
-        } else {
-            echo html_writer::tag('b',
-                                  get_string('error_dne_recyclebin', 'tool_fix_delete_modules', $cminfostring),
-                                  array('class' => "text-danger"));
-
-        }
-        echo html_writer::start_tag('hr', array('class' => 'fix_delete_modules_divider'));
-        echo html_writer::end_tag('hr');
-    }
-} else { // No course_module_delete task in adhoc task queue... Show "Everything's fine".
-    echo html_writer::tag('b', get_string('success_none_found', 'tool_fix_delete_modules'),
-                              array('class' => "text-success"));
+if ($output == '') {
+    $output = html_writer::tag('p',
+                              get_string('success_none_found', 'tool_fix_delete_modules'),
+                              array("class" => "text-success"));
 }
 
+echo $output;
 
 echo $OUTPUT->footer();
 

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Delete Modules but skip pre-delete functions of course/lib.php function
+ * Separate into individual Module delete adhoc tasks
  *
  * @package     tool_fix_delete_modules
  * @category    admin
@@ -24,15 +24,18 @@
  */
 
 require_once(__DIR__ . '/../../../config.php');
-require_once(__DIR__ . '/lib.php');
-require_once($CFG->dirroot.'/lib/classes/task/logmanager.php');
+
 require_login();
+
+use tool_fix_delete_modules\reporter as reporter;
 
 // Retrieve parameters.
 $action       = required_param('action', PARAM_ALPHANUMEXT);
 $taskid       = required_param('taskid', PARAM_INT);
 
 if ($action == 'separate_module') {
+
+    require_sesskey();
 
     $url = new moodle_url('/admin/tool/fix_delete_modules/separate_module.php');
     $prevurl = new moodle_url('/admin/tool/fix_delete_modules/index.php');
@@ -44,17 +47,17 @@ if ($action == 'separate_module') {
 
     echo $OUTPUT->header();
 
-    // Create individual adhoc tasks & remove original task.
-    if ($originaladhoctaskdata = get_original_cmdelete_adhoctask_data($taskid)) {
-        echo separate_clustered_task_into_modules($originaladhoctaskdata, $taskid, true);
-    } else {
-        $errorstring = get_string('separatetask_error_dnfadhoctask', 'tool_fix_delete_modules', $taskid);
-        echo html_writer::tag('p', $errorstring, array('class' => "text-danger"));
+    $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
+    $reporter = new reporter(true, $minimumfaildelay);
 
-        $mainurl   = new moodle_url(__DIR__.'index.php');
-        $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
-        echo get_string('separatetask_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
-    }
+    // Output template rendered results of fixing the course module.
+    echo $reporter->make_fix(array($taskid));
+
+    // Return to main page link.
+    $mainurl    = new moodle_url('index.php');
+    $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
+    echo get_string('separatetask_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
+
     echo $OUTPUT->footer();
 } else {
     throw new moodle_exception('error:actionnotfound', 'block_teachercontact', $prevurl, $action);

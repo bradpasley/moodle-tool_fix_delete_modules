@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_fix_delete_modules';
 $plugin->release = '0.1.0';
-$plugin->version = 2022080401;
+$plugin->version = 2022081600;
 $plugin->requires = 2018051700;
+$plugin->supported = [35, 36];
 $plugin->maturity = MATURITY_BETA;

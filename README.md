@@ -2,6 +2,11 @@
 
 Plugin used to check and resolve any incomplete course_delete_module adhoc tasks.
 
+This has been tested to cover the following course_delete_module adhoc task failure scenarios:
+- course_module table record absent.
+- module's table (e.g. quiz) record absent.
+- context table record absent.
+
 ## Check ##
 - If the task(s) contains multiple course modules, it will recommend
   separating each module into separate adhoc tasks. See "Resolve" for more
@@ -39,11 +44,11 @@ Instructions of how to use the CLI can be found in the help page:
 
 ## Branches ##
 
-Moodle version     | Branch
------------------- | -----------------
-Moodle 3.5 - 3.6   | main
-Moodle 3.7 - 3.11  | MOODLE_37_STABLE
-Moodle 4.0+        | MOODLE_400_STABLE
+| Moodle version     | Branch            | PHP  |
+-------------------- | ------------------|------|
+| Moodle 3.5 - 3.6   | main              | 7.2+ |
+| Moodle 3.7 - 3.11  | MOODLE_37_STABLE  | 7.4+ |
+| Moodle 4.0+        | MOODLE_400_STABLE | 7.4+ |
 
 ## Installing via uploaded ZIP file ##
 
