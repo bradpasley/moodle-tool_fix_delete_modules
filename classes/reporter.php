@@ -170,12 +170,13 @@ class reporter {
             $titleword = get_string('results', 'tool_fix_delete_modules');
             $outcometitle = $this->get_word_task_module_string($titleword, $task);
             if ($this->ishtmloutput) {
-                $outcomemessages = $outcome->get_messages();
-                $outcometable = $this->get_htmltable($outcomemessages, array(get_string('result_messages', 'tool_fix_delete_modules')));
+                $outcometable = $this->get_htmltable($outcome->get_messages(),
+                                                     array(get_string('result_messages', 'tool_fix_delete_modules')));
                 $outcomedata = ['title' => $outcometitle, 'table' => $outcometable];
                 $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/task_fix_results', $outcomedata);
             } else {
-                $outcometable = $this->get_texttable($outcome->get_messages(), array(get_string('result_messages', 'tool_fix_delete_modules')));
+                $outcometable = $this->get_texttable($outcome->get_messages(),
+                                                     array(get_string('result_messages', 'tool_fix_delete_modules')));
                 $output .= $outcometitle.PHP_EOL.$outcometable;
             }
         }
