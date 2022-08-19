@@ -309,7 +309,7 @@ class surgeon {
             rebuild_course_cache($cm->course, true);
         }
 
-    $outcomemessages[] = get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules');
+        $outcomemessages[] = get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules');
 
         return $outcomemessages;
     }
