@@ -35,7 +35,6 @@ require_once(__DIR__ . "/../classes/deletetasklist.php");
  * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class test_fix_course_delete_module_class_diagnosis_test extends \advanced_testcase {
 
     /**

@@ -38,13 +38,16 @@ require_once("deletetask.php");
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class delete_task_list {
-    /**
-     * @var int $minimumfaildelay - only include adhoc tasks with a faildelay field value with at least this value.
-     * @var array $deletemodules - an array of delete_module objects.
-     */
+    /** @var int $minimumfaildelay - only include adhoc tasks with a faildelay field value with at least this value. */
     private $minimumfaildelay;
+    /** @var array $deletemodules - an array of delete_module objects. */
     private $deletetasks;
 
+    /**
+     * Constructor makes an array of delete_tasks objects.
+     *
+     * @param int $minimumfaildelay The minimum value (seconds) for the faildelay field of the adhoc task.
+     */
     public function __construct(int $minimumfaildelay = 60) {
         $this->minimumfaildelay = $minimumfaildelay;
         $this->set_deletetasks();

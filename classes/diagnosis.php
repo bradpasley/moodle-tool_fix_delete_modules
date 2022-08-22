@@ -38,26 +38,35 @@ require_once("deletetask.php");
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class diagnosis {
-    /**
-     * @var delete_task $task - the course_delete_module adhoc task.
-     * @var array $symptoms - an array of strings which describe (coursemoduleid as index).
-     * @var bool $ismultimoduletask - true if the symptoms included multimodule task in constructor param.
-     * @var bool $adhoctaskmissing  - true if the adhoctask record is missing.
-     * @var bool $modulehasmissingdata - true if there is some kind of missing data related to the course module being deleted.
-     */
+    /** @var delete_task $task - the course_delete_module adhoc task. */
     private $task;
+     /** @var array $symptoms - an array of strings which describe (coursemoduleid as index). */
     private $symptoms;
+     /** @var bool $ismultimoduletask - true if the symptoms included multimodule task in constructor param. */
     private $ismultimoduletask;
+     /** @var bool $adhoctaskmissing  - true if the adhoctask record is missing. */
     private $adhoctaskmissing;
+     /** @var bool $modulehasmissingdata - true if there is some kind of missing data related to the course module being deleted. */
     private $modulehasmissingdata;
-
+     /** @var GOOD status when no known issues are seen in a course_delete_module task. */
     public const GOOD                             = 'symptom_good_no_issues';
+     /** @var TASK_MULTIMODULE status when the adhoc task contains multiple modules for deletion. */
     public const TASK_MULTIMODULE                 = 'symptom_multiple_modules_in_task';
+     /** @var TASK_ADHOCRECORDMISSING status when the adhoc task no longer appears to be in the task_adhoc database table */
     public const TASK_ADHOCRECORDMISSING          = 'symptom_adhoc_task_record_missing';
+     /** @var MODULE_MODULERECORDMISSING status when the module's table (e.g. quiz or book table) is missing its record. */
     public const MODULE_MODULERECORDMISSING       = 'symptom_module_table_record_missing';
+     /** @var MODULE_COURSEMODULERECORDMISSING status when the course_module table is missing this module's record. */
     public const MODULE_COURSEMODULERECORDMISSING = 'symptom_course_module_table_record_missing';
+     /** @var MODULE_CONTEXTRECORDMISSING status when the context tableis missing this module's record. */
     public const MODULE_CONTEXTRECORDMISSING      = 'symptom_context_table_record_missing';
 
+    /**
+     * Constructor makes an array of symptoms (i.e. standard strings).
+     *
+     * @param delete_task $task The course_delete_module task related to the diagnosis.
+     * @param array $symptoms An array of strings which are the issues/symptoms for this delete_task.
+     */
     public function __construct(delete_task $task, array $symptoms) {
         $stringtmm = get_string($this::TASK_MULTIMODULE, 'tool_fix_delete_modules');
         $stringtam = get_string($this::TASK_ADHOCRECORDMISSING, 'tool_fix_delete_modules');

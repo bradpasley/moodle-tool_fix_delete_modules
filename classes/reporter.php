@@ -45,15 +45,20 @@ use html_table, html_writer, moodle_url, separate_delete_modules_form, fix_delet
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class reporter {
-    /**
-     * @var bool $ishtmloutput
-     * @var int $minimumfaildelay - to filter course_delete_module tasks with a faildelay below this value.
-     * @var array $querytaskids - (optional) listing specific tasks to report/diagnose/fix.
-     */
+    /** @var bool $ishtmloutput true for html output, false for cli output. */
     private $ishtmloutput;
+    /** @var int $minimumfaildelay to filter course_delete_module tasks with a faildelay below this value. */
     public $minimumfaildelay;
+    /** @var array $querytaskids list of specific tasks to report/diagnose/fix (optional). */
     private $querytaskids;
 
+    /**
+     * Constructor sets attributes for outputting reports, diagnoses and fix results.
+     *
+     * @param bool $ishtmloutput true for html output, false for cli output.
+     * @param int $minimumfaildelay The minimum value (seconds) for the faildelay field of the adhoc task.
+     * @param array $querytaskids list of specific tasks to report/diagnose/fix (optional).
+     */
     public function __construct(bool $ishtmloutput = true, int $minimumfaildelay = 60, array $querytaskids = array()) {
         $this->ishtmloutput = $ishtmloutput;
         $this->minimumfaildelay = $minimumfaildelay;
@@ -140,7 +145,7 @@ class reporter {
     /**
      * get_diagnosis_data() - Helper function for get_diagnosis(); gets the diagnosis object returned from diagnoser.
      *
-     * @var array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return array of diagnosis
      */
@@ -160,7 +165,7 @@ class reporter {
     /**
      * make_fix() - Make fix(s) on course_delete_module task(s) and return rendered outcomes
      *
-     * @var array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return string
      */
@@ -194,7 +199,7 @@ class reporter {
     /**
      * get_fix_results() - Helper function for make_fix(). Returns an array of outcome objects from the surgeon object.
      *
-     * @var array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return array
      */
@@ -680,7 +685,7 @@ class reporter {
     /**
      * get_fix_button() - returns an HTML rendered form/button if 'symptoms' can be acted on.
      *
-     * @param diagnosis
+     * @param diagnosis $diagnosis - The diagnosis object which contains details of what should be displayed on the fix button.
      * @return string
      */
     private function get_fix_button(diagnosis $diagnosis) {

@@ -35,21 +35,30 @@ namespace tool_fix_delete_modules;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class delete_module {
-    /**
-     * @var int $taskid - the course_delete_module adhoc task id for this course module.
-     * @var int $coursemoduleid
-     * @var ?int $moduleinstanceid
-     * @var ?int $modulecontextid
-     * @var ?string $modulename - the type of this coursemodule.
-     */
+    /** @var int $taskid - the course_delete_module adhoc task id for this course module. */
     public $taskid;
+     /** @var int $coursemoduleid - the course_module table record id.*/
     public $coursemoduleid;
+     /** @var ?int $moduleinstanceid - this module's record id for its specific module type table (e.g. quiz table or book table).*/
     public $moduleinstanceid;
+     /** @var ?int $courseid - the courseid of the course in which this module is situated. */
     public $courseid;
+    /** @var ?int $section - course section of this module. */
     public $section;
+    /** @var ?int $modulecontextid - contextid for this module*/
     private $modulecontextid;
+    /** @var ?string $modulename - the type of this module. */
     private $modulename;
 
+    /**
+     * Constructor makes an array of delete_tasks objects.
+     *
+     * @param int $taskid The taskid (aka id field for {task_adhoc} table)
+     * @param int $coursemoduleid The course_module record id for the module being deleted.
+     * @param int $moduleinstanceid The moduleinstance id for the module being deleted.
+     * @param int $courseid The course id in which the module being deleted is situated.
+     * @param int $section The section id for the module being deleted.
+     */
     public function __construct(int $taskid,
                                 int $coursemoduleid,
                                 ?int $moduleinstanceid = null,
@@ -86,7 +95,7 @@ class delete_module {
     /**
      * set_contextid() - Set the contextid of the module, retrived from the database record.
      *
-     * @param int $moduleinstanceid - course module instance id.
+     * @param int $coursemoduleid - course module instance id.
      *
      * @return null
      */
@@ -107,7 +116,7 @@ class delete_module {
      * Retrived from the database record.
      *
      * @param int $coursemoduleid - coursemodule id.
-     * @param ?int $moduleinstanceid - moduleinstance id.
+     * @param int $moduleinstanceid - moduleinstance id.
      *
      * @return null
      */

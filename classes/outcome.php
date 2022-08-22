@@ -38,44 +38,76 @@ require_once("deletetask.php");
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class outcome {
-    /**
-     * @var delete_task $task - the course_delete_module adhoc task.
-     * @var array $messages - an array of strings, one for each action taken and/or its result.
-     */
+    /** @var delete_task $task - the course_delete_module adhoc task. */
     private $task;
+    /** @var $messages - an array of strings, one for each action taken and/or its result. */
     private $messages;
 
+    /** @var TASK_SEPARATE_TASK_MADE an outcome state for separating tasks. */
     public const TASK_SEPARATE_TASK_MADE               = 'outcome_separate_into_individual_task';
+    /** @var TASK_SEPARATE_TASK_NOT_MADE an outcome state for separating tasks.*/
     public const TASK_SEPARATE_TASK_NOT_MADE           = 'outcome_separate_into_individual_task_fail';
+    /** @var TASK_SEPARATE_OLDTASK_DELETED an outcome state for separating tasks.*/
     public const TASK_SEPARATE_OLDTASK_DELETED         = 'outcome_separate_old_task_deleted';
+    /** @var TASK_SEPARATE_OLDTASK_NOT_DELETED an outcome state for separating tasks.*/
     public const TASK_SEPARATE_OLDTASK_NOT_DELETED     = 'outcome_separate_old_task_delete_fail';
+    /** @var TASK_ADHOCRECORDABSENT_ADVICE an outcome; when the task_adhoc record is missing.*/
     public const TASK_ADHOCRECORDABSENT_ADVICE         = 'outcome_adhoc_task_record_advice';
+    /** @var TASK_ADHOCTASK_RESCHEDULE describes an outcome for separating tasks.*/
     public const TASK_ADHOCTASK_RESCHEDULE             = 'outcome_adhoc_task_record_rescheduled';
+    /** @var TASK_ADHOCTASK_RESCHEDULE_FAIL describes an outcome for separating tasks.*/
     public const TASK_ADHOCTASK_RESCHEDULE_FAIL        = 'outcome_adhoc_task_record_reschedule_fail';
+    /** @var TASK_ADHOCTASK_RUN_CLI an outcome state for fixing tasks.*/
     public const TASK_ADHOCTASK_RUN_CLI                = 'outcome_task_run_cli';
+    /** @var TASK_SUCCESS an outcome state for fixing tasks.*/
     public const TASK_SUCCESS                          = 'outcome_task_fix_successful';
+    /** @var TASK_FAIL an outcome state for fixing tasks.*/
     public const TASK_FAIL                             = 'outcome_task_fix_fail';
-
+    /** @var MODULE_MODULERECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_MODULERECORD_DELETED           = 'outcome_module_table_record_deleted';
+    /** @var MODULE_MODULEINSTANCEID_NOTFOUND an outcome state for fixing a module being deleted.*/
     public const MODULE_MODULEINSTANCEID_NOTFOUND      = 'outcome_module_table_cminstance_not_found';
+    /** @var MODULE_COURSEMODULEID_NOTFOUND an outcome state for fixing a module being deleted.*/
     public const MODULE_COURSEMODULEID_NOTFOUND        = 'outcome_course_module_id_not_found';
+    /** @var MODULE_COURSEMODULE_NOTFOUND an outcome state for fixing a module being deleted.*/
     public const MODULE_COURSEMODULE_NOTFOUND          = 'outcome_course_module_table_record_not_found';
+    /** @var MODULE_COURSEMODULERECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_COURSEMODULERECORD_DELETED     = 'outcome_course_module_table_record_deleted';
+    /** @var MODULE_COURSESECTION_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_COURSESECTION_DELETED          = 'outcome_course_section_data_deleted';
+    /** @var MODULE_COURSESECTION_NOT_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_COURSESECTION_NOT_DELETED      = 'outcome_course_section_data_delete_fail';
+    /** @var MODULE_CONTEXTRECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_CONTEXTRECORD_DELETED          = 'outcome_context_table_record_deleted';
+    /** @var MODULE_COURSEMODULERECORD_NOT_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_COURSEMODULERECORD_NOT_DELETED = 'outcome_context_table_record_delete_fail';
+    /** @var MODULE_CONTEXTID_NOTFOUND an outcome state for fixing a module being deleted.*/
     public const MODULE_CONTEXTID_NOTFOUND             = 'outcome_context_id_not_found';
+    /** @var MODULE_FILERECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_FILERECORD_DELETED             = 'outcome_file_table_record_deleted';
+    /** @var MODULE_CALENDAREVENT_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_CALENDAREVENT_DELETED          = 'outcome_calendar_event_deleted';
+    /** @var MODULE_GRADEITEMRECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_GRADEITEMRECORD_DELETED        = 'outcome_grade_tables_records_deleted';
+    /** @var MODULE_BLOGRECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_BLOGRECORD_DELETED             = 'outcome_blog_table_record_deleted';
+    /** @var MODULE_COMPLETIONRECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_COMPLETIONRECORD_DELETED       = 'outcome_completion_table_record_deleted';
+    /** @var MODULE_COMPLETIONCRITERIA_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_COMPLETIONCRITERIA_DELETED     = 'outcome_completion_criteria_table_record_deleted';
+    /** @var MODULE_TAGRECORD_DELETED an outcome state for fixing a module being deleted.*/
     public const MODULE_TAGRECORD_DELETED              = 'outcome_tag_table_record_deleted';
+    /** @var MODULE_SUCCESS an outcome state for fixing a module being deleted.*/
     public const MODULE_SUCCESS                        = 'outcome_module_fix_successful';
+    /** @var MODULE_FAIL an outcome state for fixing a module being deleted.*/
     public const MODULE_FAIL                           = 'outcome_module_fix_fail';
 
+    /**
+     * Constructor makes an array of outcome messages (i.e. standard strings).
+     *
+     * @param delete_task $task The course_delete_module task related to the outcomes.
+     * @param array $messages The outcome messages for this outcome.
+     */
     public function __construct(delete_task $task, array $messages) {
         $this->task = $task;
         $this->messages = $messages;

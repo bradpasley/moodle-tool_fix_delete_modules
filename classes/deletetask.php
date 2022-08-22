@@ -38,13 +38,17 @@ require_once("deletemodule.php");
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class delete_task {
-    /**
-     * @var int $taskid - the course_delete_module adhoc task id for this course module.
-     * @var array $deletemodules - an array of delete_module objects.
-     */
+    /** @var int $taskid - the course_delete_module adhoc task id for this course module. */
     public $taskid;
+    /** @var array $deletemodules - an array of delete_module objects.*/
     private $deletemodules;
 
+    /**
+     * Constructor makes an array of delete_tasks objects.
+     *
+     * @param int $taskid The taskid (aka id field for {task_adhoc} table)
+     * @param \stdClass $customdata The customdata as an object.
+     */
     public function __construct(int $taskid, \stdClass $customdata) {
         $this->taskid = $taskid;
         $this->set_deletemodules_from_customdata($customdata);
