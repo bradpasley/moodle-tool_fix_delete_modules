@@ -39,14 +39,26 @@ require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->libdir.'/datalib.php');
 require_once($CFG->dirroot.'/blog/lib.php');
 
+/**
+ * surgeon class which fixes a Course Module delete task and provides an outcome object.
+ *
+ * @package     tool_fix_delete_modules
+ * @category    admin
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class surgeon {
     /**
-     * @var private diagnosis $diagnosis - the diagnosis object (constructor param).
      * @var private outcome $outcome - the outcome of actions performed.
      */
-    private $diagnosis;
-    private $outcome;
+    private outcome $outcome;
 
+    /**
+     * Perform fix actions and establish a list of outcomes.
+     *
+     * @param diagnosis $diagnosis The diagnosis object, containing details of what needs fixing.
+     */
     public function __construct(diagnosis $diagnosis) {
 
         $outcomemessages = array();

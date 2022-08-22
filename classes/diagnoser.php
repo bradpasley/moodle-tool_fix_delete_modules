@@ -29,12 +29,26 @@ namespace tool_fix_delete_modules;
 defined('MOODLE_INTERNAL') || die();
 require_once("deletetask.php");
 
+/**
+ * class which diagnoses a Course Module delete task and provides a diagnosis object.
+ *
+ * @package     tool_fix_delete_modules
+ * @category    admin
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class diagnoser {
     /**
      * @var diagnosis $diagnosis - the diagnosis (i.e. results of disagnosing the task).
      */
     private $diagnosis;
 
+    /**
+     * Establishes symptoms for the given delete_task.
+     *
+     * @param delete_task $task The adhoc task to be assessed.
+     */
     public function __construct(delete_task $task) {
 
         $symptoms = array();
@@ -110,7 +124,7 @@ class diagnoser {
     /**
      * get_missing_context_records() - returns an array (key: coursemoduleids) for any course modules missing in context table.
      *
-     * @param delete_module $deletemodule - the module in progress of deletion, to be diagnosed.
+     * @param delete_module $deletemodule - the task in progress of deletion, to be diagnosed.
      *
      * @return array
      */
@@ -129,7 +143,7 @@ class diagnoser {
     /**
      * get_multimodule_status() - returns an array of one element if this is a multi-module task.
      *
-     * @param delete_task $deletemodule - the module in progress of deletion, to be diagnosed.
+     * @param delete_task $deletetask - the task in progress of deletion, to be diagnosed.
      *
      * @return array
      */
@@ -144,7 +158,7 @@ class diagnoser {
     /**
      * get_missing_task_adhoc_records() - Get an array of coursemoduleids for any course modules missing in context table.
      *
-     * @param delete_task $deletemodule - the module in progress of deletion, to be diagnosed.
+     * @param delete_task $deletetask - the task in progress of deletion, to be diagnosed.
      *
      * @return array
      */

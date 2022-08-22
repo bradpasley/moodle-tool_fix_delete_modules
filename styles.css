@@ -4,30 +4,29 @@
     border: 2px;
     width: 80%;
 }
-
 .fix-diagnosis {
     border: 2px;
-    border-top: 0px;
-    border-bottom: 0px;
+    border-top: 0;
+    border-bottom: 0;
     border-radius: 10px;
     padding: 10px;
-    background-color: #ffeeee;
+    background-color: #fee;
     width: 100%;
 }
 .fix-diagnosis-heading {
     border-top: 2px;
-    color: #551111;
+    color: #511;
 }
 #page-admin-tool-fix_delete_modules-index .fix-diagnosis .generaltable th {
     padding: 0.5rem;
     border-radius: 10px;
-    border-top: 0px;
-    border-bottom: 0px;
-    background-color: #ff9999;
+    border-top: 0;
+    border-bottom: 0;
+    background-color: #f99;
 }
 #page-admin-tool-fix_delete_modules-index .fix-diagnosis .generaltable td {
     padding: 5px;
-    border-top: 0px;
+    border-top: 0;
     border-radius: 10px;
     background-color: #efdcdc;
 }
@@ -57,9 +56,9 @@
 #page-admin-tool-fix_delete_modules-delete_module .fix-results .generaltable th {
     padding: 0.5rem;
     border-radius: 10px;
-    border-top: 0px;
-    border-bottom: 0px;
-    background-color: #77cc77;
+    border-top: 0;
+    border-bottom: 0;
+    background-color: #7c7;
 }
 
 .fix-report {
@@ -86,16 +85,14 @@
 }
 
 #page-admin-tool-fix_delete_modules-index #id_submit {
-    background-color: #dd4444;
+    background-color: #d44;
 }
 
 #page-admin-tool-fix_delete_modules-index .mform .fitem .felement {
-    margin-left: 0px;
+    margin-left: 0;
 }
-#page-admin-tool-fix_delete_modules-index #fitem_id_submit .col-md-3 {
-    display: none!important;
-}
-
 #page-admin-tool-fix_delete_modules-index #fitem_id_submit div.col-md-3 {
+    position: absolute;
+    left: -999px;
     max-width: 0;
 }
