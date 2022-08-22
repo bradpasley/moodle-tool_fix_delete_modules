@@ -1,6 +1,6 @@
 # Fix Delete Modules #
 
-![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/catalyst/moodle-tool_fix_delete_modules/ci/MOODLE_400_STABLE)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/catalyst/moodle-tool_fix_delete_modules/ci/main)
 
 Plugin used to check and resolve any incomplete course_delete_module adhoc tasks.
 
