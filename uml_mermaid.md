@@ -91,7 +91,6 @@ classDiagram
         +module_has_missing_data()
     }
     class surgeon{
-        -diagnosis diagnosis
         -outcome outcome
         +__construct()
         +get_diagnosis()
