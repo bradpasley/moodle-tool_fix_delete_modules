@@ -35,7 +35,15 @@ require_once("outcome.php");
 require_once("surgeon.php");
 
 use html_table, html_writer, moodle_url, separate_delete_modules_form, fix_delete_modules_form;
-
+/**
+ * controller class which liases between the user facing (GUI/CLI files) and the model classes (diagnoser/surgeon).
+ *
+ * @package     tool_fix_delete_modules
+ * @category    admin
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class reporter {
     /**
      * @var bool $ishtmloutput

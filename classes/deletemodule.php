@@ -25,7 +25,15 @@
  */
 
 namespace tool_fix_delete_modules;
-
+/**
+ * class to define a single Course Module which is in the progress of being deleted.
+ *
+ * @package     tool_fix_delete_modules
+ * @category    admin
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class delete_module {
     /**
      * @var int $taskid - the course_delete_module adhoc task id for this course module.

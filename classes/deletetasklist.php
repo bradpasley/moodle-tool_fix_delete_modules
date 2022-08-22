@@ -28,7 +28,15 @@ namespace tool_fix_delete_modules;
 
 defined('MOODLE_INTERNAL') || die();
 require_once("deletetask.php");
-
+/**
+ * class to define an list of Course Module delete tasks.
+ *
+ * @package     tool_fix_delete_modules
+ * @category    admin
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class delete_task_list {
     /**
      * @var int $minimumfaildelay - only include adhoc tasks with a faildelay field value with at least this value.

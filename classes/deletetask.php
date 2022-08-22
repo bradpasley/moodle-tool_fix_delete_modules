@@ -28,7 +28,15 @@ namespace tool_fix_delete_modules;
 
 defined('MOODLE_INTERNAL') || die();
 require_once("deletemodule.php");
-
+/**
+ * class to define a Course Module delete task, which can contain one or many Modules in the process of being deleted.
+ *
+ * @package     tool_fix_delete_modules
+ * @category    admin
+ * @author      Brad Pasley <brad.pasley@catalyst-au.net>
+ * @copyright   Catalyst IT, 2022
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class delete_task {
     /**
      * @var int $taskid - the course_delete_module adhoc task id for this course module.

@@ -52,7 +52,7 @@ class surgeon {
     /**
      * @var private outcome $outcome - the outcome of actions performed.
      */
-    private outcome $outcome;
+    private $outcome;
 
     /**
      * Perform fix actions and establish a list of outcomes.
