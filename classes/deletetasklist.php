@@ -40,7 +40,7 @@ require_once("deletetask.php");
 class delete_task_list {
     /** @var int $minimumfaildelay - only include adhoc tasks with a faildelay field value with at least this value. */
     private $minimumfaildelay;
-    /** @var array $deletemodules - an array of delete_module objects. */
+    /** @var array $deletetasks - an array of delete_module objects. */
     private $deletetasks;
 
     /**
