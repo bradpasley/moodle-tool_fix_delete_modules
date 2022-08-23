@@ -318,6 +318,10 @@ class surgeon {
             ));
             $event->add_record_snapshot('course_modules', $cm);
             $event->trigger();
+            // Function for Moodle 4.0+.
+            if (function_exists('\course_modinfo::purge_course_module_cache')) {
+                \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+            }
             rebuild_course_cache($cm->course, true);
         }
 
