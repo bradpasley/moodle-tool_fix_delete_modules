@@ -48,8 +48,8 @@ Instructions of how to use the CLI can be found in the help page:
 
 | Moodle version     | Branch            | PHP       |
 -------------------- | ------------------|-----------|
-| Moodle 3.5 - 3.7   | main              | 7.1 - 7.3 |
-| Moodle 3.8 - 3.11  | MOODLE_38_STABLE  | 7.4+      |
+| Moodle 3.5 - 3.8   | main              | 7.1 - 7.3 |
+| Moodle 3.9 - 3.11  | MOODLE_39_STABLE  | 7.4+      |
 | Moodle 4.0+        | MOODLE_400_STABLE | 7.4+      |
 
 ## Installing via uploaded ZIP file ##
