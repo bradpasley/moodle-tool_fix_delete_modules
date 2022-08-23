@@ -321,6 +321,18 @@ class surgeon {
             rebuild_course_cache($cm->course, true);
         }
 
+        // Reset adhoc task to run asap. Works on Moodle 3.7+.
+        if (function_exists('\core\task\manager::reschedule_or_queue_adhoc_task')) {
+            if ($thisadhoctask = get_adhoctask_from_taskid($task->taskid)) {
+                $thisadhoctask->set_fail_delay(0);
+                $thisadhoctask->set_next_run_time(time());
+                \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
+
+                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
+            } else {
+                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');
+            }
+        }
         $outcomemessages[] = get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules');
 
         return $outcomemessages;
