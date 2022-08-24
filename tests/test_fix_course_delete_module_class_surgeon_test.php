@@ -208,6 +208,13 @@ class test_fix_course_delete_module_class_surgeon_test extends \advanced_testcas
         ];
         $messagesbook = [get_string(outcome::TASK_ADHOCRECORDABSENT_ADVICE, 'tool_fix_delete_modules')];
 
+        // Extra outcome messages for Moodle 3.7+.
+        if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
+            $successfulreschedule = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
+            array_splice($messagespage, (count($messagespage) - 1), 0, $successfulreschedule);
+            array_splice($messagesurl,  (count($messagesurl) - 1), 0, $successfulreschedule);
+        }
+
         $expectedoutcomepage      = new outcome($deletepagetask,  $messagespage);
         $expectedoutcomeurltask   = new outcome($deleteurltask,   $messagesurl);
         $expectedoutcomemultitask = new outcome($deletemultitask, $messagesmulti);
@@ -223,6 +230,5 @@ class test_fix_course_delete_module_class_surgeon_test extends \advanced_testcas
         $this->assertEquals($expectedoutcomemultitask->get_messages(), $testoutcomemulti->get_messages());
         $this->assertEquals($expectedoutcomebooktask->get_messages(), $testoutcomebook->get_messages());
 
-        // TO DO: Test execution & cleanup of the separated module tasks.
     }
 }

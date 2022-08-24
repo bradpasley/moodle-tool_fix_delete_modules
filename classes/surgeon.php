@@ -319,15 +319,15 @@ class surgeon {
             $event->add_record_snapshot('course_modules', $cm);
             $event->trigger();
             // Function for Moodle 4.0+.
-            if (function_exists('\course_modinfo::purge_course_module_cache')) {
+            if (method_exists('\course_modinfo', 'purge_course_module_cache')) {
                 \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
             }
             rebuild_course_cache($cm->course, true);
         }
 
         // Reset adhoc task to run asap. Works on Moodle 3.7+.
-        if (function_exists('\core\task\manager::reschedule_or_queue_adhoc_task')) {
-            if ($thisadhoctask = get_adhoctask_from_taskid($task->taskid)) {
+        if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
+            if ($thisadhoctask = $this->get_adhoctask_from_taskid($task->taskid)) {
                 $thisadhoctask->set_fail_delay(0);
                 $thisadhoctask->set_next_run_time(time());
                 \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
@@ -373,4 +373,26 @@ class surgeon {
         }
         return $returnname;
     }
+
+    /**
+     * get_adhoctask_from_taskid()
+     *
+     * @param int $taskid - the taskid of a course_delete_modules adhoc task.
+     * @return \core\task\adhoc_task|bool - false if not found.
+     */
+    private function get_adhoctask_from_taskid(int $taskid) {
+        $thisadhoctask = null;
+        $cdmadhoctasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+        foreach ($cdmadhoctasks as $adhoctask) {
+            if ($adhoctask->get_id() == $taskid) {
+                $thisadhoctask = $adhoctask;
+                break;
+            }
+        }
+        if (isset($thisadhoctask)) {
+            return $thisadhoctask;
+        } else {
+            return false;
+        }
+}
 }

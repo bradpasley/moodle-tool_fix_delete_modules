@@ -98,27 +98,7 @@ class test_fix_course_delete_module_class_reporter_test extends \advanced_testca
         $this->assertCount(4, $DB->get_records('course_modules'));
         $this->assertFalse($DB->record_exists('course_modules', array('id' => $url->cmid)));
 
-        // Setup 1st adhoc task for page module deletion.
-        $removaltaskpage = new \core_course\task\course_delete_modules();
-        $pagedata = [
-            'cms' => [$pagecm],
-            'userid' => $user->id,
-            'realuserid' => $user->id
-        ];
-        $removaltaskpage->set_custom_data($pagedata);
-        \core\task\manager::queue_adhoc_task($removaltaskpage);
-
-        // Setup 2nd adhoc task for url module deletion.
-        $removaltaskurl = new \core_course\task\course_delete_modules();
-        $urldata = [
-            'cms' => [$urlcm],
-            'userid' => $user->id,
-            'realuserid' => $user->id
-        ];
-        $removaltaskurl->set_custom_data($urldata);
-        \core\task\manager::queue_adhoc_task($removaltaskurl);
-
-        // Setup 3rd adhoc task for a multi-module delete (both quiz and assign).
+        // Setup adhoc task for a multi-module delete (both quiz and assign).
         $removaltaskmulti = new \core_course\task\course_delete_modules();
         $cmsarray = array(''.$assigncm->id => array('id' => $assigncm->id),
                             ''.$quizcm->id => array('id' => $quizcm->id));
@@ -130,9 +110,40 @@ class test_fix_course_delete_module_class_reporter_test extends \advanced_testca
         $removaltaskmulti->set_custom_data($multidata);
         \core\task\manager::queue_adhoc_task($removaltaskmulti);
 
-        // DON'T Setup 4th adhoc task for book module deletion.
+        // Execute tasks (first one should complete, second should fail).
+        try { // This will fail due to the quiz record already being deleted.
+            $now = time();
+            $removaltaskmulti = \core\task\manager::get_next_adhoc_task($now);
+            $removaltaskmulti->execute();
+            \core\task\manager::adhoc_task_complete($removaltaskmulti);
+        } catch (Exception $e) {
+            $this->assertCount(1, $DB->get_records('task_adhoc'));
+            \core\task\manager::adhoc_task_failed($removaltaskmulti);
+            $this->assertCount(1, $DB->get_records('task_adhoc'));
+        }
+
+        // Setup adhoc task for page module deletion.
+        $removaltaskpage = new \core_course\task\course_delete_modules();
+        $pagedata = [
+            'cms' => [$pagecm],
+            'userid' => $user->id,
+            'realuserid' => $user->id
+        ];
+        $removaltaskpage->set_custom_data($pagedata);
+        \core\task\manager::queue_adhoc_task($removaltaskpage);
+
+        // Setup adhoc task for url module deletion.
+        $removaltaskurl = new \core_course\task\course_delete_modules();
+        $urldata = [
+            'cms' => [$urlcm],
+            'userid' => $user->id,
+            'realuserid' => $user->id
+        ];
+        $removaltaskurl->set_custom_data($urldata);
+        \core\task\manager::queue_adhoc_task($removaltaskurl);
+
+        // DON'T Setup adhoc task for book module deletion.
         // This will be used to test a task which is absent from the task_adhoc table.
-        // Setup 3rd adhoc task for a multi-module delete (both quiz and assign).
         $removalbooktask = new \core_course\task\course_delete_modules();
         $bookdata = [
             'cms' => [$bookcm],
@@ -142,12 +153,9 @@ class test_fix_course_delete_module_class_reporter_test extends \advanced_testca
         $removalbooktask->set_custom_data($bookdata);
         $bookcms = $removalbooktask->get_custom_data();
 
-        // Execute tasks (first one should complete, second should fail).
-        try { // This will fail due to the quiz record already being deleted.
-            $removaltaskmulti->execute();
-        } catch (Exception $e) {
-            $this->assertCount(3, $DB->get_records('task_adhoc'));
-        }
+        // Mark time just after tasks are queued.
+        $timeafterqueue = time();
+
         // The assign & url module have been deleted from the course.
         // ... quiz are still thought to be present.
         // ... page are stil thought to be present.
@@ -166,27 +174,34 @@ class test_fix_course_delete_module_class_reporter_test extends \advanced_testca
         $deletetasklist = new delete_task_list(0);
 
         $deletetasks        = array_values($deletetasklist->get_deletetasks());
-        $deletepagetask     = $deletetasks[0];
-        $deleteurltask      = $deletetasks[1];
-        $deletemultitask    = $deletetasks[2];
+        $deletemultitask    = $deletetasks[0];
+        $deletepagetask     = $deletetasks[1];
+        $deleteurltask      = $deletetasks[2];
         $deletebooktask     = new delete_task(999999, $bookcms); // This task will not exist in the task_adhoc table.
 
         $dbtasks = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'));
         $this->assertCount(3, $dbtasks);
 
         // Creating diagnosis objects.
+        $diagnosermultitask = new diagnoser($deletemultitask);
         $diagnoserpagetask  = new diagnoser($deletepagetask);
         $diagnoserurltask   = new diagnoser($deleteurltask);
-        $diagnosermultitask = new diagnoser($deletemultitask);
         $diagnoserbooktask  = new diagnoser($deletebooktask);
 
         // Create Test surgeon objects.
+        $surgeonmultitask = new surgeon($diagnosermultitask->get_diagnosis());
         $surgeonpagetask  = new surgeon($diagnoserpagetask->get_diagnosis());
         $surgeonurltask   = new surgeon($diagnoserurltask->get_diagnosis());
-        $surgeonmultitask = new surgeon($diagnosermultitask->get_diagnosis());
         $surgeonbooktask  = new surgeon($diagnoserbooktask->get_diagnosis());
 
         // Expected outcome messages.
+        $messagesmulti = [get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
+                          get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
+                          get_string(outcome::TASK_SEPARATE_OLDTASK_DELETED, 'tool_fix_delete_modules'),
+                          get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules'),
+                          get_string(outcome::TASK_ADHOCTASK_RUN_CLI, 'tool_fix_delete_modules')
+        ];
+
         $messagespage = [get_string(outcome::MODULE_FILERECORD_DELETED, 'tool_fix_delete_modules'),
                          get_string(outcome::MODULE_BLOGRECORD_DELETED, 'tool_fix_delete_modules'),
                          get_string(outcome::MODULE_COMPLETIONRECORD_DELETED, 'tool_fix_delete_modules'),
@@ -200,27 +215,28 @@ class test_fix_course_delete_module_class_reporter_test extends \advanced_testca
         $messagesurl = $messagespage;
         array_unshift($messagesurl, get_string(outcome::MODULE_COURSEMODULE_NOTFOUND, 'tool_fix_delete_modules'));
 
-        $messagesmulti = [get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SEPARATE_OLDTASK_DELETED, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_ADHOCTASK_RUN_CLI, 'tool_fix_delete_modules')
-        ];
         $messagesbook = [get_string(outcome::TASK_ADHOCRECORDABSENT_ADVICE, 'tool_fix_delete_modules')];
 
+        // Extra outcome messages for Moodle 3.7+.
+        if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
+            $successfulreschedule = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
+            array_splice($messagespage, (count($messagespage) - 1), 0, $successfulreschedule);
+            array_splice($messagesurl,  (count($messagesurl) - 1), 0, $successfulreschedule);
+        }
+
+        $expectedoutcomemultitask = new outcome($deletemultitask, $messagesmulti);
         $expectedoutcomepage      = new outcome($deletepagetask,  $messagespage);
         $expectedoutcomeurltask   = new outcome($deleteurltask,   $messagesurl);
-        $expectedoutcomemultitask = new outcome($deletemultitask, $messagesmulti);
         $expectedoutcomebooktask  = new outcome($deletebooktask,  $messagesbook);
 
+        $testoutcomemulti = $surgeonmultitask->get_outcome();
         $testoutcomepage  = $surgeonpagetask->get_outcome();
         $testoutcomeurl   = $surgeonurltask->get_outcome();
-        $testoutcomemulti = $surgeonmultitask->get_outcome();
         $testoutcomebook  = $surgeonbooktask->get_outcome();
 
+        $this->assertEquals($expectedoutcomemultitask->get_messages(), $testoutcomemulti->get_messages());
         $this->assertEquals($expectedoutcomepage->get_messages(), $testoutcomepage->get_messages());
         $this->assertEquals($expectedoutcomeurltask->get_messages(), $testoutcomeurl->get_messages());
-        $this->assertEquals($expectedoutcomemultitask->get_messages(), $testoutcomemulti->get_messages());
         $this->assertEquals($expectedoutcomebooktask->get_messages(), $testoutcomebook->get_messages());
 
         // Test reporter: CLI.
@@ -233,12 +249,24 @@ class test_fix_course_delete_module_class_reporter_test extends \advanced_testca
         $this->assertNotEquals('', $fixresults);
 
         // Run Adhoc Tasks.
+        // Get Tasks from the scheduler and run them.
         $now = time();
-        // Get it from the scheduler.
-        $task = \core\task\manager::get_next_adhoc_task($now);
-        $this->assertInstanceOf('\\core_course\\task\\course_delete_modules', $task);
-        $task->execute();
-        \core\task\manager::adhoc_task_complete($task);
+        while (($task = \core\task\manager::get_next_adhoc_task($now + 120)) !== null) {
+            // Check is a course_delete_modules adhoc task.
+            $this->assertInstanceOf('\\core_course\\task\\course_delete_modules', $task);
+            // Check faildelay is 0.
+            $this->assertEquals(0, $task->get_fail_delay());
+            // Check nextrun is later than "$timeafterqueue".
+            $this->assertEquals($now, $task->get_next_run_time());
+            try {
+                $task->execute();
+                \core\task\manager::adhoc_task_complete($task);
+            } catch (Exception $e) {
+                \core\task\manager::adhoc_task_failed($task);
+            }
+            // Check Adhoc Task is now cleared.
+            $this->assertEmpty($DB->get_records('task_adhoc', array('id' => $task->get_id())));
+        }
 
     }
 }
