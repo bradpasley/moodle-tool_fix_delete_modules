@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -41,7 +41,7 @@ use html_table, html_writer, moodle_url, separate_delete_modules_form, fix_delet
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class reporter {
@@ -49,7 +49,7 @@ class reporter {
     private $ishtmloutput;
     /** @var int $minimumfaildelay to filter course_delete_module tasks with a faildelay below this value. */
     public $minimumfaildelay;
-    /** @var array $querytaskids list of specific tasks to report/diagnose/fix (optional). */
+    /** @var int[] $querytaskids list of specific tasks to report/diagnose/fix (optional). */
     private $querytaskids;
 
     /**
@@ -57,7 +57,7 @@ class reporter {
      *
      * @param bool $ishtmloutput true for html output, false for cli output.
      * @param int $minimumfaildelay The minimum value (seconds) for the faildelay field of the adhoc task.
-     * @param array $querytaskids list of specific tasks to report/diagnose/fix (optional).
+     * @param int[] $querytaskids list of specific tasks to report/diagnose/fix (optional).
      */
     public function __construct(bool $ishtmloutput = true, int $minimumfaildelay = 60, array $querytaskids = array()) {
         $this->ishtmloutput = $ishtmloutput;
@@ -145,7 +145,7 @@ class reporter {
     /**
      * get_diagnosis_data() - Helper function for get_diagnosis(); gets the diagnosis object returned from diagnoser.
      *
-     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return array of diagnosis
      */
@@ -165,7 +165,7 @@ class reporter {
     /**
      * make_fix() - Make fix(s) on course_delete_module task(s) and return rendered outcomes
      *
-     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return string
      */
@@ -199,7 +199,7 @@ class reporter {
     /**
      * get_fix_results() - Helper function for make_fix(). Returns an array of outcome objects from the surgeon object.
      *
-     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return array
      */
@@ -573,7 +573,7 @@ class reporter {
      * get_texttable()
      *
      * @param array $arraytable
-     * @param array $headings - array of table headings (optional) - empty array is ignored.
+     * @param string[] $headings - array of table headings (optional) - empty array is ignored.
      * @return string
      */
     private function get_texttable(array $arraytable, array $headings = array()) {
@@ -604,10 +604,9 @@ class reporter {
      * get_texttable_vertical()
      *
      * @param array $records
-     * @param  array $columntitles - column titles
      * @return string
      */
-    private function get_texttable_vertical(array $records, array $columntitles) {
+    private function get_texttable_vertical(array $records) {
         $outputtable = '';
         $titlerow = implode('\t', array_keys((array) current($records))).PHP_EOL;
         foreach ($records as $row) {
@@ -625,7 +624,7 @@ class reporter {
      * get_htmltable() - returns html table from an array of records (first row is heading).
      *
      * @param array $records - records of table
-     * @param array $headings - array of table headings (optional) - empty array is ignored.
+     * @param string[] $headings - array of table headings (optional) - empty array is ignored.
      * @return string - an html_table as a string
      */
     private function get_htmltable(array $records, array $headings = array()) {

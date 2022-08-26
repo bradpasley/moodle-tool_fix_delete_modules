@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -45,7 +45,7 @@ require_once($CFG->dirroot.'/blog/lib.php');
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class surgeon {
@@ -357,9 +357,10 @@ class surgeon {
         $returnname = $deletemodule->get_modulename();
         if (!isset($returnname)) {
             global $DB;
-            // If cm doesn't have the module id, try to retrieve that from the db.
+            // If $cm doesn't have the modulename, try to retrieve that from the {module} table's name field.
             $moduleid = isset($cm->module) ? $cm->module : null;
             if (!isset($moduleid)) {
+                // Grab the {module} table id from this module's course_module record.
                 if (!$moduleid = $DB->get_field('course_modules', 'module', array('id' => $deletemodule->coursemoduleid))) {
                     $moduleid = null;
                 }
