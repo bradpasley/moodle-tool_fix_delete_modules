@@ -203,8 +203,6 @@ class test_fix_course_delete_module_class_reporter_test extends test_fix_course_
         // Get Tasks from the scheduler and run them.
         $adhoctaskprecount = count($DB->get_records('task_adhoc'));
         $now = time();
-        $adhoctaskprecount = count($DB->get_records('task_adhoc'));
-        $now = time();
         while (($task = \core\task\manager::get_next_adhoc_task($now + 120)) !== null) {
             // Check is a course_delete_modules adhoc task.
             $this->assertInstanceOf('\\core_course\\task\\course_delete_modules', $task);
