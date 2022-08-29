@@ -95,7 +95,9 @@ class test_fix_course_delete_module_class_diagnosis_test extends \advanced_testc
         $this->resetAfterTest(true);
 
         // Ensure all adhoc tasks/cache are cleared.
-        \core\task\manager::$miniqueue = []; // Clear the cached queue.
+        if (isset(\core\task\manager::$miniqueue)) {
+            \core\task\manager::$miniqueue = [];
+        } // Clear the cached queue.
         $DB->delete_records('task_adhoc');
 
         // Setup a course with a page, a url, a book, an assignment and a quiz module.
@@ -264,7 +266,9 @@ class test_fix_course_delete_module_class_diagnosis_test extends \advanced_testc
         // This will fail due to the quiz record already being deleted.
         $now = time();
         $removaltaskmulti = null;
-        \core\task\manager::$miniqueue = [];
+        if (isset(\core\task\manager::$miniqueue)) {
+                    \core\task\manager::$miniqueue = [];
+        } // Clear the cached queue.
         $removaltaskmulti = \core\task\manager::get_next_adhoc_task($now);
         // Check this actually is the multi adhoc task.
         $this->assertEquals($multitaskid, $removaltaskmulti->get_id());

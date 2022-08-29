@@ -94,7 +94,9 @@ class test_fix_course_delete_module_class_outcome_test extends \advanced_testcas
         $this->resetAfterTest(true);
 
         // Ensure all adhoc tasks/cache are cleared.
-        \core\task\manager::$miniqueue = []; // Clear the cached queue.
+        if (isset(\core\task\manager::$miniqueue)) {
+            \core\task\manager::$miniqueue = [];
+        } // Clear the cached queue.
         $DB->delete_records('task_adhoc');
 
         // Setup a course with a page, an assignment and a quiz module.
