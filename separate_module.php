@@ -27,7 +27,7 @@ require_once(__DIR__ . '/../../../config.php');
 
 require_login();
 
-use tool_fix_delete_modules\reporter as reporter;
+use tool_fix_delete_modules\reporter;
 
 // Retrieve parameters.
 $action       = required_param('action', PARAM_ALPHANUMEXT);
@@ -51,7 +51,7 @@ if ($action == 'separate_module') {
     $reporter = new reporter(true, $minimumfaildelay);
 
     // Output template rendered results of fixing the course module.
-    echo $reporter->make_fix(array($taskid));
+    echo $reporter->fix_tasks(array($taskid));
 
     // Return to main page link.
     $mainurl    = new moodle_url('index.php');

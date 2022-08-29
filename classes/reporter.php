@@ -163,13 +163,13 @@ class reporter {
     }
 
     /**
-     * make_fix() - Make fix(s) on course_delete_module task(s) and return rendered outcomes
+     * fix_tasks() - Make fix(s) on course_delete_module task(s) and return rendered outcomes
      *
      * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return string
      */
-    public function make_fix(array $taskids = array()) {
+    public function fix_tasks(array $taskids = array()) {
         global $OUTPUT;
         $output = '';
         $outcomes = $this->get_fix_results($taskids);
@@ -197,7 +197,7 @@ class reporter {
     }
 
     /**
-     * get_fix_results() - Helper function for make_fix(). Returns an array of outcome objects from the surgeon object.
+     * get_fix_results() - Helper function for fix_tasks(). Returns an array of outcome objects from the surgeon object.
      *
      * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
@@ -239,7 +239,7 @@ class reporter {
                 $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
             } else {
                 $table = $this->get_texttable($records);
-                $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
+                $output .= $tabletitle.PHP_EOL.$table.PHP_EOL;
             }
         }
         return $output;

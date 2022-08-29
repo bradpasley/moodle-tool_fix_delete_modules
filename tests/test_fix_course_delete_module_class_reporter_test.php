@@ -287,12 +287,25 @@ class test_fix_course_delete_module_class_reporter_test extends \advanced_testca
 
         // Test reporter: CLI.
         $testreporter = new reporter(false, 0);
+
         // Test output displays for get_diagnosis_data().
         $testdiagnoses = $testreporter->get_diagnosis();
         $this->assertNotEquals('', $testdiagnoses);
-        // Test output displays for make_fix().
-        $fixresults = $testreporter->make_fix();
+        $this->assertStringContainsString(get_string('diagnosis', 'tool_fix_delete_modules'), $testdiagnoses);
+        $this->assertStringContainsString(get_string('symptoms', 'tool_fix_delete_modules'), $testdiagnoses);
+
+        // Test output displays for get_tables_report().
+        $testreports = $testreporter->get_tables_report();
+        $this->assertNotEquals('', $testreports);
+        $this->assertStringContainsString(get_string('report_heading', 'tool_fix_delete_modules'), $testreports);
+        $this->assertStringContainsString(get_string('table_title_adhoctask', 'tool_fix_delete_modules'), $testreports);
+        $this->assertStringContainsString(get_string('table_title_adhoctask', 'tool_fix_delete_modules'), $testreports);
+
+        // Test output displays for fix_tasks().
+        $fixresults = $testreporter->fix_tasks();
         $this->assertNotEquals('', $fixresults);
+        $this->assertStringContainsString(get_string('results', 'tool_fix_delete_modules'), $fixresults);
+        $this->assertStringContainsString(get_string('result_messages', 'tool_fix_delete_modules'), $fixresults);
 
         // Run Adhoc Tasks.
         // Get Tasks from the scheduler and run them.

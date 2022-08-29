@@ -136,7 +136,7 @@ $diagnoses = $reporter->get_diagnosis();
 if ($diagnoses !== '' || !empty($options['fix'])) {
     echo $diagnoses;
     if (!empty($options['fix'])) { // Fix if 'fix' param settings made correctly.
-        $outcomes = $reporter->make_fix($taskids);
+        $outcomes = $reporter->fix_tasks($taskids);
         echo $outcomes;
     }
 } else {
