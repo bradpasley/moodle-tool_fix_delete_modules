@@ -31,7 +31,7 @@ require(__DIR__.'/../classes/reporter.php');
 require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->libdir.'/clilib.php');
 
-use tool_fix_delete_modules\reporter as reporter;
+use tool_fix_delete_modules\reporter;
 
 // Get the cli options.
 list($options, $unrecognized) = cli_get_params(array(
@@ -91,11 +91,12 @@ if ($options['minimumfaildelay'] !== false) {
 
 $taskids = preg_split('/\s*,\s*/', $options['taskids'], -1, PREG_SPLIT_NO_EMPTY);
 if (in_array('*', $taskids) || empty($taskids)) {
-    $where = '';
-    $params = array();
+    $where = "WHERE classname = :classname";
+    $params = array('classname' => '\core_course\task\course_delete_modules');
 } else {
     list($sql, $params) = $DB->get_in_or_equal($taskids, SQL_PARAMS_NAMED, 'id');
-    $where = 'WHERE id '. $sql;
+    $params += array('classname' => '\core_course\task\course_delete_modules');
+    $where = "WHERE classname = :classname AND id ". $sql;
 }
 
 // Require --fix to also have the --modules param (with specific modules listed).

@@ -65,7 +65,7 @@ class diagnosis {
      * Constructor makes an array of symptoms (i.e. standard strings).
      *
      * @param delete_task $task The course_delete_module task related to the diagnosis.
-     * @param string[] $symptoms An array of strings which are the issues/symptoms for this delete_task.
+     * @param array $symptoms An array (moduleids) each with an array of strings which are the issues/symptoms for this delete_task.
      */
     public function __construct(delete_task $task, array $symptoms) {
         $stringtmm = get_string($this::TASK_MULTIMODULE, 'tool_fix_delete_modules');
