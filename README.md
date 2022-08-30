@@ -46,9 +46,9 @@ Instructions of how to use the CLI can be found in the help page:
 
 ## Branches ##
 
-| Moodle version     | Branch            | PHP       |
--------------------- | ------------------|-----------|
-| Moodle 3.5+        | main              | 7.1 - 7.4 |
+| Moodle version     | Branch            |
+-------------------- | ------------------|
+| Moodle 3.5+        | main              |
 
 ## Installing via uploaded ZIP file ##
 

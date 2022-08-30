@@ -19,7 +19,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -27,7 +27,7 @@ require_once(__DIR__ . '/../../../config.php');
 require_once(__DIR__.'/classes/reporter.php');
 require_login();
 
-use tool_fix_delete_modules\reporter as reporter;
+use tool_fix_delete_modules\reporter;
 
 // Retrieve parameters.
 $action       = required_param('action', PARAM_ALPHANUMEXT);
@@ -54,7 +54,7 @@ if ($action == 'delete_module') {
     $reporter = new reporter(true, $minimumfaildelay);
 
     // Output template rendered results of fixing the course module.
-    echo $reporter->make_fix(array($taskid));
+    echo $reporter->fix_tasks(array($taskid));
 
     // Return to main page link.
     $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));

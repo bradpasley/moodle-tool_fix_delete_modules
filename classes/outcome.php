@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,13 +34,13 @@ require_once("deletetask.php");
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class outcome {
     /** @var delete_task $task - the course_delete_module adhoc task. */
     private $task;
-    /** @var $messages - an array of strings, one for each action taken and/or its result. */
+    /** @var string[] $messages - an array of strings, one for each action taken and/or its result. */
     private $messages;
 
     /** @var TASK_SEPARATE_TASK_MADE an outcome state for separating tasks. */
@@ -106,7 +106,7 @@ class outcome {
      * Constructor makes an array of outcome messages (i.e. standard strings).
      *
      * @param delete_task $task The course_delete_module task related to the outcomes.
-     * @param array $messages The outcome messages for this outcome.
+     * @param string[] $messages The outcome messages for this outcome.
      */
     public function __construct(delete_task $task, array $messages) {
         $this->task = $task;

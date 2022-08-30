@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,13 +34,13 @@ require_once("deletetask.php");
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class diagnosis {
     /** @var delete_task $task - the course_delete_module adhoc task. */
     private $task;
-     /** @var array $symptoms - an array of strings which describe (coursemoduleid as index). */
+     /** @var string[] $symptoms - an array of strings which describe (coursemoduleid as index). */
     private $symptoms;
      /** @var bool $ismultimoduletask - true if the symptoms included multimodule task in constructor param. */
     private $ismultimoduletask;
@@ -65,7 +65,7 @@ class diagnosis {
      * Constructor makes an array of symptoms (i.e. standard strings).
      *
      * @param delete_task $task The course_delete_module task related to the diagnosis.
-     * @param array $symptoms An array of strings which are the issues/symptoms for this delete_task.
+     * @param array $symptoms An array (moduleids) each with an array of strings which are the issues/symptoms for this delete_task.
      */
     public function __construct(delete_task $task, array $symptoms) {
         $stringtmm = get_string($this::TASK_MULTIMODULE, 'tool_fix_delete_modules');

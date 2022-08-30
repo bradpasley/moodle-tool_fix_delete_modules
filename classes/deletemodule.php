@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,12 +31,10 @@ namespace tool_fix_delete_modules;
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class delete_module {
-    /** @var int $taskid - the course_delete_module adhoc task id for this course module. */
-    public $taskid;
      /** @var int $coursemoduleid - the course_module table record id.*/
     public $coursemoduleid;
      /** @var ?int $moduleinstanceid - this module's record id for its specific module type table (e.g. quiz table or book table).*/
@@ -53,30 +51,27 @@ class delete_module {
     /**
      * Constructor makes an array of delete_tasks objects.
      *
-     * @param int $taskid The taskid (aka id field for {task_adhoc} table)
      * @param int $coursemoduleid The course_module record id for the module being deleted.
      * @param int $moduleinstanceid The moduleinstance id for the module being deleted.
      * @param int $courseid The course id in which the module being deleted is situated.
      * @param int $section The section id for the module being deleted.
      */
-    public function __construct(int $taskid,
-                                int $coursemoduleid,
+    public function __construct(int $coursemoduleid,
                                 ?int $moduleinstanceid = null,
                                 ?int $courseid = null,
                                 ?int $section = null) {
-        $this->taskid = $taskid;
         $this->coursemoduleid = $coursemoduleid;
         $this->moduleinstanceid = $moduleinstanceid;
         $this->courseid = $courseid;
         $this->section = $section;
-        $this->set_contextid($this->coursemoduleid);
-        $this->set_modulename($this->coursemoduleid, $this->moduleinstanceid);
+        $this->set_contextid();
+        $this->set_modulename();
     }
 
     /**
-     * get_contextid() - Get the name of the table related to the course module which is failing to be deleted.
+     * get_contextid() - Get the contextid of the course module which is failing to be deleted.
      *
-     * @return string
+     * @return int
      */
     public function get_contextid() {
         return $this->modulecontextid;
@@ -95,18 +90,19 @@ class delete_module {
     /**
      * set_contextid() - Set the contextid of the module, retrived from the database record.
      *
-     * @param int $coursemoduleid - course module instance id.
-     *
      * @return null
      */
-    public function set_contextid(int $coursemoduleid) {
-        if (isset($coursemoduleid)) {
-            global $DB;
-
-            if ($result = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $coursemoduleid))) {
-                $this->modulecontextid = current($result)->id;
-            } else {
-                $this->modulecontextid = null;
+    private function set_contextid() {
+        if (isset($this->coursemoduleid)) {
+            try {
+                $this->modulecontextid = \context_module::instance($this->coursemoduleid)->id;
+            } catch (\dml_missing_record_exception $e) {
+                global $DB;
+                if ($result = $DB->get_records('context', array('contextlevel' => '70', 'instanceid' => $this->coursemoduleid))) {
+                    $this->modulecontextid = current($result)->id;
+                } else {
+                    $this->modulecontextid = null;
+                }
             }
         }
     }
@@ -115,18 +111,15 @@ class delete_module {
      * set_modulename()-  Set the name of the table related to the course module which is failing to be deleted.
      * Retrived from the database record.
      *
-     * @param int $coursemoduleid - coursemodule id.
-     * @param int $moduleinstanceid - moduleinstance id.
-     *
      * @return null
      */
-    public function set_modulename(int $coursemoduleid, ?int $moduleinstanceid = null) {
+    private function set_modulename() {
         global $DB;
         // First get moduleid.
-        if (!isset($moduleinstanceid)) {
-            $queryarray = array('id' => $coursemoduleid);
+        if (!isset($this->moduleinstanceid)) {
+            $queryarray = array('id' => $this->coursemoduleid);
         } else {
-            $queryarray = array('id' => $coursemoduleid, 'instance' => $moduleinstanceid);
+            $queryarray = array('id' => $this->coursemoduleid, 'instance' => $this->moduleinstanceid);
         }
 
         if ($cmrecord = $DB->get_records('course_modules', $queryarray, '', 'module')) {

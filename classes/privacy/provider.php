@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @subpackage  privacy
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,7 +31,7 @@ namespace tool_fix_delete_modules\privacy;
  *
  * @package    tool_fix_delete_modules
  * @author     Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright  Catalyst IT, 2022
+ * @copyright  2022 Catalyst IT
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\null_provider {

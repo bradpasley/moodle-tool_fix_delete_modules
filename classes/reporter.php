@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -33,6 +33,7 @@ require_once("deletemodule.php");
 require_once("diagnoser.php");
 require_once("outcome.php");
 require_once("surgeon.php");
+require_once(__DIR__."/../form.php");
 
 use html_table, html_writer, moodle_url, separate_delete_modules_form, fix_delete_modules_form;
 /**
@@ -41,7 +42,7 @@ use html_table, html_writer, moodle_url, separate_delete_modules_form, fix_delet
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class reporter {
@@ -49,7 +50,7 @@ class reporter {
     private $ishtmloutput;
     /** @var int $minimumfaildelay to filter course_delete_module tasks with a faildelay below this value. */
     public $minimumfaildelay;
-    /** @var array $querytaskids list of specific tasks to report/diagnose/fix (optional). */
+    /** @var int[] $querytaskids list of specific tasks to report/diagnose/fix (optional). */
     private $querytaskids;
 
     /**
@@ -57,7 +58,7 @@ class reporter {
      *
      * @param bool $ishtmloutput true for html output, false for cli output.
      * @param int $minimumfaildelay The minimum value (seconds) for the faildelay field of the adhoc task.
-     * @param array $querytaskids list of specific tasks to report/diagnose/fix (optional).
+     * @param int[] $querytaskids list of specific tasks to report/diagnose/fix (optional).
      */
     public function __construct(bool $ishtmloutput = true, int $minimumfaildelay = 60, array $querytaskids = array()) {
         $this->ishtmloutput = $ishtmloutput;
@@ -91,12 +92,9 @@ class reporter {
             $reporttables .= $this->get_filetable($deletetask);
             $reporttables .= $this->get_gradestable($deletetask);
             $reporttables .= $this->get_recyclebintable($deletetask);
-            if ($this->ishtmloutput) {
-                $reportdata = ['title' => $taskreporttitle, 'reporttables' => $reporttables];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/task_report', $reportdata);
-            } else {
-                $output .= $taskreporttitle.PHP_EOL.$reporttables.PHP_EOL;
-            }
+
+            $reportdata = ['title' => $taskreporttitle, 'reporttables' => $reporttables];
+            $output .= $this->format_message($reportdata, 'task_report');
         }
         return $output;
     }
@@ -121,23 +119,12 @@ class reporter {
             }
             $titleword = get_string('diagnosis', 'tool_fix_delete_modules');
             $diagnosistitle = $this->get_word_task_module_string($titleword, $task);
-            if ($this->ishtmloutput) {
-                $symptoms = $diagnosis->get_symptoms();
-                $diagnosistable = $this->get_htmltable($symptoms, [get_string('symptoms', 'tool_fix_delete_modules')]);
-                $diagnosisbutton = $this->get_fix_button($diagnosis);
-                $diagnosisdata = ['title' => $diagnosistitle, 'table' => $diagnosistable, 'button' => $diagnosisbutton];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/task_diagnosis', $diagnosisdata);
-            } else {
-                $symptoms = $diagnosis->get_symptoms();
-                if (empty($symptoms)) { // If no symptoms, then add a "It's all Good" string for CLI output.
-                    $symptoms = array(get_string(diagnosis::GOOD, 'tool_fix_delete_modules'));
-                    $heading = array(); // No heading needed.
-                } else {
-                    $heading = [get_string('symptoms', 'tool_fix_delete_modules')];
-                }
-                $diagnosistable = $this->get_texttable($symptoms, $heading);
-                $output .= $diagnosistitle.PHP_EOL.$diagnosistable;
-            }
+            $symptoms = $diagnosis->get_symptoms();
+            $diagnosisbutton = $this->get_fix_button($diagnosis);
+            $diagnosisdata = ['title' => $diagnosistitle,
+                              'symptoms' => $symptoms,
+                              'button' => $diagnosisbutton];
+            $output .= $this->format_message($diagnosisdata, 'task_diagnosis');
         }
         return $output;
     }
@@ -145,7 +132,7 @@ class reporter {
     /**
      * get_diagnosis_data() - Helper function for get_diagnosis(); gets the diagnosis object returned from diagnoser.
      *
-     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return array of diagnosis
      */
@@ -163,13 +150,13 @@ class reporter {
     }
 
     /**
-     * make_fix() - Make fix(s) on course_delete_module task(s) and return rendered outcomes
+     * fix_tasks() - Make fix(s) on course_delete_module task(s) and return rendered outcomes
      *
-     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return string
      */
-    public function make_fix(array $taskids = array()) {
+    public function fix_tasks(array $taskids = array()) {
         global $OUTPUT;
         $output = '';
         $outcomes = $this->get_fix_results($taskids);
@@ -182,24 +169,16 @@ class reporter {
             }
             $titleword = get_string('results', 'tool_fix_delete_modules');
             $outcometitle = $this->get_word_task_module_string($titleword, $task);
-            if ($this->ishtmloutput) {
-                $outcometable = $this->get_htmltable($outcome->get_messages(),
-                                                     array(get_string('result_messages', 'tool_fix_delete_modules')));
-                $outcomedata = ['title' => $outcometitle, 'table' => $outcometable];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/task_fix_results', $outcomedata);
-            } else {
-                $outcometable = $this->get_texttable($outcome->get_messages(),
-                                                     array(get_string('result_messages', 'tool_fix_delete_modules')));
-                $output .= $outcometitle.PHP_EOL.$outcometable;
-            }
+            $outcomedata = ['title' => $outcometitle, 'outcomemessages' => $outcome->get_messages()];
+            $output .= $this->format_message($outcomedata, 'task_fix_results');
         }
         return $output;
     }
 
     /**
-     * get_fix_results() - Helper function for make_fix(). Returns an array of outcome objects from the surgeon object.
+     * get_fix_results() - Helper function for fix_tasks(). Returns an array of outcome objects from the surgeon object.
      *
-     * @param array $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
+     * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
      * @return array
      */
@@ -234,13 +213,8 @@ class reporter {
             }
 
             $tabletitle = get_string('table_title_adhoctask', 'tool_fix_delete_modules');
-            if ($this->ishtmloutput) {
-                $data = ['title' => $tabletitle, 'table' => $this->get_htmltable($records)];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
-            } else {
-                $table = $this->get_texttable($records);
-                $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
-            }
+            $data = ['title' => $tabletitle, 'records' => $records];
+            $output .= $this->format_message($data, 'report_table');
         }
         return $output;
     }
@@ -265,14 +239,8 @@ class reporter {
         if ($records = $DB->get_records_sql($sqlhead.$where, $params)) {
             $tableword = get_string('table_title_coursemodules', 'tool_fix_delete_modules');
             $tabletitle = $this->get_word_task_module_string($tableword, $deletetask);
-            if ($this->ishtmloutput) {
-                $table = $this->get_htmltable($records);
-                $data = ['title' => $tabletitle, 'table' => $table];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
-            } else {
-                $table = $this->get_texttable($records);
-                $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
-            }
+            $data = ['title' => $tabletitle, 'records' => $records];
+            $output .= $this->format_message($data, 'report_table');
         }
         return $output;
     }
@@ -301,14 +269,8 @@ class reporter {
             if ($records = $DB->get_records_sql($sqlhead.$where, $params)) {
                 $tableword = get_string('table_title_module', 'tool_fix_delete_modules').': '.$modulename;
                 $tabletitle = $this->get_word_task_module_string($tableword, $deletetask);
-                if ($this->ishtmloutput) {
-                    $table = $this->get_htmltable($records);
-                    $data = ['title' => $tabletitle, 'table' => $table];
-                    $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
-                } else {
-                    $table = $this->get_texttable($records);
-                    $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
-                }
+                $data = ['title' => $tabletitle, 'records' => $records];
+                $output .= $this->format_message($data, 'report_table');
             }
         }
 
@@ -335,14 +297,8 @@ class reporter {
         if ($records = $DB->get_records_sql($sqlhead.$where, $params)) {
             $tableword = get_string('table_title_context', 'tool_fix_delete_modules');
             $tabletitle = $this->get_word_task_module_string($tableword, $deletetask);
-            if ($this->ishtmloutput) {
-                $table = $this->get_htmltable($records);
-                $data = ['title' => $tabletitle, 'table' => $table];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
-            } else {
-                $table = $this->get_texttable($records);
-                $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
-            }
+            $data = ['title' => $tabletitle, 'records' => $records];
+            $output .= $this->format_message($data, 'report_table');
         }
         return $output;
     }
@@ -408,14 +364,10 @@ class reporter {
 
             $tableword = get_string('table_title_files', 'tool_fix_delete_modules');
             $tabletitle = $this->get_word_task_module_string($tableword, $deletetask);
-            if ($this->ishtmloutput) {
-                $table = $this->get_htmltable_vertical($records, array("name", "count"));
-                $data = ['title' => $tabletitle, 'table' => $table];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
-            } else {
-                $table = $this->get_texttable_vertical($records, array("name", "count"));
-                $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
-            }
+            $data = ['title' => $tabletitle,
+                     'records' => $records,
+                     'headings' => array("name", "count")];
+            $output .= $this->format_message($data, 'report_table');
         }
         return $output;
     }
@@ -453,14 +405,8 @@ class reporter {
 
             $tableword = get_string('table_title_grades', 'tool_fix_delete_modules');
             $tabletitle = $this->get_word_task_module_string($tableword, $deletetask);;
-            if ($this->ishtmloutput) {
-                $table = $this->get_htmltable($records);
-                $data = ['title' => $tabletitle, 'table' => $table];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
-            } else {
-                $table = $this->get_texttable($records);
-                $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
-            }
+            $data = ['title' => $tabletitle, 'records' => $records];
+            $output .= $this->format_message($data, 'report_table');
         }
         return $output;
     }
@@ -487,14 +433,8 @@ class reporter {
                                         array('courseid' => $deletemodule->courseid))) {
             $tableword = get_string('table_title_recyclebin', 'tool_fix_delete_modules');
             $tabletitle = $this->get_word_task_module_string($tableword, $deletetask);
-            if ($this->ishtmloutput) {
-                $table = $this->get_htmltable($records);
-                $data = ['title' => $tabletitle, 'table' => $table];
-                $output .= $OUTPUT->render_from_template('tool_fix_delete_modules/report_table', $data);
-            } else {
-                $table = $this->get_texttable($records);
-                $output .= $tabletitle.PHP_EOL.$tabletitle.PHP_EOL;
-            }
+            $data = ['title' => $tabletitle, 'records' => $records];
+            $output .= $this->format_message($data, 'report_table');
         }
         return $output;
     }
@@ -573,7 +513,7 @@ class reporter {
      * get_texttable()
      *
      * @param array $arraytable
-     * @param array $headings - array of table headings (optional) - empty array is ignored.
+     * @param string[] $headings - array of table headings (optional) - empty array is ignored.
      * @return string
      */
     private function get_texttable(array $arraytable, array $headings = array()) {
@@ -604,10 +544,9 @@ class reporter {
      * get_texttable_vertical()
      *
      * @param array $records
-     * @param  array $columntitles - column titles
      * @return string
      */
-    private function get_texttable_vertical(array $records, array $columntitles) {
+    private function get_texttable_vertical(array $records) {
         $outputtable = '';
         $titlerow = implode('\t', array_keys((array) current($records))).PHP_EOL;
         foreach ($records as $row) {
@@ -625,7 +564,7 @@ class reporter {
      * get_htmltable() - returns html table from an array of records (first row is heading).
      *
      * @param array $records - records of table
-     * @param array $headings - array of table headings (optional) - empty array is ignored.
+     * @param string[] $headings - array of table headings (optional) - empty array is ignored.
      * @return string - an html_table as a string
      */
     private function get_htmltable(array $records, array $headings = array()) {
@@ -743,5 +682,50 @@ class reporter {
         }
         return $htmloutput;
 
+    }
+
+    /**
+     * format_message() - returns a string, either HTML or plain text depending on the $this->ishtmloutput attribute.
+     *
+     * @param array $data - an array, including 'title', table data, etc.
+     * @param string $templatename - the name for the HTML template used (also used to distinguish types of messages).
+     * @return string
+     */
+    private function format_message(array $data, string $templatename) {
+        global $OUTPUT;
+
+        switch($templatename) {
+            case 'task_report':
+                $data['body'] = $data['reporttables'];
+                break;
+            case 'task_diagnosis':
+                $heading = array();
+                if (empty($data['symptoms'])) {
+                    $data['symptoms'] = array(get_string(diagnosis::GOOD, 'tool_fix_delete_modules'));
+                } else {
+                    $heading = [get_string('symptoms', 'tool_fix_delete_modules')];
+                }
+                $data['body'] = $this->get_texttable($data['symptoms'], $heading);
+                break;
+            case 'task_fix_results':
+                $data['table'] = $this->get_htmltable($data['outcomemessages'],
+                                                     array(get_string('result_messages', 'tool_fix_delete_modules')));
+                $data['body'] = $this->get_texttable($data['outcomemessages'],
+                                                     array(get_string('result_messages', 'tool_fix_delete_modules')));
+                break;
+            case 'report_table':
+                if (!isset($data['headings']) || empty($data['headings'])) {
+                    $data['table'] = $this->get_htmltable($data['records']);
+                    $data['body'] = $this->get_texttable($data['records']);
+                } else {
+                    $data['table'] = $this->get_htmltable_vertical($data['records'], $data['headings']);
+                    $data['body'] = $this->get_texttable_vertical($data['records'], $data['headings']);
+                }
+                break;
+            default:
+                break;
+        }
+        return $this->ishtmloutput ? $OUTPUT->render_from_template("tool_fix_delete_modules/$templatename", $data)
+                                    : $data['title'].PHP_EOL.$data['body'].PHP_EOL;
     }
 }

@@ -108,7 +108,7 @@ classDiagram
         +get_tables_report()
         +get_diagnosis()
         -get_diagnosis_data()
-        +make_fix()
+        +fix_tasks()
         -get_fix_results()
         -get_adhoctable()
         -get_coursemodulestable()

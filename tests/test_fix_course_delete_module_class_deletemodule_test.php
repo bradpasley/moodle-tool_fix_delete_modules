@@ -29,7 +29,7 @@ require_once(__DIR__ . "/../classes/deletemodule.php");
  * @package     tool_fix_delete_modules
  * @category    test
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class test_fix_course_delete_module_class_deletemodule_test extends \advanced_testcase {
@@ -47,12 +47,40 @@ class test_fix_course_delete_module_class_deletemodule_test extends \advanced_te
         $DB->delete_records('context');
         $DB->delete_records('assign');
         $DB->delete_records('quiz');
+        $DB->delete_records('page');
+        $DB->delete_records('book');
+        $DB->delete_records('url');
+        $DB->delete_records('task_adhoc');
+
         $this->assertEmpty($DB->get_records('course'));
         $this->assertEmpty($DB->get_records('course_modules'));
         $this->assertEmpty($DB->get_records('context'));
         $this->assertEmpty($DB->get_records('assign'));
         $this->assertEmpty($DB->get_records('quiz'));
+        $this->assertEmpty($DB->get_records('page'));
+        $this->assertEmpty($DB->get_records('book'));
+        $this->assertEmpty($DB->get_records('url'));
+        $this->assertEmpty($DB->get_records('task_adhoc'));
     }
+
+    /**
+     * Test data reset successfully.
+     *
+     * @coversNothing
+     */
+    public function test_user_table_was_reset() {
+        global $DB;
+        $this->assertEquals(0, $DB->count_records('enrol', array()));
+        $this->assertEquals(1, $DB->count_records('course', array()));
+        $this->assertEquals(2, $DB->count_records('user', array()));
+        $this->assertEmpty($DB->get_records('assign'));
+        $this->assertEmpty($DB->get_records('quiz'));
+        $this->assertEmpty($DB->get_records('page'));
+        $this->assertEmpty($DB->get_records('book'));
+        $this->assertEmpty($DB->get_records('url'));
+        $this->assertEmpty($DB->get_records('task_adhoc'));
+    }
+
 
     /**
      * Test for get/set modulename & get/set contextid.
@@ -68,8 +96,7 @@ class test_fix_course_delete_module_class_deletemodule_test extends \advanced_te
         $modassign = $this->getDataGenerator()->create_module('assign', array('course' => $course->id));
 
         // Test set/get_modulename() and set/get_contextid() via constructor.
-        $taskid = 21345;
-        $deletemodule = new delete_module($taskid, $modassign->cmid, $modassign->id, $course->id);
+        $deletemodule = new delete_module($modassign->cmid, $modassign->id, $course->id);
         $modcontext = \context_module::instance($modassign->cmid);
         $this->assertEquals('assign', $deletemodule->get_modulename());
         $this->assertEquals($modassign->id, $deletemodule->moduleinstanceid);
@@ -78,7 +105,7 @@ class test_fix_course_delete_module_class_deletemodule_test extends \advanced_te
 
         // Test also on a quiz module.
         $modquiz   = $this->getDataGenerator()->create_module('quiz', array('course' => $course->id));
-        $deletemodule = new delete_module($taskid, $modquiz->cmid, $modquiz->id, $course->id);
+        $deletemodule = new delete_module($modquiz->cmid, $modquiz->id, $course->id);
         $modcontext = \context_module::instance($modquiz->cmid);
         $this->assertEquals('quiz', $deletemodule->get_modulename());
         $this->assertEquals($modquiz->id, $deletemodule->moduleinstanceid);

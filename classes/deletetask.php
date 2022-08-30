@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,13 +34,13 @@ require_once("deletemodule.php");
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class delete_task {
     /** @var int $taskid - the course_delete_module adhoc task id for this course module. */
     public $taskid;
-    /** @var array $deletemodules - an array of delete_module objects.*/
+    /** @var delete_module[] $deletemodules - an array of delete_module objects.*/
     private $deletemodules;
 
     /**
@@ -188,7 +188,7 @@ class delete_task {
                     $section = $record;
                 }
             }
-            $dm = new delete_module($this->taskid, $cmdata->id, $instanceid, $courseid, $section);
+            $dm = new delete_module($cmdata->id, $instanceid, $courseid, $section);
             $this->deletemodules[''.$cmdata->id] = $dm;
         }
 

@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,13 +34,13 @@ require_once("deletetask.php");
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class delete_task_list {
     /** @var int $minimumfaildelay - only include adhoc tasks with a faildelay field value with at least this value. */
     private $minimumfaildelay;
-    /** @var array $deletetasks - an array of delete_module objects. */
+    /** @var delete_module[] $deletetasks - an array of delete_module objects. */
     private $deletetasks;
 
     /**
@@ -66,7 +66,7 @@ class delete_task_list {
      * set_deletetasks() - Set the deletetasks array.
      *
      */
-    public function set_deletetasks() {
+    private function set_deletetasks() {
         $this->deletetasks = array();
         $cdmadhoctasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
         foreach ($cdmadhoctasks as $taskid => $cdadhoctask) {
