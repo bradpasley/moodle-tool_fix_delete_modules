@@ -21,6 +21,7 @@ use tool_fix_delete_modules\delete_task_list;
 
 defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . "/../classes/deletetasklist.php");
+require_once("test_fix_course_delete_module_test.php");
 
 /**
  * The test_fix_course_delete_module_class_delete_module test class.
@@ -33,54 +34,7 @@ require_once(__DIR__ . "/../classes/deletetasklist.php");
  * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class test_fix_course_delete_module_class_deletetasklist_test extends \advanced_testcase {
-
-    /**
-     * Test deletion of data after test.
-     *
-     * @coversNothing
-     */
-    public function test_deleting() {
-        global $DB;
-        $this->resetAfterTest(true);
-        $DB->delete_records('course');
-        $DB->delete_records('course_modules');
-        $DB->delete_records('context');
-        $DB->delete_records('assign');
-        $DB->delete_records('quiz');
-        $DB->delete_records('page');
-        $DB->delete_records('book');
-        $DB->delete_records('url');
-        $DB->delete_records('task_adhoc');
-
-        $this->assertEmpty($DB->get_records('course'));
-        $this->assertEmpty($DB->get_records('course_modules'));
-        $this->assertEmpty($DB->get_records('context'));
-        $this->assertEmpty($DB->get_records('assign'));
-        $this->assertEmpty($DB->get_records('quiz'));
-        $this->assertEmpty($DB->get_records('page'));
-        $this->assertEmpty($DB->get_records('book'));
-        $this->assertEmpty($DB->get_records('url'));
-        $this->assertEmpty($DB->get_records('task_adhoc'));
-    }
-
-    /**
-     * Test data reset successfully.
-     *
-     * @coversNothing
-     */
-    public function test_user_table_was_reset() {
-        global $DB;
-        $this->assertEquals(0, $DB->count_records('enrol', array()));
-        $this->assertEquals(1, $DB->count_records('course', array()));
-        $this->assertEquals(2, $DB->count_records('user', array()));
-        $this->assertEmpty($DB->get_records('assign'));
-        $this->assertEmpty($DB->get_records('quiz'));
-        $this->assertEmpty($DB->get_records('page'));
-        $this->assertEmpty($DB->get_records('book'));
-        $this->assertEmpty($DB->get_records('url'));
-        $this->assertEmpty($DB->get_records('task_adhoc'));
-    }
+class test_fix_course_delete_module_class_deletetasklist_test extends test_fix_course_delete_module_test {
 
     /**
      * Test for get/set functions for delete task list object.
@@ -91,65 +45,26 @@ class test_fix_course_delete_module_class_deletetasklist_test extends \advanced_
         global $DB;
         $this->resetAfterTest(true);
 
-        // Ensure all adhoc tasks/cache are cleared.
-        if (isset(\core\task\manager::$miniqueue)) {
-            \core\task\manager::$miniqueue = [];
-        } // Clear the cached queue.
-        $DB->delete_records('task_adhoc');
-
-        // Setup a course with a page, an assignment and a quiz module.
-        $user     = $this->getDataGenerator()->create_user();
-        $course   = $this->getDataGenerator()->create_course();
-        $page     = $this->getDataGenerator()->create_module('page', array('course' => $course->id));
-        $pagecm = get_coursemodule_from_id('page', $page->cmid);
-        $assign   = $this->getDataGenerator()->create_module('assign', array('course' => $course->id));
-        $assigncm = get_coursemodule_from_id('assign', $assign->cmid);
-        $quiz   = $this->getDataGenerator()->create_module('quiz', array('course' => $course->id));
-        $quizcm = get_coursemodule_from_id('quiz', $quiz->cmid);
-
-        // The module exists in the course.
-        $coursedmodules = get_course_mods($course->id);
-        $this->assertCount(3, $coursedmodules);
-
-        // Delete quiz table record to replicate failed course_module_delete adhoc task.
-        $this->assertCount(1, $DB->get_records('quiz'));
-        $DB->delete_records('quiz');
-        $this->assertEmpty($DB->get_records('quiz'));
-
-        // Setup adhoc task for a multi-module delete (both quiz and assign).
-        $removaltaskmulti = new \core_course\task\course_delete_modules();
-        $cmsarray = array(''.$assigncm->id => array('id' => $assigncm->id),
-                            ''.$quizcm->id   => array('id' => $quizcm->id));
-        $multidata = [
-            'cms' => $cmsarray,
-            'userid' => $user->id,
-            'realuserid' => $user->id
-        ];
-        $removaltaskmulti->set_custom_data($multidata);
-        \core\task\manager::queue_adhoc_task($removaltaskmulti);
+        // Queue adhoc task for a multi-module delete (both quiz and assign).
+        \core\task\manager::queue_adhoc_task($this->removaltaskmulti);
 
         // The pre-execute status of modules.
-        $this->assertFalse($DB->record_exists('quiz', array('id' => $quizcm->instance))); // Was already deleted.
-        $this->assertTrue($DB->record_exists('assign', array('id' => $assigncm->instance))); // Not yet deleted.
-        $this->assertTrue($DB->record_exists('page', array('id' => $pagecm->instance))); // Not yet deleted.
-        $this->assertTrue($DB->record_exists('course_modules', array('id' => $quizcm->id))); // Quiz cm still present.
-        $this->assertTrue($DB->record_exists('course_modules', array('id' => $assigncm->id))); // Assign cm exists.
-        $this->assertTrue($DB->record_exists('course_modules', array('id' => $pagecm->id))); // Page cm exists.
+        $this->assertFalse($DB->record_exists('quiz', array('id' => $this->quizcm->instance))); // Was already deleted.
+        $this->assertTrue($DB->record_exists('assign', array('id' => $this->assigncm->instance))); // Not yet deleted.
+        $this->assertTrue($DB->record_exists('book', array('id' => $this->bookcm->instance))); // Not yet deleted.
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->quizcm->id))); // Quiz cm still present.
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->assigncm->id))); // Assign cm exists.
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->bookcm->id))); // Book cm exists.
 
         // Check creation of deletetask list only with multimodule taskm before execution.
         // Test creating a deletetasklist object.
         $dbtasks = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'));
-        $multitaskid = 0;
-        foreach ($dbtasks as $dbtaskid => $dbtask) {
-            if ($dbtask->customdata === $removaltaskmulti->get_custom_data_as_string()) {
-                $multitaskid = $dbtaskid;
-            }
-        }
+        $multitaskid = $this->find_taskid($this->removaltaskmulti);
         // Include all tasks (even 0 fail delay).
         $deletetasklist = new delete_task_list(0);
         $deletetasks    = $deletetasklist->get_deletetasks();
 
-        $deletepagetask = null;
+        $deletemultitask = null;
         foreach ($deletetasks as $dt) {
             if ($dt->is_multi_module_task()) {
                 $deletemultitask = $dt;
@@ -158,18 +73,23 @@ class test_fix_course_delete_module_class_deletetasklist_test extends \advanced_
         $this->assertNotNull($deletemultitask);
 
         $deletemodulesmulti = $deletemultitask->get_deletemodules();
-        $dmassign           = current($deletemodulesmulti);
-        $dmquiz             = end($deletemodulesmulti);
+        foreach ($deletemodulesmulti as $deletemodule) {
+            if ($deletemodule->coursemoduleid == $this->assign->cmid) {
+                $assignmodule = $deletemodule;
+            } else if ($deletemodule->coursemoduleid == $this->quiz->cmid) {
+                $quizmodule = $deletemodule;
+            }
+        }
 
         // Check the multi mod deletion task.
         $this->assertCount(2, $deletemodulesmulti);
         $this->assertTrue($deletemultitask->is_multi_module_task());
-        $this->assertEquals($assign->cmid, $dmassign->coursemoduleid);
-        $this->assertEquals($assign->id,   $dmassign->moduleinstanceid); // Should be set via database check.
-        $this->assertEquals($course->id,   $dmassign->courseid); // Should be set via database check.
-        $this->assertEquals($quiz->cmid,   $dmquiz->coursemoduleid);
-        $this->assertEquals($quiz->id,     $dmquiz->moduleinstanceid); // Should be set via database check.
-        $this->assertEquals($course->id,   $dmquiz->courseid); // Should be set via database check.
+        $this->assertEquals($this->assign->cmid, $assignmodule->coursemoduleid);
+        $this->assertEquals($this->assign->id,   $assignmodule->moduleinstanceid); // Should be set via database check.
+        $this->assertEquals($this->course->id,   $assignmodule->courseid); // Should be set via database check.
+        $this->assertEquals($this->quiz->cmid,   $quizmodule->coursemoduleid);
+        $this->assertEquals($this->quiz->id,     $quizmodule->moduleinstanceid); // Should be set via database check.
+        $this->assertEquals($this->course->id,   $quizmodule->courseid); // Should be set via database check.
         $this->assertEquals($multitaskid, $deletemultitask->taskid);
 
         // Execute tasks (which should fail).
@@ -193,97 +113,85 @@ class test_fix_course_delete_module_class_deletetasklist_test extends \advanced_
         }
 
         // The assign module has deleted from the course.
-        $this->assertFalse($DB->record_exists('quiz', array('id' => $quizcm->instance))); // Was already deleted.
-        $this->assertFalse($DB->record_exists('assign', array('id' => $assigncm->instance))); // Now deleted.
-        $this->assertTrue($DB->record_exists('page', array('id' => $pagecm->instance))); // Not yet deleted.
-        $this->assertTrue($DB->record_exists('course_modules', array('id' => $quizcm->id))); // Quiz cm still present.
-        $this->assertFalse($DB->record_exists('course_modules', array('id' => $assigncm->id))); // Assign cm deleted.
-        $this->assertTrue($DB->record_exists('course_modules', array('id' => $pagecm->id))); // Assign cm deleted.
+        $this->assertFalse($DB->record_exists('quiz', array('id' => $this->quizcm->instance))); // Was already deleted.
+        $this->assertFalse($DB->record_exists('assign', array('id' => $this->assigncm->instance))); // Now deleted.
+        $this->assertTrue($DB->record_exists('book', array('id' => $this->bookcm->instance))); // Not yet deleted.
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->quizcm->id))); // Quiz cm still present.
+        $this->assertFalse($DB->record_exists('course_modules', array('id' => $this->assigncm->id))); // Assign cm deleted.
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->bookcm->id))); // Assign cm deleted.
 
-        // Setup adhoc task for page module deletion.
-        $removaltaskpage = new \core_course\task\course_delete_modules();
-        $pagedata = [
-            'cms' => [$pagecm],
-            'userid' => $user->id,
-            'realuserid' => $user->id
-        ];
-        $removaltaskpage->set_custom_data($pagedata);
-        \core\task\manager::queue_adhoc_task($removaltaskpage);
+        // Queue adhoc task for book module deletion.
+        \core\task\manager::queue_adhoc_task($this->removaltaskbook);
 
         // Test creating a deletetasklist object.
         $dbtasks = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'));
-        $multitaskid = 0;
-        $pagetaskid = 0;
-        foreach ($dbtasks as $dbtaskid => $dbtask) {
-            if ($dbtask->customdata === $removaltaskmulti->get_custom_data_as_string()) {
-                $multitaskid = $dbtaskid;
-            } else if ($dbtask->customdata === $removaltaskpage->get_custom_data_as_string()) {
-                $pagetaskid = $dbtaskid;
-            }
-        }
+        $multitaskid = $this->find_taskid($this->removaltaskmulti);
+        $booktaskid = $this->find_taskid($this->removaltaskbook);
 
         // Include all tasks (even 0 fail delay).
         $deletetasklist = new delete_task_list(0);
-
-        $deletetasks        = array();
-        $deletetasks        = $deletetasklist->get_deletetasks();
+        $deletetasks    = $deletetasklist->get_deletetasks();
 
         foreach ($deletetasks as $dt) {
             if ($dt->is_multi_module_task()) {
                 $deletemultitask = $dt;
             } else { // Only one module in task.
                 $deletemodule = current($dt->get_deletemodules());
-                if ($deletemodule->get_modulename() == 'page') {
-                    $deletepagetask  = $dt;
+                if ($deletemodule->get_modulename() == 'book') {
+                    $deletebooktask  = $dt;
                 }
             }
         }
 
-        $deletemodulespage  = $deletepagetask->get_deletemodules();
-        $dmpage             = current($deletemodulespage);
+        $deletemodulesbook  = $deletebooktask->get_deletemodules();
+        $dmbook             = current($deletemodulesbook);
         $deletemodulesmulti = $deletemultitask->get_deletemodules();
-        $dmassign           = current($deletemodulesmulti);
-        $dmquiz             = end($deletemodulesmulti);
-
-        // Check the first task (page mod deletion).
-        $this->assertCount(1, $deletemodulespage);
-        $this->assertFalse($deletepagetask->is_multi_module_task());
-        $this->assertEquals($page->cmid, $dmpage->coursemoduleid);
-        $this->assertEquals($page->id,   $dmpage->moduleinstanceid);
-        $this->assertEquals($pagetaskid, $deletepagetask->taskid);
+        foreach ($deletemodulesmulti as $deletemodule) {
+            if ($deletemodule->coursemoduleid == $this->assign->cmid) {
+                $assignmodule = $deletemodule;
+            } else if ($deletemodule->coursemoduleid == $this->quiz->cmid) {
+                $quizmodule = $deletemodule;
+            }
+        }
+        // Check the first task (book mod deletion).
+        $this->assertCount(1, $deletemodulesbook);
+        $this->assertFalse($deletebooktask->is_multi_module_task());
+        $this->assertEquals($this->book->cmid, $dmbook->coursemoduleid);
+        $this->assertEquals($this->book->id,   $dmbook->moduleinstanceid);
+        $this->assertEquals($booktaskid, $deletebooktask->taskid);
 
         // Check the second task (multi mod deletion).
         $this->assertCount(2, $deletemodulesmulti);
         $this->assertTrue($deletemultitask->is_multi_module_task());
-        $this->assertEquals($assign->cmid, $dmassign->coursemoduleid);
-        $this->assertNull($dmassign->moduleinstanceid); // Should be gone (deleted).
-        $this->assertNull($dmassign->courseid); // Should be gone (deleted).
-        $this->assertEquals($quiz->cmid,   $dmquiz->coursemoduleid);
-        $this->assertEquals($quiz->id,     $dmquiz->moduleinstanceid); // Should be set via database check.
-        $this->assertEquals($course->id,   $dmquiz->courseid); // Should be set via database check.
+        $this->assertEquals($this->assign->cmid, $assignmodule->coursemoduleid);
+        $this->assertNull($assignmodule->moduleinstanceid); // Should be gone (deleted).
+        $this->assertNull($assignmodule->courseid); // Should be gone (deleted).
+        $this->assertEquals($this->quiz->cmid,   $quizmodule->coursemoduleid);
+        $this->assertEquals($this->quiz->id,     $quizmodule->moduleinstanceid); // Should be set via database check.
+        $this->assertEquals($this->course->id,   $quizmodule->courseid); // Should be set via database check.
         $this->assertEquals($multitaskid, $deletemultitask->taskid);
 
-        // Execute page task - should execute successfully.
+        // Execute book task - should execute successfully.
         $now = time();
-        $removaltaskpage = \core\task\manager::get_next_adhoc_task($now);
-        // Check this actually is the page adhoc task (should be due to faildelay of multitask).
-        $this->assertEquals($pagetaskid, $removaltaskpage->get_id());
+        $this->removaltaskbook = \core\task\manager::get_next_adhoc_task($now);
+        // Check this actually is the book adhoc task (should be due to faildelay of multitask).
+        $this->assertEquals($booktaskid, $this->removaltaskbook->get_id());
         $adhoctaskprecount = count($DB->get_records('task_adhoc'));
-        $removaltaskpage->execute();
+        $this->removaltaskbook->execute();
         // Replicate completed task.
         $this->assertCount($adhoctaskprecount, $DB->get_records('task_adhoc'));
-        \core\task\manager::adhoc_task_complete($removaltaskpage);
+        \core\task\manager::adhoc_task_complete($this->removaltaskbook);
         $this->assertCount($adhoctaskprecount - 1, $DB->get_records('task_adhoc'));
 
         // The assign module has deleted from the course.
         // ... quiz are still thought to be present.
-        // ... page has not been deleted.
-        $this->assertFalse($DB->record_exists('quiz', array('id' => $quizcm->instance))); // Was already deleted.
-        $this->assertFalse($DB->record_exists('assign', array('id' => $assigncm->instance))); // Now deleted.
-        $this->assertFalse($DB->record_exists('page', array('id' => $pagecm->instance))); // Was already deleted.
-        $this->assertTrue($DB->record_exists('course_modules', array('id' => $quizcm->id))); // Quiz cm still present.
-        $this->assertFalse($DB->record_exists('course_modules', array('id' => $assigncm->id))); // Assign cm deleted.
-        $this->assertFalse($DB->record_exists('course_modules', array('id' => $pagecm->id))); // Page just deleted.
+        // ... book has not been deleted.
+        $this->assertFalse($DB->record_exists('quiz', array('id' => $this->quizcm->instance))); // Was already deleted.
+        $this->assertFalse($DB->record_exists('assign', array('id' => $this->assigncm->instance))); // Now deleted.
+        $this->assertFalse($DB->record_exists('book', array('id' => $this->bookcm->instance))); // Was already deleted.
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->quizcm->id))); // Quiz cm still present.
+        $this->assertFalse($DB->record_exists('course_modules', array('id' => $this->assigncm->id))); // Assign cm deleted.
+        $this->assertFalse($DB->record_exists('course_modules', array('id' => $this->bookcm->id))); // Book just deleted.
 
         // Test creating a deletetasklist object after failed adhoc_task run.
 
@@ -303,22 +211,26 @@ class test_fix_course_delete_module_class_deletetasklist_test extends \advanced_
 
         $deletetasks        = array();
         $deletetasks        = $deletetasklist->get_deletetasks();
-        // Page task shouldn't be included due to faildelay filter.
+        // Book task shouldn't be included due to faildelay filter.
         $this->assertCount(1, $deletetasks);
         $deletemultitask    = current($deletetasks);
         $deletemodulesmulti = $deletemultitask->get_deletemodules();
         $this->assertCount(2, $deletemodulesmulti);
-        $dmassign           = current($deletemodulesmulti);
-        $dmquiz             = end($deletemodulesmulti);
-
+        foreach ($deletemodulesmulti as $deletemodule) {
+            if ($deletemodule->coursemoduleid == $this->assign->cmid) {
+                $assignmodule = $deletemodule;
+            } else if ($deletemodule->coursemoduleid == $this->quiz->cmid) {
+                $quizmodule = $deletemodule;
+            }
+        }
         // Check the second task (multi mod deletion).
         $this->assertCount(2, $deletemodulesmulti);
         $this->assertTrue($deletemultitask->is_multi_module_task());
-        $this->assertEquals($assign->cmid, $dmassign->coursemoduleid);
-        $this->assertNull($dmassign->moduleinstanceid); // Null on muli-mod delete.
-        $this->assertEquals($quiz->cmid, $dmquiz->coursemoduleid);
-        $this->assertEquals($quiz->id,     $dmquiz->moduleinstanceid); // Should be set via database check.
-        $this->assertEquals($course->id,   $dmquiz->courseid); // Should be set via database check.
+        $this->assertEquals($this->assign->cmid, $assignmodule->coursemoduleid);
+        $this->assertNull($assignmodule->moduleinstanceid); // Null on muli-mod delete.
+        $this->assertEquals($this->quiz->cmid, $quizmodule->coursemoduleid);
+        $this->assertEquals($this->quiz->id,     $quizmodule->moduleinstanceid); // Should be set via database check.
+        $this->assertEquals($this->course->id,   $quizmodule->courseid); // Should be set via database check.
         $this->assertEquals(end($dbtasks)->id, end($deletetasks)->taskid);
 
         if ($exceptionthrown181) {
