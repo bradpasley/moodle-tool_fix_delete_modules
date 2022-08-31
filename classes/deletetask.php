@@ -189,7 +189,7 @@ class delete_task {
                 }
             }
             $dm = new delete_module($cmdata->id, $instanceid, $courseid, $section);
-            $this->deletemodules[''.$cmdata->id] = $dm;
+            $this->deletemodules[(string) $cmdata->id] = $dm;
         }
 
     }
