@@ -39,6 +39,14 @@ require_once("test_fix_course_delete_module_test.php");
 class test_fix_course_delete_module_class_diagnoser_test extends test_fix_course_delete_module_test {
 
     /**
+     * Test deletion of data after test.
+     *
+     * @coversNothing
+     */
+    public function test_deleting() {
+        global $DB;
+
+    /**
      * Test for get/set modulename & get/set contextid.
      *
      * @covers \tool_fix_course_delete_module\diagnoser

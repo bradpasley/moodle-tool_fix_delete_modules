@@ -39,6 +39,25 @@ require_once("test_fix_course_delete_module_test.php");
 class test_fix_course_delete_module_class_diagnosis_test extends test_fix_course_delete_module_test {
 
     /**
+     * Test data reset successfully.
+     *
+     * @coversNothing
+     */
+    public function test_user_table_was_reset() {
+        global $DB;
+        $this->assertEquals(0, $DB->count_records('enrol', array()));
+        $this->assertEquals(1, $DB->count_records('course', array()));
+        $this->assertEquals(2, $DB->count_records('user', array()));
+        $this->assertEmpty($DB->get_records('assign'));
+        $this->assertEmpty($DB->get_records('quiz'));
+        $this->assertEmpty($DB->get_records('page'));
+        $this->assertEmpty($DB->get_records('book'));
+        $this->assertEmpty($DB->get_records('url'));
+        $this->assertEmpty($DB->get_records('task_adhoc'));
+    }
+
+
+    /**
      * Test for get/set modulename & get/set contextid.
      *
      * @covers \tool_fix_course_delete_module\diagnosis
@@ -85,6 +104,15 @@ class test_fix_course_delete_module_class_diagnosis_test extends test_fix_course
         \core\task\manager::queue_adhoc_task($this->removaltaskurl);
         // Get url task's id.
         $urltaskid = $this->find_taskid($this->removaltaskurl);
+
+        // Get url task's id.
+        $dbtasks = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'));
+        $urltaskid = 0;
+        foreach ($dbtasks as $dbtaskid => $dbtask) {
+            if ($dbtask->customdata === $removaltaskurl->get_custom_data_as_string()) {
+                $urltaskid = $dbtaskid;
+            }
+        }
 
         $deletetasklist = new delete_task_list(0);
         $deletetasks    = $deletetasklist->get_deletetasks();

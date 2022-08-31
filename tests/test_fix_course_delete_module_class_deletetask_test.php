@@ -33,7 +33,27 @@ require_once("test_fix_course_delete_module_test.php");
  * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 class test_fix_course_delete_module_class_deletetask_test extends test_fix_course_delete_module_test {
+
+    /**
+     * Test data reset successfully.
+     *
+     * @coversNothing
+     */
+    public function test_user_table_was_reset() {
+        global $DB;
+        $this->assertEquals(0, $DB->count_records('enrol', array()));
+        $this->assertEquals(1, $DB->count_records('course', array()));
+        $this->assertEquals(2, $DB->count_records('user', array()));
+        $this->assertEmpty($DB->get_records('assign'));
+        $this->assertEmpty($DB->get_records('quiz'));
+        $this->assertEmpty($DB->get_records('page'));
+        $this->assertEmpty($DB->get_records('book'));
+        $this->assertEmpty($DB->get_records('url'));
+        $this->assertEmpty($DB->get_records('task_adhoc'));
+    }
+
 
     /**
      * Test for get/set functions for delete task object.

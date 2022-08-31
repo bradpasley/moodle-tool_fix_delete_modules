@@ -60,6 +60,7 @@ class test_fix_course_delete_module_class_deletetasklist_test extends test_fix_c
         // Test creating a deletetasklist object.
         $dbtasks = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'));
         $multitaskid = $this->find_taskid($this->removaltaskmulti);
+
         // Include all tasks (even 0 fail delay).
         $deletetasklist = new delete_task_list(0);
         $deletetasks    = $deletetasklist->get_deletetasks();
