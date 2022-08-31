@@ -93,12 +93,12 @@ class diagnoser {
         // At least, we don't know what type of module it is (even if the record still exists).
         $symptomstring = get_string(diagnosis::MODULE_MODULERECORDMISSING, 'tool_fix_delete_modules');
         if (is_null($modulename = $deletemodule->get_modulename())) {
-            return array(''.$deletemodule->coursemoduleid => [$symptomstring]);
+            return array((string) $deletemodule->coursemoduleid => [$symptomstring]);
         } else {
             global $DB;
             // Check if this module's coursemodule id exists in course_modules table.
             if (!$DB->record_exists($modulename, array('id' => $deletemodule->moduleinstanceid))) {
-                return array(''.$deletemodule->coursemoduleid => [$symptomstring]);
+                return array((string) $deletemodule->coursemoduleid => [$symptomstring]);
             }
         }
         return array();
@@ -116,7 +116,7 @@ class diagnoser {
         // Check if this module's coursemodule id exists in course_modules table.
         if (!$DB->record_exists('course_modules', array('id' => $deletemodule->coursemoduleid))) {
             $symptomstring = get_string(diagnosis::MODULE_COURSEMODULERECORDMISSING, 'tool_fix_delete_modules');
-            return array(''.$deletemodule->coursemoduleid => [$symptomstring]);
+            return array((string) $deletemodule->coursemoduleid => [$symptomstring]);
         }
         return array();
     }
@@ -135,7 +135,7 @@ class diagnoser {
         if (!$DB->record_exists('context', array('contextlevel' => '70',
                                                  'instanceid' => $deletemodule->coursemoduleid))) {
             $symptomstring = get_string(diagnosis::MODULE_CONTEXTRECORDMISSING, 'tool_fix_delete_modules');
-            return array(''.$deletemodule->coursemoduleid => [$symptomstring]);
+            return array((string) $deletemodule->coursemoduleid => [$symptomstring]);
         }
         return array();
     }
