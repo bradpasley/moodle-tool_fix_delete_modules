@@ -149,19 +149,14 @@ class test_fix_course_delete_module_class_reporter_test extends test_fix_course_
                          get_string(outcome::MODULE_CONTEXTRECORD_DELETED, 'tool_fix_delete_modules'),
                          get_string(outcome::MODULE_COURSEMODULERECORD_DELETED, 'tool_fix_delete_modules'),
                          get_string(outcome::MODULE_COURSESECTION_NOT_DELETED, 'tool_fix_delete_modules'),
+                         get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules'),
+                         get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules'),
                          get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules')
         ];
         $messagesurl = $messagespage;
         array_unshift($messagesurl, get_string(outcome::MODULE_COURSEMODULE_NOTFOUND, 'tool_fix_delete_modules'));
 
         $messagesbook = [get_string(outcome::TASK_ADHOCRECORDABSENT_ADVICE, 'tool_fix_delete_modules')];
-
-        // Extra outcome messages for Moodle 3.7+.
-        if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
-            $successfulreschedule = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
-            array_splice($messagespage, (count($messagespage) - 1), 0, $successfulreschedule);
-            array_splice($messagesurl,  (count($messagesurl) - 1), 0, $successfulreschedule);
-        }
 
         $expectedoutcomemultitask = new outcome($deletemultitask, $messagesmulti);
         $expectedoutcomepage      = new outcome($deletepagetask,  $messagespage);

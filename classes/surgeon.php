@@ -327,22 +327,35 @@ class surgeon {
         }
 
         // Reset adhoc task to run asap.
+        $now = time();
         if ($thisadhoctask = $this->get_adhoctask_from_taskid($task->taskid)) {
             $thisadhoctask->set_fail_delay(0);
-            $thisadhoctask->set_next_run_time(time());
+            $thisadhoctask->set_next_run_time($now);
             // Function exists on Moodle 3.7+.
             if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
                 \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
             } else {
                 $this->reschedule_or_queue_adhoc_task($thisadhoctask);
             }
+            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
             try {
+                // Retrieve rescheduled task from queue.
+                $adhoctasks = $DB->get_records('task_adhoc');
+                while ($rescheduledadhoctask = \core\task\manager::get_next_adhoc_task($now + 60)) {
+                    if ($rescheduledadhoctask->get_id() === $thisadhoctask->get_id()) {
+                        break; // Found it!
+                    } else { // Delay this 'other' task.
+                        \core\task\manager::adhoc_task_failed($rescheduledadhoctask);
+                    }
+                }
+
+                // Execute the task.
                 $thisadhoctask->execute();
-                \core\task\manager::adhoc_task_complete($thisadhoctask);
-                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
+                \core\task\manager::adhoc_task_complete($rescheduledadhoctask);
+                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules');
             } catch (moodle_exception $e) {
                 \core\task\manager::adhoc_task_failed($thisadhoctask);
-                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');
+                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE_FAIL, 'tool_fix_delete_modules');
             }
         } else {
             $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');

@@ -53,9 +53,13 @@ class outcome {
     public const TASK_SEPARATE_OLDTASK_NOT_DELETED     = 'outcome_separate_old_task_delete_fail';
     /** @var TASK_ADHOCRECORDABSENT_ADVICE an outcome; when the task_adhoc record is missing.*/
     public const TASK_ADHOCRECORDABSENT_ADVICE         = 'outcome_adhoc_task_record_advice';
-    /** @var TASK_ADHOCTASK_RESCHEDULE describes an outcome for separating tasks.*/
+    /** @var TASK_ADHOCTASK_EXECUTE describes an outcome for re-executing an adhoc task.*/
+    public const TASK_ADHOCTASK_EXECUTE             = 'outcome_adhoc_task_record_rescheduled';
+    /** @var TASK_ADHOCTASK_EXECUTE_FAIL describes an outcome for re-executing an adhoc task.*/
+    public const TASK_ADHOCTASK_EXECUTE_FAIL        = 'outcome_adhoc_task_record_reschedule_fail';
+    /** @var TASK_ADHOCTASK_RESCHEDULE describes an outcome for rescheduling a task.*/
     public const TASK_ADHOCTASK_RESCHEDULE             = 'outcome_adhoc_task_record_rescheduled';
-    /** @var TASK_ADHOCTASK_RESCHEDULE_FAIL describes an outcome for separating tasks.*/
+    /** @var TASK_ADHOCTASK_RESCHEDULE_FAIL describes an outcome for rescheduling a task.*/
     public const TASK_ADHOCTASK_RESCHEDULE_FAIL        = 'outcome_adhoc_task_record_reschedule_fail';
     /** @var TASK_ADHOCTASK_RUN_CLI an outcome state for fixing tasks.*/
     public const TASK_ADHOCTASK_RUN_CLI                = 'outcome_task_run_cli';
