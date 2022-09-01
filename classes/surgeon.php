@@ -26,6 +26,7 @@
 
 namespace tool_fix_delete_modules;
 
+use moodle_exception;
 use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
@@ -325,17 +326,26 @@ class surgeon {
             rebuild_course_cache($cm->course, true);
         }
 
-        // Reset adhoc task to run asap. Works on Moodle 3.7+.
-        if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
-            if ($thisadhoctask = $this->get_adhoctask_from_taskid($task->taskid)) {
-                $thisadhoctask->set_fail_delay(0);
-                $thisadhoctask->set_next_run_time(time());
+        // Reset adhoc task to run asap.
+        if ($thisadhoctask = $this->get_adhoctask_from_taskid($task->taskid)) {
+            $thisadhoctask->set_fail_delay(0);
+            $thisadhoctask->set_next_run_time(time());
+            // Function exists on Moodle 3.7+.
+            if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
                 \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
-
-                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
             } else {
+                $this->reschedule_or_queue_adhoc_task($thisadhoctask);
+            }
+            try {
+                $thisadhoctask->execute();
+                \core\task\manager::adhoc_task_complete($thisadhoctask);
+                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
+            } catch (moodle_exception $e) {
+                \core\task\manager::adhoc_task_failed($thisadhoctask);
                 $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');
             }
+        } else {
+            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');
         }
         $outcomemessages[] = get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules');
 
@@ -394,6 +404,32 @@ class surgeon {
             return $thisadhoctask;
         } else {
             return false;
+        }
+    }
+
+    /**
+     * Schedule a new task, or reschedule an existing adhoc task which has matching data.
+     *
+     * Only a task matching the same user, classname, component, and customdata will be rescheduled.
+     * If these values do not match exactly then a new task is scheduled.
+     *
+     * Cherry-picked from Moodle 3.7+ version.
+     *
+     * @param \core\task\adhoc_task $task - The new adhoc task information to store.
+     * @return void
+     */
+    private static function reschedule_or_queue_adhoc_task(\core\task\adhoc_task $task) {
+        global $DB;
+
+        if ($existingrecord = $DB->get_record('adhoc_task', array('id' => $task->id, 'classname' => $task->classname))) {
+            // Only update the next run time if it is explicitly set on the task.
+            $nextruntime = $task->get_next_run_time();
+            if ($nextruntime && ($existingrecord->nextruntime != $nextruntime)) {
+                $DB->set_field('task_adhoc', 'nextruntime', $nextruntime, ['id' => $existingrecord->id]);
+            }
+        } else {
+            // There is nothing queued yet. Just queue as normal.
+            \core\task\manager::queue_adhoc_task($task);
         }
     }
 }
