@@ -26,6 +26,7 @@
 
 namespace tool_fix_delete_modules;
 
+use moodle_exception;
 use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
@@ -125,6 +126,8 @@ class surgeon {
         $multimoduletask = $diagnosis->get_task();
         $deletemodules   = $multimoduletask->get_deletemodules();
 
+        // Keep track of each task-module's cm data to check during re-execution.
+        $newtaskscms = array();
         // Create individual adhoc task for each module.
         foreach ($deletemodules as $cmid => $deletemodule) {
             // Get the course module.
@@ -155,6 +158,7 @@ class surgeon {
                 'userid' => $mainadminid,    // Set user to main admin.
                 'realuserid' => $mainadminid // Set user to main admin.
             ));
+            $newtaskscms[] = $newdeletetask->get_custom_data();
 
             // Queue the task for the next run.
             \core\task\manager::queue_adhoc_task($newdeletetask);
@@ -164,13 +168,16 @@ class surgeon {
         // Remove old task.
         if ($DB->delete_records('task_adhoc', array('id' => $multimoduletask->taskid))) {
             $outcomemessages[] = get_string(outcome::TASK_SEPARATE_OLDTASK_DELETED, 'tool_fix_delete_modules');
-            $outcomemessages[] = get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules');
-            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RUN_CLI, 'tool_fix_delete_modules');
         } else {
             $outcomemessages[] = get_string(outcome::TASK_SEPARATE_OLDTASK_NOT_DELETED, 'tool_fix_delete_modules');
             $outcomemessages[] = get_string(outcome::TASK_FAIL, 'tool_fix_delete_modules');
-            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RUN_CLI, 'tool_fix_delete_modules');
         }
+
+        // Execute the new course_detele_module adhoc tasks now.
+        $executionoutcomes = $this->execute_course_delete_module_tasks($newtaskscms);
+        $outcomemessages = array_merge($outcomemessages, $executionoutcomes);
+        $outcomemessages[] = get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules');
+
         return $outcomemessages;
     }
 
@@ -325,17 +332,40 @@ class surgeon {
             rebuild_course_cache($cm->course, true);
         }
 
-        // Reset adhoc task to run asap. Works on Moodle 3.7+.
-        if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
-            if ($thisadhoctask = $this->get_adhoctask_from_taskid($task->taskid)) {
-                $thisadhoctask->set_fail_delay(0);
-                $thisadhoctask->set_next_run_time(time());
+        // Reset adhoc task to run asap.
+        $now = time();
+        if ($thisadhoctask = $this->get_adhoctask_from_taskid($task->taskid)) {
+            $thisadhoctask->set_fail_delay(0);
+            $thisadhoctask->set_next_run_time($now);
+            // Function exists on Moodle 3.7+.
+            if (method_exists('\core\task\manager', 'reschedule_or_queue_adhoc_task')) {
                 \core\task\manager::reschedule_or_queue_adhoc_task($thisadhoctask);
-
-                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
             } else {
-                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');
+                $this->reschedule_or_queue_adhoc_task($thisadhoctask);
             }
+            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
+            try {
+                // Retrieve rescheduled task from queue.
+                $adhoctasks = $DB->get_records('task_adhoc');
+                while ($rescheduledadhoctask = \core\task\manager::get_next_adhoc_task($now + 60)) {
+                    if ($rescheduledadhoctask->get_id() === $thisadhoctask->get_id()) {
+                        break; // Found it!
+                    } else { // Delay this 'other' task.
+                        \core\task\manager::adhoc_task_failed($rescheduledadhoctask);
+                    }
+                }
+
+                // Execute the task.
+                $thisadhoctask->execute();
+                \core\task\manager::adhoc_task_complete($rescheduledadhoctask);
+                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules');
+            } catch (moodle_exception $e) {
+                \core\task\manager::adhoc_task_failed($thisadhoctask);
+                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE_FAIL, 'tool_fix_delete_modules');
+            }
+        } else {
+            $dbtasks = $DB->get_records('task_adhoc');
+            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');
         }
         $outcomemessages[] = get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules');
 
@@ -395,5 +425,70 @@ class surgeon {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Schedule a new task, or reschedule an existing adhoc task which has matching data.
+     *
+     * Only a task matching the same user, classname, component, and customdata will be rescheduled.
+     * If these values do not match exactly then a new task is scheduled.
+     *
+     * Adapted from Moodle 3.7+ version function.
+     *
+     * @param \core\task\adhoc_task $task - The new adhoc task information to store.
+     * @return void
+     */
+    private static function reschedule_or_queue_adhoc_task(\core\task\adhoc_task $task) {
+        global $DB;
+
+        $alldeletemoduletasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+
+        // Check that the task exists in the database and that it is a course_delete_module adhoc task.
+        if (($existingrecord = $DB->get_record('task_adhoc', array('id' => $task->get_id())))
+            && in_array($task->get_id(), array_keys($alldeletemoduletasks))) {
+            // Only update the next run time if it is explicitly set on the task.
+            $nextruntime = $task->get_next_run_time();
+            if ($nextruntime && ($existingrecord->nextruntime != $nextruntime)) {
+                $DB->set_field('task_adhoc', 'nextruntime', $nextruntime, ['id' => $existingrecord->id]);
+            }
+        } else {
+            // There is nothing queued yet. Just queue as normal.
+            \core\task\manager::queue_adhoc_task($task);
+        }
+    }
+
+    /**
+     * Run course_delete_module tasks asap.
+     *
+     * Used after multi-module course_delete_module tasks have been split into separate, individualised tasks.
+     *
+     * @param stdClass[] $newtaskscms array of the custom_data objects to ensure only the newly made adhoctasks are executed.
+     *
+     * @return string[] - returns the outcome messages of each execution (either successful or failed).
+     */
+    private static function execute_course_delete_module_tasks(array $newtaskscms) {
+        global $DB;
+
+        $executionoutcomes = array();
+
+        $alldeletemoduletasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+        $now = time();
+        while ($nextadhoctask = \core\task\manager::get_next_adhoc_task($now + 60)) {
+            // Only run newly made course_delete_module adhoc tasks; delay others.
+            if (in_array($nextadhoctask->get_id(), array_keys($alldeletemoduletasks)) &&
+                in_array($nextadhoctask->get_custom_data(), $newtaskscms)) {
+                try { // Some of these will pass, some will fail.
+                    $nextadhoctask->execute();
+                    \core\task\manager::adhoc_task_complete($nextadhoctask);
+                    $executionoutcomes[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules');
+                } catch (moodle_exception $e) {
+                    \core\task\manager::adhoc_task_failed($nextadhoctask);
+                    $executionoutcomes[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE_FAIL, 'tool_fix_delete_modules');
+                }
+            } else { // Delay other tasks.
+                \core\task\manager::adhoc_task_failed($nextadhoctask);
+            }
+        }
+        return $executionoutcomes;
     }
 }

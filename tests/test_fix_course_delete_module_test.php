@@ -36,48 +36,48 @@ require_once(__DIR__ . "/../classes/deletetasklist.php");
  */
 class test_fix_course_delete_module_test extends \advanced_testcase {
 
-    /** @var user moodle user object*/
+    /** @var $user moodle user object*/
     public $user;
-    /** @var course moodle course object*/
+    /** @var $course moodle course object*/
     public $course;
-    /** @var page moodle module object*/
+    /** @var $page moodle module object*/
     public $page;
-    /** @var pagecm moodle course module object*/
+    /** @var $pagecm moodle course module object*/
     public $pagecm;
     /** @var int course module contextid*/
     public $pagecontextid;
-    /** @var url moodle module object*/
+    /** @var $url moodle module object*/
     public $url;
-    /** @var urlcm moodle course module object*/
+    /** @var $urlcm moodle course module object*/
     public $urlcm;
     /** @var int course module contextid*/
     public $urlcontextid;
-    /** @var book moodle module object*/
+    /** @var $book moodle module object*/
     public $book;
-    /** @var bookcm moodle course module object*/
+    /** @var $bookcm moodle course module object*/
     public $bookcm;
     /** @var int course module contextid*/
     public $bookcontextid;
-    /** @var assign moodle module object*/
+    /** @var $assign moodle module object*/
     public $assign;
-    /** @var assigncm moodle course module object*/
+    /** @var $assigncm moodle course module object*/
     public $assigncm;
     /** @var int course module contextid*/
     public $assigncontextid;
-    /** @var quiz moodle module object*/
+    /** @var $quiz moodle module object*/
     public $quiz;
     /** @var quizcm moodle course module object*/
     public $quizcm;
     /** @var int course module contextid*/
     public $quizcontextid;
-    /** @var removaltaskassign adhoc_task object */
+    /** @var adhoc_task object */
     public $removaltaskassign;
-    /** @var removaltaskmulti adhoc_task object */
-    public $removaltaskmulti;
-    /** @var removaltaskpage adhoc_task object */
-    public $removaltaskpage;
-    /** @var removaltaskurl adhoc_task object */
-    public $removaltaskurl;
+    /** @var adhoc_task object */
+    public $rmovaltaskmulti;
+    /** @var adhoc_task object */
+    public $rmovaltaskpage;
+    /** @var adhoc_task object */
+    public $rmovaltaskurl;
 
     /**
      * Setup test.
