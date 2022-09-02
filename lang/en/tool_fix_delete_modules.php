@@ -83,7 +83,6 @@ $string[outcome::TASK_ADHOCTASK_EXECUTE]                = 'Adhoc Task was succes
 $string[outcome::TASK_ADHOCTASK_EXECUTE_FAIL]           = 'Adhoc Task re-execution Failed to complete';
 $string[outcome::TASK_ADHOCTASK_RESCHEDULE]             = 'Individual Module Adhoc Task(s) was successfully rescheduled';
 $string[outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL]        = 'Individual Module Adhoc Task(s) was NOT successfully rescheduled';
-$string[outcome::TASK_ADHOCTASK_RUN_CLI]                = 'Please run the CLI adhoc_task script or wait for the task to be run via the cron';
 $string[outcome::TASK_SUCCESS]                          = 'Adhoc Task Separation was Successful';
 $string[outcome::TASK_FAIL]                             = 'Adhoc Task Separation Failed';
 $string[outcome::MODULE_MODULERECORD_DELETED]           = 'The related module table record was successfully deleted';

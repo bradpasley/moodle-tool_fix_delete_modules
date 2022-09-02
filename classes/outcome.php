@@ -61,8 +61,6 @@ class outcome {
     public const TASK_ADHOCTASK_RESCHEDULE             = 'outcome_adhoc_task_record_rescheduled';
     /** @var TASK_ADHOCTASK_RESCHEDULE_FAIL describes an outcome for rescheduling a task.*/
     public const TASK_ADHOCTASK_RESCHEDULE_FAIL        = 'outcome_adhoc_task_record_reschedule_fail';
-    /** @var TASK_ADHOCTASK_RUN_CLI an outcome state for fixing tasks.*/
-    public const TASK_ADHOCTASK_RUN_CLI                = 'outcome_task_run_cli';
     /** @var TASK_SUCCESS an outcome state for fixing tasks.*/
     public const TASK_SUCCESS                          = 'outcome_task_fix_successful';
     /** @var TASK_FAIL an outcome state for fixing tasks.*/

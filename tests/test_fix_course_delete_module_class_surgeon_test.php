@@ -138,8 +138,9 @@ class test_fix_course_delete_module_class_surgeon_test extends test_fix_course_d
         $messagesmulti = [get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
                           get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
                           get_string(outcome::TASK_SEPARATE_OLDTASK_DELETED, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_ADHOCTASK_RUN_CLI, 'tool_fix_delete_modules')
+                          get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules'),
+                          get_string(outcome::TASK_ADHOCTASK_EXECUTE_FAIL, 'tool_fix_delete_modules'),
+                          get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules')
         ];
         $messagespage = [get_string(outcome::MODULE_FILERECORD_DELETED, 'tool_fix_delete_modules'),
                          get_string(outcome::MODULE_BLOGRECORD_DELETED, 'tool_fix_delete_modules'),
