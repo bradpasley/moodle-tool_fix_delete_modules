@@ -139,8 +139,6 @@ class test_fix_course_delete_module_class_surgeon_test extends test_fix_course_d
         $messagesmulti = [get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
                           get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
                           get_string('outcome_separate_old_task_deleted', 'tool_fix_delete_modules'),
-                          get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules'),
-                          get_string('outcome_adhoc_task_record_reexecution_failed', 'tool_fix_delete_modules'),
                           get_string('outcome_task_fix_successful', 'tool_fix_delete_modules')
         ];
         $messagespage = [get_string('outcome_file_table_record_deleted', 'tool_fix_delete_modules'),
@@ -152,7 +150,6 @@ class test_fix_course_delete_module_class_surgeon_test extends test_fix_course_d
                          get_string('outcome_course_module_table_record_deleted', 'tool_fix_delete_modules'),
                          get_string('outcome_course_section_data_delete_fail', 'tool_fix_delete_modules'),
                          get_string('outcome_adhoc_task_record_rescheduled', 'tool_fix_delete_modules'),
-                         get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules'),
                          get_string('outcome_module_fix_successful', 'tool_fix_delete_modules')
         ];
         $messagesurl = $messagespage;
@@ -200,14 +197,14 @@ class test_fix_course_delete_module_class_surgeon_test extends test_fix_course_d
         surgeon::reschedule_or_queue_adhoc_task($task);
         // None added.
         $this->assertEquals($precountwrongtask,
-                            count(\core\task\manager::get_adhoc_tasks('\core\task\adhoc_test_task')));
+                            count(\core\task\manager::get_adhoc_tasks('\tool_monitor\notification_task')));
         $this->assertEquals($precountrighttask,
                             count(\core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules')));
 
         // Schedule right type of adhoc task.
         surgeon::reschedule_or_queue_adhoc_task($this->removaltaskassign);
         $this->assertEquals($precountwrongtask,
-                            count(\core\task\manager::get_adhoc_tasks('\core\task\adhoc_test_task')));
+                            count(\core\task\manager::get_adhoc_tasks('\tool_monitor\notification_task')));
         $this->assertEquals($precountrighttask + 1,
                             count(\core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules')));
     }
@@ -324,5 +321,45 @@ class test_fix_course_delete_module_class_surgeon_test extends test_fix_course_d
         $firsttask = reset($tasks);
         $this->assertEquals($newruntime, $firsttask->get_next_run_time());
     }
+
+    /**
+     * Ensure that the reschedule_or_queue_adhoc_task function will update the run time if there are planned changes.
+     * @covers ::reschedule_or_queue_adhoc_task
+     */
+    public function test_reschedule_or_queue_adhoc_task_next_runtime_updated() {
+        $this->resetAfterTest(true);
+        $initialruntime = time();
+
+        // Schedule adhoc task.
+        $task = $this->removaltaskassign;
+        $task->set_next_run_time($initialruntime);
+        \core\task\manager::queue_adhoc_task($task);
+        $before = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+
+        // Run and fail the task.
+        $task = \core\task\manager::get_next_adhoc_task($initialruntime + 60);
+        $task->execute();
+        \core\task\manager::adhoc_task_failed($task);
+
+        // Schedule the task again.
+        $tasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+        $this->assertEquals(1, count($tasks));
+        $originalnextrun = intval(current($tasks)->get_next_run_time());
+        $newnextruntime = $originalnextrun + 60;
+
+        $this->assertTrue($initialruntime < $originalnextrun);
+        $this->assertTrue($originalnextrun < $newnextruntime);
+
+        $task->set_next_run_time($newnextruntime);
+        surgeon::reschedule_or_queue_adhoc_task($task);
+        $tasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+        $this->assertEquals(1, count($tasks));
+        $this->assertTrue($initialruntime < current($tasks)->get_next_run_time());
+        $this->assertTrue($originalnextrun < current($tasks)->get_next_run_time());
+        $this->assertNotEquals($before, $tasks);
+        $firsttask = reset($tasks);
+        $this->assertEquals($newnextruntime, $firsttask->get_next_run_time());
+    }
+
 
 }
