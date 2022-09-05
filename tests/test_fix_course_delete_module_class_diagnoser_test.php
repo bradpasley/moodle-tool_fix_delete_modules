@@ -127,16 +127,16 @@ class test_fix_course_delete_module_class_diagnoser_test extends test_fix_course
         $diagnoserbooktask  = new diagnoser($deletebooktask);
 
         $expectedsymptomspage  = [(string) $this->page->cmid =>
-                                  [get_string(diagnosis::MODULE_MODULERECORDMISSING, 'tool_fix_delete_modules')]];
+                                  [get_string('symptom_module_table_record_missing', 'tool_fix_delete_modules')]];
         $expectedsymptomsurl   = [(string) $this->url->cmid =>
-                                  [get_string(diagnosis::MODULE_MODULERECORDMISSING, 'tool_fix_delete_modules'),
-                                   get_string(diagnosis::MODULE_COURSEMODULERECORDMISSING, 'tool_fix_delete_modules')
+                                  [get_string('symptom_module_table_record_missing', 'tool_fix_delete_modules'),
+                                   get_string('symptom_course_module_table_record_missing', 'tool_fix_delete_modules')
                                   ]
         ];
-        $expectedsymptomsmulti = [get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules') =>
-                                  [get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules')]];
-        $expectedsymptomsbook  = [get_string(diagnosis::TASK_ADHOCRECORDMISSING, 'tool_fix_delete_modules') =>
-                                  [get_string(diagnosis::TASK_ADHOCRECORDMISSING, 'tool_fix_delete_modules')]];
+        $expectedsymptomsmulti = [get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules') =>
+                                  [get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules')]];
+        $expectedsymptomsbook  = [get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules') =>
+                                  [get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules')]];
 
         $expecteddiagnosispagetask  = new diagnosis($deletepagetask, $expectedsymptomspage);
         $expecteddiagnosisurltask   = new diagnosis($deleteurltask, $expectedsymptomsurl);
@@ -163,10 +163,10 @@ class test_fix_course_delete_module_class_diagnoser_test extends test_fix_course
         $DB->delete_records('task_adhoc', array('id' => $deletemultitask->taskid));
         $this->assertFalse($DB->record_exists('task_adhoc', array('id' => $deletemultitask->taskid)));
         $diagnosermultitask = new diagnoser($deletemultitask);
-        $expectedsymptomsmulti = [get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules') =>
-                                  [get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules')],
-                                  get_string(diagnosis::TASK_ADHOCRECORDMISSING, 'tool_fix_delete_modules') =>
-                                  [get_string(diagnosis::TASK_ADHOCRECORDMISSING, 'tool_fix_delete_modules')]
+        $expectedsymptomsmulti = [get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules') =>
+                                  [get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules')],
+                                  get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules') =>
+                                  [get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules')]
         ];
         $expecteddiagnosismultitask = new diagnosis($deletemultitask, $expectedsymptomsmulti);
         $this->assertTrue($deletemultitask->is_multi_module_task());

@@ -16,7 +16,7 @@
 
 namespace tool_fix_delete_modules;
 
-use adhoc_task;
+use core\task\adhoc_task;
 
 defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . "/../classes/diagnosis.php");

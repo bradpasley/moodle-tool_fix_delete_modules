@@ -67,7 +67,7 @@ class reporter {
     }
 
     /**
-     * get_tables_report() - Get a summary of the related tables for course_delete_module tasks in rendered text.
+     * Get a summary of the related tables for course_delete_module tasks in rendered text.
      *
      * @return string
      */
@@ -100,7 +100,7 @@ class reporter {
     }
 
     /**
-     * get_diagnosis() - Get the diagnosis of all course_delete_module tasks in either HTML or plain text format.
+     * Get the diagnosis of all course_delete_module tasks in either HTML or plain text format.
      *
      * @return string
      */
@@ -130,7 +130,7 @@ class reporter {
     }
 
     /**
-     * get_diagnosis_data() - Helper function for get_diagnosis(); gets the diagnosis object returned from diagnoser.
+     * Helper function for get_diagnosis(); gets the diagnosis object returned from diagnoser.
      *
      * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
@@ -150,7 +150,7 @@ class reporter {
     }
 
     /**
-     * fix_tasks() - Make fix(s) on course_delete_module task(s) and return rendered outcomes
+     * Make fix(s) on course_delete_module task(s) and return rendered outcomes
      *
      * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
@@ -176,7 +176,7 @@ class reporter {
     }
 
     /**
-     * get_fix_results() - Helper function for fix_tasks(). Returns an array of outcome objects from the surgeon object.
+     * Helper function for fix_tasks(). Returns an array of outcome objects from the surgeon object.
      *
      * @param int[] $taskids - optional array of ints (task id(s) to be fixed); empty array means no filter.
      *
@@ -193,7 +193,7 @@ class reporter {
     }
 
     /**
-     * get_adhoctasktable() - Helper function for get_tables_report; returns summary of task_adhoc table.
+     * Helper function for get_tables_report; returns summary of task_adhoc table.
      *
      * @param delete_task $deletetask
      * @return string
@@ -220,7 +220,7 @@ class reporter {
     }
 
     /**
-     * get_coursemodulestable() - Helper function for get_tables_report; returns summary of course_modules table.
+     * Helper function for get_tables_report; returns summary of course_modules table.
      *
      * @param delete_task $deletetask
      * @return string
@@ -246,7 +246,7 @@ class reporter {
     }
 
     /**
-     * get_moduletable() - Helper function for get_tables_report; returns summary of related module table.
+     * Helper function for get_tables_report; returns summary of related module table.
      *
      * @param delete_task $deletetask
      * @return string
@@ -278,7 +278,7 @@ class reporter {
     }
 
     /**
-     * get_contexttable() - Helper function for get_tables_report; returns summary of context table.
+     * Helper function for get_tables_report; returns summary of context table.
      *
      * @param delete_task $deletetask
      * @return string
@@ -304,7 +304,7 @@ class reporter {
     }
 
     /**
-     * get_filetable() - Helper function for get_tables_report; returns summary of file table (only for singular module tasks).
+     * Helper function for get_tables_report; returns summary of file table (only for singular module tasks).
      *
      * @param delete_task $deletetask
      * @return string
@@ -373,7 +373,7 @@ class reporter {
     }
 
     /**
-     * get_gradestable() - Helper function for get_tables_report; returns summary of grades tables (only for singular module tasks).
+     * Helper function for get_tables_report; returns summary of grades tables (only for singular module tasks).
      *
      * @param delete_task $deletetask
      * @return string
@@ -412,7 +412,7 @@ class reporter {
     }
 
     /**
-     * get_recyclebintable() - Helper function for get_tables_report; returns summary of tool_recyclebin_course table.
+     * Helper function for get_tables_report; returns summary of tool_recyclebin_course table.
      *
      * @param delete_task $deletetask
      * @return string
@@ -440,7 +440,7 @@ class reporter {
     }
 
     /**
-     * get_word_task_module_string() - formulate a string which includes a word, taskid and module ids.
+     * Formulate a string which includes a word, taskid and module ids.
      *
      * @param string $titlehead
      * @param delete_task $task
@@ -510,7 +510,7 @@ class reporter {
     }
 
     /**
-     * get_texttable()
+     * Returns a text table with a heading row, followed by data rows.
      *
      * @param array $arraytable
      * @param string[] $headings - array of table headings (optional) - empty array is ignored.
@@ -541,7 +541,7 @@ class reporter {
     }
 
     /**
-     * get_texttable_vertical()
+     * Returns a table in cli text format, with vertical heading column/data columns.
      *
      * @param array $records
      * @return string
@@ -561,7 +561,7 @@ class reporter {
     }
 
     /**
-     * get_htmltable() - returns html table from an array of records (first row is heading).
+     * Returns html table from an array of records (first row is heading).
      *
      * @param array $records - records of table
      * @param string[] $headings - array of table headings (optional) - empty array is ignored.
@@ -597,7 +597,7 @@ class reporter {
     }
 
     /**
-     * get_htmltable_vertical() - returns a 2 column html table; first column heading, second column value.
+     * Returns a 2 column html table; first column heading, second column value.
      *
      * @param  array $records - records of table
      * @param  array $columntitles - column titles
@@ -622,7 +622,7 @@ class reporter {
     }
 
     /**
-     * get_fix_button() - returns an HTML rendered form/button if 'symptoms' can be acted on.
+     * Returns an HTML rendered form/button if 'symptoms' can be acted on.
      *
      * @param diagnosis $diagnosis - The diagnosis object which contains details of what should be displayed on the fix button.
      * @return string
@@ -685,7 +685,7 @@ class reporter {
     }
 
     /**
-     * format_message() - returns a string, either HTML or plain text depending on the $this->ishtmloutput attribute.
+     * Returns a string, either HTML or plain text depending on the $this->ishtmloutput attribute.
      *
      * @param array $data - an array, including 'title', table data, etc.
      * @param string $templatename - the name for the HTML template used (also used to distinguish types of messages).
@@ -701,7 +701,7 @@ class reporter {
             case 'task_diagnosis':
                 $heading = array();
                 if (empty($data['symptoms'])) {
-                    $data['symptoms'] = array(get_string(diagnosis::GOOD, 'tool_fix_delete_modules'));
+                    $data['symptoms'] = array(get_string('symptom_good_no_issues', 'tool_fix_delete_modules'));
                 } else {
                     $heading = [get_string('symptoms', 'tool_fix_delete_modules')];
                 }

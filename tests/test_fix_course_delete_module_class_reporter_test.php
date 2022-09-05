@@ -134,30 +134,30 @@ class test_fix_course_delete_module_class_reporter_test extends test_fix_course_
         $surgeonbooktask  = new surgeon($diagnoserbooktask->get_diagnosis());
 
         // Expected outcome messages.
-        $messagesmulti = [get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SEPARATE_OLDTASK_DELETED, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_ADHOCTASK_EXECUTE_FAIL, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules')
+        $messagesmulti = [get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
+                          get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
+                          get_string('outcome_separate_old_task_deleted', 'tool_fix_delete_modules'),
+                          get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules'),
+                          get_string('outcome_adhoc_task_record_reexecution_failed', 'tool_fix_delete_modules'),
+                          get_string('outcome_task_fix_successful', 'tool_fix_delete_modules')
         ];
 
-        $messagespage = [get_string(outcome::MODULE_FILERECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_BLOGRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COMPLETIONRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COMPLETIONCRITERIA_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_TAGRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_CONTEXTRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COURSEMODULERECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COURSESECTION_NOT_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules'),
-                         get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules')
+        $messagespage = [get_string('outcome_file_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_blog_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_completion_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_completion_criteria_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_tag_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_context_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_course_module_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_course_section_data_delete_fail', 'tool_fix_delete_modules'),
+                         get_string('outcome_adhoc_task_record_rescheduled', 'tool_fix_delete_modules'),
+                         get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules'),
+                         get_string('outcome_module_fix_successful', 'tool_fix_delete_modules')
         ];
         $messagesurl = $messagespage;
-        array_unshift($messagesurl, get_string(outcome::MODULE_COURSEMODULE_NOTFOUND, 'tool_fix_delete_modules'));
+        array_unshift($messagesurl, get_string('outcome_course_module_table_record_not_found', 'tool_fix_delete_modules'));
 
-        $messagesbook = [get_string(outcome::TASK_ADHOCRECORDABSENT_ADVICE, 'tool_fix_delete_modules')];
+        $messagesbook = [get_string('outcome_adhoc_task_record_advice', 'tool_fix_delete_modules')];
 
         $expectedoutcomemultitask = new outcome($deletemultitask, $messagesmulti);
         $expectedoutcomepage      = new outcome($deletepagetask,  $messagespage);

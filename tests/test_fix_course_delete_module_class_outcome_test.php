@@ -102,22 +102,22 @@ class test_fix_course_delete_module_class_outcome_test extends test_fix_course_d
         $this->assertCount(2, $dbtasks);
 
         // Test creating a diagnosis object.
-        $messagespage = [get_string(outcome::MODULE_MODULERECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COURSEMODULERECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COURSESECTION_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_CONTEXTRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_FILERECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_GRADEITEMRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_BLOGRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COMPLETIONRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_COMPLETIONCRITERIA_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_TAGRECORD_DELETED, 'tool_fix_delete_modules'),
-                         get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules')
+        $messagespage = [get_string('outcome_module_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_course_module_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_course_section_data_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_context_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_file_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_grade_tables_records_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_blog_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_completion_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_completion_criteria_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_tag_table_record_deleted', 'tool_fix_delete_modules'),
+                         get_string('outcome_module_fix_successful', 'tool_fix_delete_modules')
         ];
 
-        $messagesmulti = [get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules'),
-                          get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules')
+        $messagesmulti = [get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
+                          get_string('outcome_adhoc_task_record_rescheduled', 'tool_fix_delete_modules'),
+                          get_string('outcome_task_fix_successful', 'tool_fix_delete_modules')
         ];
 
         $outcomepage      = new outcome($deletepagetask, $messagespage);

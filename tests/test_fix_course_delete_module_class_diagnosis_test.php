@@ -177,15 +177,15 @@ class test_fix_course_delete_module_class_diagnosis_test extends test_fix_course
 
         // Build symptoms.
         $pagesymptoms = array((string) $this->page->cmid =>
-                              [get_string(diagnosis::MODULE_MODULERECORDMISSING, 'tool_fix_delete_modules')]);
+                              [get_string('symptom_module_table_record_missing', 'tool_fix_delete_modules')]);
 
         $urlsymptoms  = array((string) $this->url->cmid =>
-                              [get_string(diagnosis::MODULE_MODULERECORDMISSING, 'tool_fix_delete_modules'),
-                               get_string(diagnosis::MODULE_COURSEMODULERECORDMISSING, 'tool_fix_delete_modules')
+                              [get_string('symptom_module_table_record_missing', 'tool_fix_delete_modules'),
+                               get_string('symptom_course_module_table_record_missing', 'tool_fix_delete_modules')
                               ]
                              );
-        $multimodulesymptoms = array(get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules') =>
-                                     get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules'));
+        $multimodulesymptoms = array(get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules') =>
+                                     get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules'));
 
         // Test creating a diagnosis object.
         $diagnosispagetask  = new diagnosis($deletepagetask, $pagesymptoms);
@@ -202,7 +202,7 @@ class test_fix_course_delete_module_class_diagnosis_test extends test_fix_course
 
         // Check multi-module deletion task.
         $this->assertTrue($diagnosismultitask->is_multi_module_task());
-        $this->assertEquals(get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules'),
+        $this->assertEquals(get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules'),
                             current($diagnosismultitask->get_symptoms()));
 
         if ($exceptionthrown145 && $exceptionthrown145) {

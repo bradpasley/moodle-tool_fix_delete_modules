@@ -69,7 +69,7 @@ class surgeon {
     }
 
     /**
-     * get_diagnosis() - Get the diagnosis object.
+     * Get the diagnosis attribute.
      *
      * @return diagnosis
      */
@@ -78,7 +78,7 @@ class surgeon {
     }
 
     /**
-     * get_outcome() - Get the outcome object.
+     * Get the outcome attribute.
      *
      * @return outcome
      */
@@ -87,7 +87,7 @@ class surgeon {
     }
 
     /**
-     * fix() - returns an array of outcome strings.
+     * Returns an array of outcome strings, after the diagnosed problems are fixed.
      *
      * @param diagnosis $diagnosis - the diagnosis of a course_delete_module task.
      *
@@ -100,10 +100,10 @@ class surgeon {
         // Deal with task issues first.
 
         // If there the adhoc task is absent, advise adhoc_task cli command to be run.
-        if (in_array(get_string(diagnosis::TASK_ADHOCRECORDMISSING, 'tool_fix_delete_modules'),
+        if (in_array(get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules'),
                      array_keys($symptoms))) {
-            $outcomemessages[] = get_string(outcome::TASK_ADHOCRECORDABSENT_ADVICE, 'tool_fix_delete_modules');
-        } else if (in_array(get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules'),
+            $outcomemessages[] = get_string('outcome_adhoc_task_record_advice', 'tool_fix_delete_modules');
+        } else if (in_array(get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules'),
                             array_keys($symptoms))) {
             // If there the adhoc task is a multi-module task, split it into many tasks.
             $outcomemessages = $this->separate_multitask_into_moduletasks($diagnosis);
@@ -114,7 +114,7 @@ class surgeon {
     }
 
     /**
-     * separate_multitask_into_moduletasks() - creates a course_delete_module task for each module & deletes original task.
+     * Creates a course_delete_module task for each module & deletes original task.
      *
      * @param diagnosis $diagnosis
      *
@@ -162,27 +162,27 @@ class surgeon {
 
             // Queue the task for the next run.
             \core\task\manager::queue_adhoc_task($newdeletetask);
-            $outcomemessages[] = get_string(outcome::TASK_SEPARATE_TASK_MADE, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules');
         }
 
         // Remove old task.
         if ($DB->delete_records('task_adhoc', array('id' => $multimoduletask->taskid))) {
-            $outcomemessages[] = get_string(outcome::TASK_SEPARATE_OLDTASK_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_separate_old_task_deleted', 'tool_fix_delete_modules');
         } else {
-            $outcomemessages[] = get_string(outcome::TASK_SEPARATE_OLDTASK_NOT_DELETED, 'tool_fix_delete_modules');
-            $outcomemessages[] = get_string(outcome::TASK_FAIL, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_separate_old_task_delete_fail', 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_task_fix_fail', 'tool_fix_delete_modules');
         }
 
         // Execute the new course_detele_module adhoc tasks now.
         $executionoutcomes = $this->execute_course_delete_module_tasks($newtaskscms);
         $outcomemessages = array_merge($outcomemessages, $executionoutcomes);
-        $outcomemessages[] = get_string(outcome::TASK_SUCCESS, 'tool_fix_delete_modules');
+        $outcomemessages[] = get_string('outcome_task_fix_successful', 'tool_fix_delete_modules');
 
         return $outcomemessages;
     }
 
     /**
-     * delete_module_cleanly() - deletes all remnant data related to a failed course_delete_module task.
+     * Deletes all remnant data related to a failed course_delete_module task.
      *
      * @param diagnosis $diagnosis
      *
@@ -195,22 +195,22 @@ class surgeon {
         $task = $diagnosis->get_task();
         if ($task->is_multi_module_task()) {
             // Should not have been passed to here, but just in case!
-            $outputmessages[] = get_string(diagnosis::TASK_MULTIMODULE, 'tool_fix_delete_modules');
-            $outputmessages[] = get_string(outcome::MODULE_FAIL, 'tool_fix_delete_modules');
+            $outputmessages[] = get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules');
+            $outputmessages[] = get_string('outcome_module_fix_fail', 'tool_fix_delete_modules');
             return new outcome($task, $outputmessages);
         }
         // Take first module; there should only be one anyway!
         $deletemodule = current($task->get_deletemodules());
 
         if (is_null($deletemodule->coursemoduleid)) {
-            $outputmessages[] = get_string(outcome::MODULE_COURSEMODULEID_NOTFOUND, 'tool_fix_delete_modules');
-            $outputmessages[] = get_string(outcome::MODULE_FAIL, 'tool_fix_delete_modules');
+            $outputmessages[] = get_string('outcome_course_module_id_not_found', 'tool_fix_delete_modules');
+            $outputmessages[] = get_string('outcome_module_fix_fail', 'tool_fix_delete_modules');
             return new outcome($task, $outputmessages);
         }
 
         // Get the course module.
         if (!$cm = $DB->get_record('course_modules', array('id' => $deletemodule->coursemoduleid))) {
-            $outcomemessages[] = get_string(outcome::MODULE_COURSEMODULE_NOTFOUND, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_course_module_table_record_not_found', 'tool_fix_delete_modules');
             $cm = new stdClass();
             $cm->id = $deletemodule->coursemoduleid;
             $cm->course = $deletemodule->courseid;
@@ -221,7 +221,7 @@ class surgeon {
         try {
             $modcontext = \context_module::instance($deletemodule->coursemoduleid);
         } catch (\dml_missing_record_exception $e) {
-            $outputmessages[] = get_string(outcome::MODULE_CONTEXTID_NOTFOUND, 'tool_fix_delete_modules');
+            $outputmessages[] = get_string('outcome_context_id_not_found', 'tool_fix_delete_modules');
             $modcontext = false;
         }
 
@@ -232,7 +232,7 @@ class surgeon {
         if ($modcontext) {
             $fs = get_file_storage();
             $fs->delete_area_files($modcontext->id);
-            $outcomemessages[] = get_string(outcome::MODULE_FILERECORD_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_file_table_record_deleted', 'tool_fix_delete_modules');
         }
 
         // Delete events from calendar.
@@ -243,7 +243,7 @@ class surgeon {
                 $event->context = $coursecontext;
                 $calendarevent = \calendar_event::load($event);
                 $calendarevent->delete();
-                $outcomemessages[] = get_string(outcome::MODULE_CALENDAREVENT_DELETED, 'tool_fix_delete_modules');
+                $outcomemessages[] = get_string('outcome_calendar_event_deleted', 'tool_fix_delete_modules');
             }
         }
 
@@ -256,14 +256,14 @@ class surgeon {
                                                           'courseid' => $cm->course))) {
             foreach ($gradeitems as $gradeitem) {
                 $gradeitem->delete('moddelete');
-                $outcomemessages[] = get_string(outcome::MODULE_GRADEITEMRECORD_DELETED, 'tool_fix_delete_modules');
+                $outcomemessages[] = get_string('outcome_grade_tables_records_deleted', 'tool_fix_delete_modules');
             }
         }
 
         // Delete associated blogs and blog tag instances.
         if ($modcontext) {
             blog_remove_associations_for_module($modcontext->id);
-            $outcomemessages[] = get_string(outcome::MODULE_BLOGRECORD_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_blog_table_record_deleted', 'tool_fix_delete_modules');
         }
 
         // Delete completion and availability data; it is better to do this even if the
@@ -271,13 +271,13 @@ class surgeon {
         // very quick on an empty table).
         if ($modcontext) {
             if ($DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id))) {
-                $outcomemessages[] = get_string(outcome::MODULE_COMPLETIONRECORD_DELETED, 'tool_fix_delete_modules');
+                $outcomemessages[] = get_string('outcome_completion_table_record_deleted', 'tool_fix_delete_modules');
             }
             if ($DB->delete_records('course_completion_criteria',
                                     array('moduleinstance' => $cm->id,
                                           'course' => $cm->course,
                                           'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY))) {
-                $outcomemessages[] = get_string(outcome::MODULE_COMPLETIONCRITERIA_DELETED, 'tool_fix_delete_modules');
+                $outcomemessages[] = get_string('outcome_completion_criteria_table_record_deleted', 'tool_fix_delete_modules');
             }
         }
 
@@ -285,7 +285,7 @@ class surgeon {
         if ($modcontext) {
             \core_tag_tag::delete_instances('mod_' . $modulename, null, $modcontext->id);
             \core_tag_tag::remove_all_item_tags('core', 'course_modules', $cm->id);
-            $outcomemessages[] = get_string(outcome::MODULE_TAGRECORD_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_tag_table_record_deleted', 'tool_fix_delete_modules');
         }
 
         // Notify the competency subsystem.
@@ -295,21 +295,21 @@ class surgeon {
         if ($modcontext) {
             \context_helper::delete_instance(CONTEXT_MODULE, $cm->id);
 
-            $outcomemessages[] = get_string(outcome::MODULE_CONTEXTRECORD_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_context_table_record_deleted', 'tool_fix_delete_modules');
         }
 
         // Delete the module from the course_modules table.
         if ($DB->delete_records('course_modules', array('id' => $cm->id))) {
-            $outcomemessages[] = get_string(outcome::MODULE_COURSEMODULERECORD_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_course_module_table_record_deleted', 'tool_fix_delete_modules');
         } else {
-            $outcomemessages[] = get_string(outcome::MODULE_COURSEMODULERECORD_NOT_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_context_table_record_delete_fail', 'tool_fix_delete_modules');
         }
 
         // Delete module from that section.
         if (!delete_mod_from_section($cm->id, $cm->section)) {
-            $outcomemessages[] = get_string(outcome::MODULE_COURSESECTION_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_course_section_data_deleted', 'tool_fix_delete_modules');
         } else {
-            $outcomemessages[] = get_string(outcome::MODULE_COURSESECTION_NOT_DELETED, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_course_section_data_delete_fail', 'tool_fix_delete_modules');
         }
 
         // Trigger event for course module delete action.
@@ -343,7 +343,7 @@ class surgeon {
             } else {
                 $this->reschedule_or_queue_adhoc_task($thisadhoctask);
             }
-            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_adhoc_task_record_rescheduled', 'tool_fix_delete_modules');
             try {
                 // Retrieve rescheduled task from queue.
                 $adhoctasks = $DB->get_records('task_adhoc');
@@ -358,22 +358,22 @@ class surgeon {
                 // Execute the task.
                 $thisadhoctask->execute();
                 \core\task\manager::adhoc_task_complete($rescheduledadhoctask);
-                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules');
+                $outcomemessages[] = get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules');
             } catch (moodle_exception $e) {
                 \core\task\manager::adhoc_task_failed($thisadhoctask);
-                $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE_FAIL, 'tool_fix_delete_modules');
+                $outcomemessages[] = get_string('outcome_adhoc_task_record_reexecution_failed', 'tool_fix_delete_modules');
             }
         } else {
             $dbtasks = $DB->get_records('task_adhoc');
-            $outcomemessages[] = get_string(outcome::TASK_ADHOCTASK_RESCHEDULE_FAIL, 'tool_fix_delete_modules');
+            $outcomemessages[] = get_string('outcome_adhoc_task_record_rescheduled_failed', 'tool_fix_delete_modules');
         }
-        $outcomemessages[] = get_string(outcome::MODULE_SUCCESS, 'tool_fix_delete_modules');
+        $outcomemessages[] = get_string('outcome_module_fix_successful', 'tool_fix_delete_modules');
 
         return $outcomemessages;
     }
 
     /**
-     * get_module_name() - Attempts to get the module type name from the delete_module object or via the database.
+     * Attempts to get the module type name from the delete_module object or via the database.
      *
      * @param stdClass $cm - course module record.
      * @param delete_module $deletemodule
@@ -438,23 +438,49 @@ class surgeon {
      * @param \core\task\adhoc_task $task - The new adhoc task information to store.
      * @return void
      */
-    private static function reschedule_or_queue_adhoc_task(\core\task\adhoc_task $task) {
+    public static function reschedule_or_queue_adhoc_task(\core\task\adhoc_task $task) {
         global $DB;
 
-        $alldeletemoduletasks = \core\task\manager::get_adhoc_tasks('\core_course\task\course_delete_modules');
+        // Find classname.
+        $classname = (strpos(get_class($task), '\\') !== 0) ? '\\'.get_class($task) : get_class($task);
 
-        // Check that the task exists in the database and that it is a course_delete_module adhoc task.
-        if (($existingrecord = $DB->get_record('task_adhoc', array('id' => $task->get_id())))
-            && in_array($task->get_id(), array_keys($alldeletemoduletasks))) {
-            // Only update the next run time if it is explicitly set on the task.
-            $nextruntime = $task->get_next_run_time();
-            if ($nextruntime && ($existingrecord->nextruntime != $nextruntime)) {
-                $DB->set_field('task_adhoc', 'nextruntime', $nextruntime, ['id' => $existingrecord->id]);
+        // Check that it is a course_delete_module adhoc task.
+        if ($classname == '\core_course\task\course_delete_modules') {
+            // Check the task exists in the database.
+            if ($existingrecord = self::get_queued_adhoc_task_record($task)) {
+                // Only update the next run time if it is explicitly set on the task.
+                $nextruntime = $task->get_next_run_time();
+                if ($nextruntime && ($existingrecord->nextruntime != $nextruntime)) {
+                    $DB->set_field('task_adhoc', 'nextruntime', $nextruntime, ['id' => $existingrecord->id]);
+                }
+            } else {
+                // There is nothing queued yet. Just queue as normal.
+                \core\task\manager::queue_adhoc_task($task);
             }
-        } else {
-            // There is nothing queued yet. Just queue as normal.
-            \core\task\manager::queue_adhoc_task($task);
         }
+    }
+
+    /**
+     * Checks if the task with the same classname, component and customdata is already scheduled
+     *
+     * Adapted from Moodle 3.7+ version function.
+     *
+     * @param adhoc_task $task
+     * @return stdClass
+     */
+    private static function get_queued_adhoc_task_record($task) {
+        global $DB;
+
+        $record = \core\task\manager::record_from_adhoc_task($task);
+        $params = [$record->classname, $record->component, $record->customdata];
+        $sql = 'classname = ? AND component = ? AND ' .
+            $DB->sql_compare_text('customdata', \core_text::strlen($record->customdata) + 1) . ' = ?';
+
+        if ($record->userid) {
+            $params[] = $record->userid;
+            $sql .= " AND userid = ? ";
+        }
+        return $DB->get_record_select('task_adhoc', $sql, $params);
     }
 
     /**
@@ -480,10 +506,10 @@ class surgeon {
                 try { // Some of these will pass, some will fail.
                     $nextadhoctask->execute();
                     \core\task\manager::adhoc_task_complete($nextadhoctask);
-                    $executionoutcomes[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE, 'tool_fix_delete_modules');
+                    $executionoutcomes[] = get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules');
                 } catch (moodle_exception $e) {
                     \core\task\manager::adhoc_task_failed($nextadhoctask);
-                    $executionoutcomes[] = get_string(outcome::TASK_ADHOCTASK_EXECUTE_FAIL, 'tool_fix_delete_modules');
+                    $executionoutcomes[] = get_string('outcome_adhoc_task_record_reexecution_failed', 'tool_fix_delete_modules');
                 }
             } else { // Delay other tasks.
                 \core\task\manager::adhoc_task_failed($nextadhoctask);

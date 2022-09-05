@@ -55,7 +55,7 @@ class delete_task {
     }
 
     /**
-     * get_deletemodules() - Get the array of delete_module objects.
+     * Get the array of delete_module objects.
      *
      * @return array
      */
@@ -64,7 +64,7 @@ class delete_task {
     }
 
     /**
-     * get_coursemoduleids() - Get each coursemoduleid for this task.
+     * Get each coursemoduleid for this task.
      *
      * @return array
      */
@@ -77,7 +77,7 @@ class delete_task {
     }
 
     /**
-     * get_moduleinstanceids() - Get each moduleinstanceid for this task.
+     * Get each moduleinstanceid for this task.
      *
      * @return array
      */
@@ -90,7 +90,7 @@ class delete_task {
     }
 
     /**
-     * get_courseids() - Get each module's course id for this task.
+     * Get each module's course id for this task.
      *
      * @param bool $uniqueids - return only unique ids (false to return all).
      * @param bool $skipnulls - true to skip, false to include.
@@ -108,7 +108,7 @@ class delete_task {
     }
 
     /**
-     * get_contextids() - Get each contextid for this task.
+     * Get each contextid for this task.
      *
      * @return array
      */
@@ -121,7 +121,7 @@ class delete_task {
     }
 
     /**
-     * get_modulenames() - Get each modulename (key is coursemoduleid) for this task.
+     * Get each modulename (key is coursemoduleid) for this task.
      *
      * @param bool $uniquenames - return only unique names (false to return all).
      * @param bool $skipnulls - true to skip, false to include.
@@ -142,7 +142,7 @@ class delete_task {
     }
 
     /**
-     * is_multi_module_task() - Returns true if there is more than 1 element in $deletemodules array.
+     * Returns true if this task relates to more than one course module.
      *
      * @return bool
      */
@@ -151,7 +151,7 @@ class delete_task {
     }
 
     /**
-     * task_record_exists() - Returns true if the task record currently exists in the database.
+     * Returns true if the task record currently exists in the database.
      *
      * @return bool
      */
@@ -161,7 +161,7 @@ class delete_task {
     }
 
     /**
-     * set_deletemodules_from_customdata() - Set the deletemodules array, retrived customdata objects.
+     * Set the deletemodules array, retrived customdata objects.
      *
      * @param \stdClass $customdata - stdClass obect (customdata) retrieved from an adhoc_task object.
      */
