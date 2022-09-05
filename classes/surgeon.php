@@ -197,7 +197,7 @@ class surgeon {
             // Should not have been passed to here, but just in case!
             $outputmessages[] = get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules');
             $outputmessages[] = get_string('outcome_module_fix_fail', 'tool_fix_delete_modules');
-            return new outcome($task, $outputmessages);
+            return $outputmessages;
         }
         // Take first module; there should only be one anyway!
         $deletemodule = current($task->get_deletemodules());
@@ -205,7 +205,7 @@ class surgeon {
         if (is_null($deletemodule->coursemoduleid)) {
             $outputmessages[] = get_string('outcome_course_module_id_not_found', 'tool_fix_delete_modules');
             $outputmessages[] = get_string('outcome_module_fix_fail', 'tool_fix_delete_modules');
-            return new outcome($task, $outputmessages);
+            return $outputmessages;
         }
 
         // Get the course module.
