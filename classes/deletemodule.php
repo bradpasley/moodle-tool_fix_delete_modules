@@ -69,7 +69,7 @@ class delete_module {
     }
 
     /**
-     * get_contextid() - Get the contextid of the course module which is failing to be deleted.
+     * Get the contextid of the course module which is failing to be deleted.
      *
      * @return int
      */
@@ -79,7 +79,7 @@ class delete_module {
 
 
     /**
-     * get_modulename() - Get the name of the table related to the course module which is failing to be deleted.
+     * Get the module's name, which is also the table related to the course module (e.q. 'quiz' or 'assign').
      *
      * @return string
      */
@@ -88,9 +88,9 @@ class delete_module {
     }
 
     /**
-     * set_contextid() - Set the contextid of the module, retrived from the database record.
+     * Set the contextid of the module, retrived from the database record.
      *
-     * @return null
+     * @return void
      */
     private function set_contextid() {
         if (isset($this->coursemoduleid)) {
@@ -108,10 +108,10 @@ class delete_module {
     }
 
     /**
-     * set_modulename()-  Set the name of the table related to the course module which is failing to be deleted.
+     * Set the name of this module, which is also the table related to the course module (e.g. 'quiz' or 'assign').
      * Retrived from the database record.
      *
-     * @return null
+     * @return void
      */
     private function set_modulename() {
         global $DB;

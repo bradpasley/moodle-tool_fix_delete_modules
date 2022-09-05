@@ -54,7 +54,7 @@ class delete_task_list {
     }
 
     /**
-     * get_deletetasks() - Get the array of delete_task objects.
+     * Get the array of delete_task objects.
      *
      * @return array
      */
@@ -63,7 +63,7 @@ class delete_task_list {
     }
 
     /**
-     * set_deletetasks() - Set the deletetasks array.
+     * Set the deletetasks array.
      *
      */
     private function set_deletetasks() {

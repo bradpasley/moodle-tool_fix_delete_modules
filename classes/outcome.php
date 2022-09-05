@@ -116,7 +116,7 @@ class outcome {
     }
 
     /**
-     * get_deletetask() - Get the array of delete_module objects.
+     * Get the array of delete_module objects.
      *
      * @return delete_task
      */
@@ -125,7 +125,7 @@ class outcome {
     }
 
     /**
-     * get_messages() - Get the array of outcome messages.
+     * Get the array of outcome messages.
      *
      * @return array
      */

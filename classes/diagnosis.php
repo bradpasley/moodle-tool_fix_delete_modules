@@ -48,18 +48,6 @@ class diagnosis {
     private $adhoctaskmissing;
      /** @var bool $modulehasmissingdata - true if there is some kind of missing data related to the course module being deleted. */
     private $modulehasmissingdata;
-     /** @var GOOD status when no known issues are seen in a course_delete_module task. */
-    public const GOOD                             = 'symptom_good_no_issues';
-     /** @var TASK_MULTIMODULE status when the adhoc task contains multiple modules for deletion. */
-    public const TASK_MULTIMODULE                 = 'symptom_multiple_modules_in_task';
-     /** @var TASK_ADHOCRECORDMISSING status when the adhoc task no longer appears to be in the task_adhoc database table */
-    public const TASK_ADHOCRECORDMISSING          = 'symptom_adhoc_task_record_missing';
-     /** @var MODULE_MODULERECORDMISSING status when the module's table (e.g. quiz or book table) is missing its record. */
-    public const MODULE_MODULERECORDMISSING       = 'symptom_module_table_record_missing';
-     /** @var MODULE_COURSEMODULERECORDMISSING status when the course_module table is missing this module's record. */
-    public const MODULE_COURSEMODULERECORDMISSING = 'symptom_course_module_table_record_missing';
-     /** @var MODULE_CONTEXTRECORDMISSING status when the context tableis missing this module's record. */
-    public const MODULE_CONTEXTRECORDMISSING      = 'symptom_context_table_record_missing';
 
     /**
      * Constructor makes an array of symptoms (i.e. standard strings).
@@ -68,19 +56,19 @@ class diagnosis {
      * @param array $symptoms An array (moduleids) each with an array of strings which are the issues/symptoms for this delete_task.
      */
     public function __construct(delete_task $task, array $symptoms) {
-        $stringtmm = get_string($this::TASK_MULTIMODULE, 'tool_fix_delete_modules');
-        $stringtam = get_string($this::TASK_ADHOCRECORDMISSING, 'tool_fix_delete_modules');
-        $stringmrm = get_string($this::MODULE_MODULERECORDMISSING, 'tool_fix_delete_modules');
-        $stringcmm = get_string($this::MODULE_COURSEMODULERECORDMISSING, 'tool_fix_delete_modules');
-        $stringcrm = get_string($this::MODULE_CONTEXTRECORDMISSING, 'tool_fix_delete_modules');
+        $strmultimoduletask = get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules');
+        $stradhoctaskmissing = get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules');
+        $strmodulerecordmissing = get_string('symptom_module_table_record_missing', 'tool_fix_delete_modules');
+        $strcmrecordmissing = get_string('symptom_course_module_table_record_missing', 'tool_fix_delete_modules');
+        $strcontextrecordmissing = get_string('symptom_context_table_record_missing', 'tool_fix_delete_modules');
 
-        if (in_array($stringtmm, array_values($symptoms))) {
+        if (in_array($strmultimoduletask, array_values($symptoms))) {
             $this->ismultimoduletask = true;
         } else {
             $this->ismultimoduletask = false;
         }
 
-        if (in_array($stringtam, array_values($symptoms))) {
+        if (in_array($stradhoctaskmissing, array_values($symptoms))) {
             $this->adhoctaskmissing = true;
         } else {
             $this->adhoctaskmissing = false;
@@ -88,12 +76,12 @@ class diagnosis {
 
         // If it's not one of the above, check individual cm symptoms.
         $this->modulehasmissingdata = false;
-        if (!in_array($stringtam, array_values($symptoms))
-            && !in_array($stringtmm, array_values($symptoms))) {
+        if (!in_array($stradhoctaskmissing, array_values($symptoms))
+            && !in_array($strmultimoduletask, array_values($symptoms))) {
             foreach ($symptoms as $cmid => $cmsymptoms) {
-                if (in_array($stringmrm, $cmsymptoms)
-                    || in_array($stringcmm, $cmsymptoms)
-                    || in_array($stringcrm, $cmsymptoms)) {
+                if (in_array($strmodulerecordmissing, $cmsymptoms)
+                    || in_array($strcmrecordmissing, $cmsymptoms)
+                    || in_array($strcontextrecordmissing, $cmsymptoms)) {
                         $this->modulehasmissingdata = true;
                 }
             }
@@ -104,7 +92,7 @@ class diagnosis {
     }
 
     /**
-     * get_deletetask() - Get the array of delete_module objects.
+     * Get the array of delete_module objects.
      *
      * @return delete_task
      */
@@ -113,7 +101,7 @@ class diagnosis {
     }
 
     /**
-     * get_symptoms() - Get the array of symptoms for this course_delete_task.
+     * Get the array of symptoms for this course_delete_task.
      *
      * @return array
      */
@@ -122,7 +110,7 @@ class diagnosis {
     }
 
     /**
-     * is_multi_module_task() - Returns true if there is more than 1 element in $deletemodules array.
+     * Returns true if there is more than 1 element in $deletemodules array.
      *
      * @return bool
      */
@@ -131,7 +119,7 @@ class diagnosis {
     }
 
     /**
-     * adhoctask_is_missing() - Returns true if the adhoc task record is missing from the database.
+     * Returns true if the adhoc task record is missing from the database.
      *
      * @return bool
      */
@@ -140,7 +128,7 @@ class diagnosis {
     }
 
     /**
-     * module_has_missing_data() - Returns true if some kind of data is missing related to the course module.
+     * Returns true if some kind of data is missing related to the course module.
      *
      * @return bool
      */
