@@ -137,8 +137,6 @@ class test_fix_course_delete_module_class_reporter_test extends test_fix_course_
         $messagesmulti = [get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
                           get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
                           get_string('outcome_separate_old_task_deleted', 'tool_fix_delete_modules'),
-                          get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules'),
-                          get_string('outcome_adhoc_task_record_reexecution_failed', 'tool_fix_delete_modules'),
                           get_string('outcome_task_fix_successful', 'tool_fix_delete_modules')
         ];
 
@@ -151,7 +149,6 @@ class test_fix_course_delete_module_class_reporter_test extends test_fix_course_
                          get_string('outcome_course_module_table_record_deleted', 'tool_fix_delete_modules'),
                          get_string('outcome_course_section_data_delete_fail', 'tool_fix_delete_modules'),
                          get_string('outcome_adhoc_task_record_rescheduled', 'tool_fix_delete_modules'),
-                         get_string('outcome_adhoc_task_record_reexecution', 'tool_fix_delete_modules'),
                          get_string('outcome_module_fix_successful', 'tool_fix_delete_modules')
         ];
         $messagesurl = $messagespage;
