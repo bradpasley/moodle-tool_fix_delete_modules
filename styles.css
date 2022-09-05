@@ -1,25 +1,98 @@
-
-#page-admin-tool-fix_delete_modules-index hr.fix_delete_modules_first_divider {
+.fix-delete-modules-main {
+    padding-top: 10px;
+    padding-bottom: 10px;
     border: 2px;
-    border-top: 2px dashed#666666;
-    border-bottom: 2px;
-    width: 300px;
+    width: 80%;
+}
+.fix-diagnosis {
+    border: 2px;
+    border-top: 0;
+    border-bottom: 0;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #fee;
+    width: 100%;
+}
+.fix-diagnosis-heading {
+    border-top: 2px;
+    color: #511;
+}
+#page-admin-tool-fix_delete_modules-index .fix-diagnosis .generaltable th {
+    padding: 0.5rem;
+    border-radius: 10px;
+    border-top: 0;
+    border-bottom: 0;
+    background-color: #f99;
+}
+#page-admin-tool-fix_delete_modules-index .fix-diagnosis .generaltable td {
+    padding: 5px;
+    border-top: 0;
+    border-radius: 10px;
+    background-color: #efdcdc;
+}
+.fix-diagnosis-action {
+    border: 2px;
+    border-bottom: 5px;
+    width: 100%;
+}
+.fix-diagnosis-action p {
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #ffb1b1;
 }
 
-#page-admin-tool-fix_delete_modules-index hr.fix_delete_modules_divider {
-    border: 3px;
-    border-top: 4px dotted green;
-    border-bottom: 3px;
+.fix-results {
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #e1ffe1;
+}
+
+.fix-results-heading {
+    border: 2px;
+    border-radius: 10px;
+    padding: 5px;
+    background-color: #a1eea1;
+}
+#page-admin-tool-fix_delete_modules-delete_module .fix-results .generaltable th {
+    padding: 0.5rem;
+    border-radius: 10px;
+    border-top: 0;
+    border-bottom: 0;
+    background-color: #7c7;
+}
+
+.fix-report {
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #e1e1ff;
+}
+
+.fix-report-table-heading {
+    border: 2px;
+    border-radius: 10px;
+    padding: 5px;
+    background-color: #b1b1ff;
+}
+
+.fix-report-table {
+    border: 2px;
+    border-radius: 10px;
+    border-top: 5px solid#e1e1ff;
+    border-bottom: 5px solid#e1e1ff;
+    padding: 3px;
+    background-color: #f5f5ff;
+    width: 100%;
 }
 
 #page-admin-tool-fix_delete_modules-index #id_submit {
-    background-color: #dd4444;
+    background-color: #d44;
 }
 
 #page-admin-tool-fix_delete_modules-index .mform .fitem .felement {
-    margin-left: 0px;
+    margin-left: 0;
 }
-
 #page-admin-tool-fix_delete_modules-index #fitem_id_submit div.col-md-3 {
+    position: absolute;
+    left: -999px;
     max-width: 0;
 }

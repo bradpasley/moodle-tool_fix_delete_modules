@@ -14,21 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Delete Modules but skip pre-delete functions of course/lib.php function
+ * Delete Modules
  *
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require_once(__DIR__ . '/../../../config.php');
-require_once(__DIR__.'/lib.php');
-require_once($CFG->libdir.'/gradelib.php');
-require_once($CFG->libdir.'/completionlib.php');
-require_once($CFG->dirroot.'/blog/lib.php');
+require_once(__DIR__.'/classes/reporter.php');
 require_login();
+
+use tool_fix_delete_modules\reporter;
 
 // Retrieve parameters.
 $action       = required_param('action', PARAM_ALPHANUMEXT);
@@ -40,6 +39,7 @@ $prevurl   = new moodle_url('/admin/tool/fix_delete_modules/index.php');
 $mainurl   = $prevurl;
 
 if ($action == 'delete_module') {
+    require_sesskey();
 
     $url = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
     $PAGE->set_url($url);
@@ -50,24 +50,15 @@ if ($action == 'delete_module') {
 
     echo $OUTPUT->header();
 
-    $cm = new stdClass();
-    $cmsdata = get_all_cmdelete_adhoctasks_data(array($cmid));
-    foreach ($cmsdata as $cmtaskid => $taskdata) {
-        $taskdata = get_cms_infos($taskdata);
-        foreach ($taskdata as $coursemoduleid => $cmdata) {
-            if ($coursemoduleid == $cmid) {
-                $cm = $cmdata;
-                break;
-            }
-        }
-    }
-    $deleteoutput = force_delete_module_data($cm, $taskid, true);
+    $minimumfaildelay = intval(get_config('tool_fix_delete_modules', 'minimumfaildelay'));
+    $reporter = new reporter(true, $minimumfaildelay);
 
-    echo $deleteoutput;
+    // Output template rendered results of fixing the course module.
+    echo $reporter->fix_tasks(array($taskid));
 
     // Return to main page link.
     $urlstring  = html_writer::link($mainurl, get_string('returntomainlinklabel', 'tool_fix_delete_modules'));
-    echo get_string('deletemodule_returntomainsentence', 'tool_fix_delete_modules', $urlstring);
+    echo get_string('deletemodule_returntomainpagesentence', 'tool_fix_delete_modules', $urlstring);
 
     echo $OUTPUT->footer();
 } else {

@@ -1,6 +1,13 @@
 # Fix Delete Modules #
 
+![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/catalyst/moodle-tool_fix_delete_modules/ci/main)
+
 Plugin used to check and resolve any incomplete course_delete_module adhoc tasks.
+
+This has been tested to cover the following course_delete_module adhoc task failure scenarios:
+- course_module table record absent.
+- module's table (e.g. quiz) record absent.
+- context table record absent.
 
 ## Check ##
 - If the task(s) contains multiple course modules, it will recommend
@@ -39,11 +46,9 @@ Instructions of how to use the CLI can be found in the help page:
 
 ## Branches ##
 
-Moodle version     | Branch
------------------- | -----------------
-Moodle 3.5 - 3.6   | main
-Moodle 3.7 - 3.11  | MOODLE_37_STABLE
-Moodle 4.0+        | MOODLE_400_STABLE
+| Moodle version     | Branch            |
+-------------------- | ------------------|
+| Moodle 3.5+        | main              |
 
 ## Installing via uploaded ZIP file ##
 
@@ -88,3 +93,17 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Support
+-------
+
+If you have issues please log them in github here
+
+https://github.com/catalyst/moodle-tool_fix_delete_modules/issues
+
+Please note our time is limited, so if you need urgent support or want to
+sponsor a new feature then please contact Catalyst IT Australia:
+
+https://www.catalyst-au.net/contact-us
+
+<a href="https://www.catalyst-au.net/"><img alt="Catalyst IT" src="https://cdn.rawgit.com/CatalystIT-AU/moodle-auth_saml2/master/pix/catalyst-logo.svg" width="400"></a>

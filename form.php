@@ -20,7 +20,7 @@
  * @package     tool_fix_delete_modules
  * @category    admin
  * @author      Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright   Catalyst IT, 2022
+ * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -33,7 +33,7 @@ require_once("$CFG->libdir/formslib.php");
  *
  * @package    tool_fix_delete_modules
  * @author     Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright  Catalyst IT, 2022
+ * @copyright  2022 Catalyst IT
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class fix_delete_modules_form extends moodleform {
@@ -71,7 +71,7 @@ class fix_delete_modules_form extends moodleform {
  *
  * @package    tool_fix_delete_modules
  * @author     Brad Pasley <brad.pasley@catalyst-au.net>
- * @copyright  Catalyst IT, 2022
+ * @copyright  2022 Catalyst IT
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class separate_delete_modules_form extends moodleform {
