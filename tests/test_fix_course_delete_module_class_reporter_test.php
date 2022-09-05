@@ -180,20 +180,20 @@ class test_fix_course_delete_module_class_reporter_test extends test_fix_course_
         // Test output displays for get_diagnosis_data().
         $testdiagnoses = $testreporter->get_diagnosis();
         $this->assertNotEquals('', $testdiagnoses);
-        $this->assertTrue(mb_strpos($testdiagnoses, get_string('diagnosis', 'tool_fix_delete_modules')) !== false);
-        $this->assertTrue(mb_strpos($testdiagnoses, get_string('symptoms', 'tool_fix_delete_modules')) !== false);
+        $this->assertTrue(strpos($testdiagnoses, get_string('diagnosis', 'tool_fix_delete_modules')) !== false);
+        $this->assertTrue(strpos($testdiagnoses, get_string('symptoms', 'tool_fix_delete_modules')) !== false);
 
         // Test output displays for get_tables_report().
         $testreports = $testreporter->get_tables_report();
         $this->assertNotEquals('', $testreports);
-        $this->assertTrue(mb_strpos($testreports, get_string('report_heading', 'tool_fix_delete_modules')) !== false);
-        $this->assertTrue(mb_strpos($testreports, get_string('table_title_adhoctask', 'tool_fix_delete_modules')) !== false);
+        $this->assertTrue(strpos($testreports, get_string('report_heading', 'tool_fix_delete_modules')) !== false);
+        $this->assertTrue(strpos($testreports, get_string('table_title_adhoctask', 'tool_fix_delete_modules')) !== false);
 
         // Test output displays for fix_tasks().
         $fixresults = $testreporter->fix_tasks();
         $this->assertNotEquals('', $fixresults);
-        $this->assertTrue(mb_strpos($fixresults, get_string('results', 'tool_fix_delete_modules')) !== false);
-        $this->assertTrue(mb_strpos($fixresults, get_string('result_messages', 'tool_fix_delete_modules')) !== false);
+        $this->assertTrue(strpos($fixresults, get_string('results', 'tool_fix_delete_modules')) !== false);
+        $this->assertTrue(strpos($fixresults, get_string('result_messages', 'tool_fix_delete_modules')) !== false);
 
         // Run Adhoc Tasks.
         // Get Tasks from the scheduler and run them.

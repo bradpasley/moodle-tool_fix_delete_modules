@@ -90,7 +90,7 @@ class delete_module {
     /**
      * Set the contextid of the module, retrived from the database record.
      *
-     * @return null
+     * @return void
      */
     private function set_contextid() {
         if (isset($this->coursemoduleid)) {
@@ -111,7 +111,7 @@ class delete_module {
      * Set the name of this module, which is also the table related to the course module (e.g. 'quiz' or 'assign').
      * Retrived from the database record.
      *
-     * @return null
+     * @return void
      */
     private function set_modulename() {
         global $DB;
