@@ -27,7 +27,7 @@
 namespace tool_fix_delete_modules;
 
 defined('MOODLE_INTERNAL') || die();
-require_once("deletemodule.php");
+require_once("delete_module.php");
 /**
  * class to define a Course Module delete task, which can contain one or many Modules in the process of being deleted.
  *

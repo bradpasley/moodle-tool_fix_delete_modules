@@ -27,7 +27,7 @@
 namespace tool_fix_delete_modules;
 
 defined('MOODLE_INTERNAL') || die();
-require_once("deletetask.php");
+require_once("delete_task.php");
 /**
  * class which provides a diagnosis for a failed Course Module delete task.
  *

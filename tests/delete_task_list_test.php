@@ -20,8 +20,8 @@ use Exception;
 use tool_fix_delete_modules\delete_task_list;
 
 defined('MOODLE_INTERNAL') || die();
-require_once(__DIR__ . "/../classes/deletetasklist.php");
-require_once("test_fix_course_delete_module_test.php");
+require_once(__DIR__ . "/../classes/delete_task_list.php");
+require_once("fix_course_delete_module_test.php");
 
 /**
  * The test_fix_course_delete_module_class_delete_module test class.
@@ -34,7 +34,7 @@ require_once("test_fix_course_delete_module_test.php");
  * @copyright   Catalyst IT, 2022
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class test_fix_course_delete_module_class_deletetasklist_test extends test_fix_course_delete_module_test {
+class delete_task_list_test extends fix_course_delete_module_test {
 
     /**
      * Test for get/set functions for delete task list object.

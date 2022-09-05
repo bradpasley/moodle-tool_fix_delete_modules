@@ -31,8 +31,8 @@ use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once("deletetask.php");
-require_once("deletemodule.php");
+require_once("delete_task.php");
+require_once("delete_module.php");
 require_once("diagnosis.php");
 require_once("outcome.php");
 require_once($CFG->libdir.'/gradelib.php');

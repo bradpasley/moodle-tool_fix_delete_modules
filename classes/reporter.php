@@ -27,9 +27,9 @@
 namespace tool_fix_delete_modules;
 
 defined('MOODLE_INTERNAL') || die();
-require_once("deletetasklist.php");
-require_once("deletetask.php");
-require_once("deletemodule.php");
+require_once("delete_task_list.php");
+require_once("delete_task.php");
+require_once("delete_module.php");
 require_once("diagnoser.php");
 require_once("outcome.php");
 require_once("surgeon.php");

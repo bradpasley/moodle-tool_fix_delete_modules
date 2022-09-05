@@ -20,11 +20,11 @@ use core\task\adhoc_task;
 
 defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . "/../classes/diagnosis.php");
-require_once(__DIR__ . "/../classes/deletemodule.php");
-require_once(__DIR__ . "/../classes/deletetasklist.php");
+require_once(__DIR__ . "/../classes/delete_module.php");
+require_once(__DIR__ . "/../classes/delete_task_list.php");
 
 /**
- * The test_fix_course_delete_module_test base test class.
+ * The fix_course_delete_module_test base test class.
  *
  * Tests the setup of course/modules/tasks for other tests.
  *
@@ -34,7 +34,7 @@ require_once(__DIR__ . "/../classes/deletetasklist.php");
  * @copyright   2022 Catalyst IT
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class test_fix_course_delete_module_test extends \advanced_testcase {
+class fix_course_delete_module_test extends \advanced_testcase {
 
     /** @var $user moodle user object*/
     public $user;
