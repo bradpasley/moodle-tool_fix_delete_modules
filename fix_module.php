@@ -38,10 +38,10 @@ $taskid       = required_param('taskid', PARAM_INT);
 $prevurl   = new moodle_url('/admin/tool/fix_delete_modules/index.php');
 $mainurl   = $prevurl;
 
-if ($action == 'delete_module') {
+if ($action == 'fix_module') {
     require_sesskey();
 
-    $url = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
+    $url = new moodle_url('/admin/tool/fix_delete_modules/fix_module.php');
     $PAGE->set_url($url);
     $PAGE->set_context(context_system::instance());
     $PAGE->set_title(get_string('pluginname', 'tool_fix_delete_modules'));

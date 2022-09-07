@@ -46,7 +46,7 @@ class fix_delete_modules_form extends moodleform {
         // Add elements to form.
         global $CFG;
 
-        $this->actionurl = new \moodle_url('/admin/tool/fix_delete_modules/delete_module.php', array(
+        $this->actionurl = new \moodle_url('/admin/tool/fix_delete_modules/fix_module.php', array(
             'sesskey'          => sesskey()
         ));
 
@@ -54,7 +54,7 @@ class fix_delete_modules_form extends moodleform {
 
         $mform->addElement('submit', 'submit',  get_string('button_delete_mod_without_backup', 'tool_fix_delete_modules')
                                                 .' #'.$this->_customdata['cmid']);
-        $mform->addElement('hidden', 'action', 'delete_module');
+        $mform->addElement('hidden', 'action', 'fix_module');
         $mform->setType('action', PARAM_ALPHAEXT);
         $mform->addElement('hidden', 'cmid', $this->_customdata['cmid']);
         $mform->setType('cmid', PARAM_INT);
