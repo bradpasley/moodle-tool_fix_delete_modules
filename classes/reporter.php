@@ -667,8 +667,8 @@ class reporter {
             if ($symptomcmid == $tcmid) {
                 $modulename = current($task->get_modulenames());
 
-                $actionurl   = new moodle_url('/admin/tool/fix_delete_modules/delete_module.php');
-                $params      = array('action'     => 'delete_module',
+                $actionurl   = new moodle_url('/admin/tool/fix_delete_modules/fix_module.php');
+                $params      = array('action'     => 'fix_module',
                                      'cmid'       => $symptomcmid,
                                      'cmname' => $modulename,
                                      'taskid'     => $taskid);
