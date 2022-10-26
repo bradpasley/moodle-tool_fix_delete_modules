@@ -72,6 +72,9 @@ class diagnoser_test extends fix_course_delete_module_test {
         // Queue adhoc task for url module deletion.
         \core\task\manager::queue_adhoc_task($this->removaltaskurl);
 
+        // Queue adhoc task for label module deletion.
+        \core\task\manager::queue_adhoc_task($this->removaltasklabel);
+
         // DON'T Queue adhoc task for book module deletion.
 
         // The assign & url module have been deleted from the course.
@@ -79,21 +82,25 @@ class diagnoser_test extends fix_course_delete_module_test {
         // ... page are stil thought to be present.
         // ... url has an orphaned record.
         // ... book remains undeleted.
+        // ... label doesn't exist in the section record.
         $this->assertFalse($DB->record_exists('course_modules', array('id' => $this->assigncm->id)));
         $this->assertFalse($DB->record_exists('course_modules', array('id' => $this->urlcm->id)));
         $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->pagecm->id)));
         $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->quizcm->id)));
         $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->bookcm->id)));
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->labelcm->id)));
         $this->assertFalse($DB->record_exists('assign', array('id' => $this->assigncm->instance)));
         $this->assertFalse($DB->record_exists('page', array('id' => $this->pagecm->instance)));
         $this->assertFalse($DB->record_exists('quiz', array('id' => $this->quizcm->instance)));
         $this->assertTrue($DB->record_exists('url', array('id' => $this->urlcm->instance)));
         $this->assertTrue($DB->record_exists('book', array('id' => $this->bookcm->instance)));
+        $this->assertTrue($DB->record_exists('label', array('id' => $this->labelcm->instance)));
         $this->assertEmpty($DB->get_records('page'));
         $this->assertEmpty($DB->get_records('assign'));
         $this->assertEmpty($DB->get_records('quiz'));
         $this->assertNotEmpty($DB->get_records('url'));
         $this->assertNotEmpty($DB->get_records('book'));
+        $this->assertNotEmpty($DB->get_records('label'));
 
         // First create a delete_task_list object first.
         $deletetasklist = new delete_task_list(0);
@@ -107,10 +114,16 @@ class diagnoser_test extends fix_course_delete_module_test {
             } else { // It's one of the single module tasks.
                 $deletemodule = current($deletemodules);
                 $modulename = $deletemodule->get_modulename();
-                if (isset($modulename) && $modulename == 'page') {
-                    $deletepagetask = $deletetask;
-                } else {
-                    $deleteurltask = $deletetask;
+                switch ($modulename) {
+                    case 'page':
+                        $deletepagetask = $deletetask;
+                        break;
+                    case 'label':
+                        $deletelabeltask = $deletetask;
+                        break;
+                    default:
+                        $deleteurltask = $deletetask;
+                        break;
                 }
             }
         }
@@ -118,13 +131,14 @@ class diagnoser_test extends fix_course_delete_module_test {
         $deletebooktask = new delete_task(999999, json_decode($this->removaltaskbook->get_custom_data_as_string()));
 
         $dbtasks = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'));
-        $this->assertCount(3, $dbtasks);
+        $this->assertCount(4, $dbtasks);
 
         // Test creating a diagnosis object.
         $diagnoserpagetask  = new diagnoser($deletepagetask);
         $diagnoserurltask   = new diagnoser($deleteurltask);
         $diagnosermultitask = new diagnoser($deletemultitask);
         $diagnoserbooktask  = new diagnoser($deletebooktask);
+        $diagnoserlabeltask  = new diagnoser($deletelabeltask);
 
         $expectedsymptomspage  = [(string) $this->page->cmid =>
                                   [get_string('symptom_module_table_record_missing', 'tool_fix_delete_modules')]];
@@ -137,11 +151,14 @@ class diagnoser_test extends fix_course_delete_module_test {
                                   [get_string('symptom_multiple_modules_in_task', 'tool_fix_delete_modules')]];
         $expectedsymptomsbook  = [get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules') =>
                                   [get_string('symptom_adhoc_task_record_missing', 'tool_fix_delete_modules')]];
+        $expectedsymptomslabel = [(string) $this->label->cmid =>
+                                [get_string('symptom_course_section_table_record_missing', 'tool_fix_delete_modules')]];
 
         $expecteddiagnosispagetask  = new diagnosis($deletepagetask, $expectedsymptomspage);
         $expecteddiagnosisurltask   = new diagnosis($deleteurltask, $expectedsymptomsurl);
         $expecteddiagnosismultitask = new diagnosis($deletemultitask, $expectedsymptomsmulti);
         $expecteddiagnosisbooktask  = new diagnosis($deletebooktask, $expectedsymptomsbook);
+        $expecteddiagnosislabeltask  = new diagnosis($deletelabeltask, $expectedsymptomslabel);
 
         // Check diagnoser for page deletion task.
         $this->assertFalse($deletepagetask->is_multi_module_task());
@@ -177,6 +194,11 @@ class diagnoser_test extends fix_course_delete_module_test {
         $this->assertFalse($deletebooktask->is_multi_module_task());
         $this->assertFalse($deletebooktask->task_record_exists());
         $this->assertEquals($expecteddiagnosisbooktask, $diagnoserbooktask->get_diagnosis());
+
+        // Check diagnoser for label deletion task.
+        $this->assertFalse($deletelabeltask->is_multi_module_task());
+        $this->assertTrue($deletelabeltask->task_record_exists());
+        $this->assertEquals($expecteddiagnosislabeltask, $diagnoserlabeltask->get_diagnosis());
 
         unset($diagnosermultitask, $diagnoserpagetask, $diagnoserurltask, $diagnoserbooktask);
 

@@ -108,7 +108,14 @@ class surgeon {
             // If there the adhoc task is a multi-module task, split it into many tasks.
             $outcomemessages = $this->separate_multitask_into_moduletasks($diagnosis);
         } else { // Now, without any task issues, proceed to fix this singular module's issue(s).
-            $outcomemessages = $this->delete_module_cleanly($diagnosis);
+            // Fix section before delete module.
+            if (in_array(get_string('symptom_course_section_table_record_missing', 'tool_fix_delete_modules'),
+                current($symptoms))) {
+                if ($this->fix_course_sequence($diagnosis)) {
+                    $outcomemessages[] = get_string('outcome_course_section_data_fixed', 'tool_fix_delete_modules');
+                }
+            }
+            $outcomemessages = array_merge($outcomemessages, $this->delete_module_cleanly($diagnosis));
         }
         return $outcomemessages;
     }
@@ -176,6 +183,23 @@ class surgeon {
         $outcomemessages[] = get_string('outcome_task_fix_successful', 'tool_fix_delete_modules');
 
         return $outcomemessages;
+    }
+
+    /**
+     * Fix course sequence.
+     *
+     * @param diagnosis $diagnosis
+     *
+     * @return bool - Fix success or not.
+     */
+    private function fix_course_sequence(diagnosis $diagnosis) {
+        $task = $diagnosis->get_task();
+        $deletemodule = current($task->get_deletemodules());
+        if ($deletemodule->courseid) {
+            rebuild_course_cache($deletemodule->courseid, true);
+            return true;
+        }
+        return false;
     }
 
     /**

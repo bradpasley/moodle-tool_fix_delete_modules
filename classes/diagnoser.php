@@ -67,6 +67,8 @@ class diagnoser {
                 $symptoms = $this->mergearrays($symptoms, $missingcms);
                 $missingcontexts = $this->get_missing_context_records($deletemodule);
                 $symptoms = $this->mergearrays($symptoms, $missingcontexts);
+                $missingsections = $this->get_missing_section_records($deletemodule);
+                $symptoms = $this->mergearrays($symptoms, $missingsections);
             }
         }
         $this->diagnosis = new diagnosis($task, $symptoms);
@@ -138,6 +140,32 @@ class diagnoser {
             return array((string) $deletemodule->coursemoduleid => [$symptomstring]);
         }
         return array();
+    }
+
+    /**
+     * Returns an array (key: coursemoduleids) for any course modules missing in section table.
+     *
+     * @param delete_module $deletemodule - the task in progress of deletion, to be diagnosed.
+     *
+     * @return array
+     */
+    public function get_missing_section_records(delete_module $deletemodule) {
+        global $DB;
+        // Check if this module's coursemodule id exists in section table.
+        $sections = $DB->get_records('course_sections', array('course' => $deletemodule->courseid));
+        foreach ($sections as $section) {
+            $sequence = $section->sequence;
+            $cms = explode(',', $sequence);
+            foreach ($cms as $cm) {
+                if ($cm == $deletemodule->coursemoduleid) {
+                    // Found the record, it's good.
+                    return array();
+                }
+            }
+        }
+        // Couldn't find the record.
+        $symptomstring = get_string('symptom_course_section_table_record_missing', 'tool_fix_delete_modules');
+        return array((string) $deletemodule->coursemoduleid => [$symptomstring]);
     }
 
     /**

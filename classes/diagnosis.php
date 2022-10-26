@@ -61,6 +61,7 @@ class diagnosis {
         $strmodulerecordmissing = get_string('symptom_module_table_record_missing', 'tool_fix_delete_modules');
         $strcmrecordmissing = get_string('symptom_course_module_table_record_missing', 'tool_fix_delete_modules');
         $strcontextrecordmissing = get_string('symptom_context_table_record_missing', 'tool_fix_delete_modules');
+        $strsectionrecordmissing = get_string('symptom_course_section_table_record_missing', 'tool_fix_delete_modules');
 
         if (in_array($strmultimoduletask, array_values($symptoms))) {
             $this->ismultimoduletask = true;
@@ -81,7 +82,8 @@ class diagnosis {
             foreach ($symptoms as $cmid => $cmsymptoms) {
                 if (in_array($strmodulerecordmissing, $cmsymptoms)
                     || in_array($strcmrecordmissing, $cmsymptoms)
-                    || in_array($strcontextrecordmissing, $cmsymptoms)) {
+                    || in_array($strcontextrecordmissing, $cmsymptoms)
+                    || in_array($strsectionrecordmissing, $cmsymptoms)) {
                         $this->modulehasmissingdata = true;
                 }
             }
