@@ -73,6 +73,9 @@ class surgeon_test extends fix_course_delete_module_test {
         // Queue adhoc task for url module deletion.
         \core\task\manager::queue_adhoc_task($this->removaltaskurl);
 
+        // Queue adhoc task for label module deletion.
+        \core\task\manager::queue_adhoc_task($this->removaltasklabel);
+
         // DON'T Queue adhoc task for book module deletion.
         // This will be used to test a task which is absent from the task_adhoc table.
 
@@ -81,21 +84,25 @@ class surgeon_test extends fix_course_delete_module_test {
         // ... page are stil thought to be present.
         // ... url has an orphaned record.
         // ... book remains undeleted.
+        // ... label doesn't exist in the section record.
         $this->assertFalse($DB->record_exists('course_modules', array('id' => $this->assigncm->id)));
         $this->assertFalse($DB->record_exists('course_modules', array('id' => $this->urlcm->id)));
         $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->pagecm->id)));
         $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->quizcm->id)));
         $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->bookcm->id)));
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->labelcm->id)));
         $this->assertFalse($DB->record_exists('assign', array('id' => $this->assigncm->instance)));
         $this->assertFalse($DB->record_exists('page', array('id' => $this->pagecm->instance)));
         $this->assertFalse($DB->record_exists('quiz', array('id' => $this->quizcm->instance)));
         $this->assertTrue($DB->record_exists('url', array('id' => $this->urlcm->instance)));
         $this->assertTrue($DB->record_exists('book', array('id' => $this->bookcm->instance)));
+        $this->assertTrue($DB->record_exists('label', array('id' => $this->labelcm->instance)));
         $this->assertEmpty($DB->get_records('page'));
         $this->assertEmpty($DB->get_records('assign'));
         $this->assertEmpty($DB->get_records('quiz'));
         $this->assertNotEmpty($DB->get_records('url'));
         $this->assertNotEmpty($DB->get_records('book'));
+        $this->assertNotEmpty($DB->get_records('label'));
 
         // First create a delete_task_list object first.
         $deletetasklist = new delete_task_list(0);
@@ -109,10 +116,16 @@ class surgeon_test extends fix_course_delete_module_test {
             } else { // It's one of the single module tasks.
                 $deletemodule = current($deletemodules);
                 $modulename = $deletemodule->get_modulename();
-                if (isset($modulename) && $modulename == 'page') {
-                    $deletepagetask = $deletetask;
-                } else {
-                    $deleteurltask = $deletetask;
+                switch ($modulename) {
+                    case 'page':
+                        $deletepagetask = $deletetask;
+                        break;
+                    case 'label':
+                        $deletelabeltask = $deletetask;
+                        break;
+                    default:
+                        $deleteurltask = $deletetask;
+                        break;
                 }
             }
         }
@@ -121,19 +134,21 @@ class surgeon_test extends fix_course_delete_module_test {
 
         // Database records of adhoc tasks to compare against.
         $dbtasks = $DB->get_records('task_adhoc', array('classname' => '\core_course\task\course_delete_modules'));
-        $this->assertCount(3, $dbtasks);
+        $this->assertCount(4, $dbtasks);
 
         // Creating diagnosis objects.
         $diagnosermultitask = new diagnoser($deletemultitask);
         $diagnoserpagetask  = new diagnoser($deletepagetask);
         $diagnoserurltask   = new diagnoser($deleteurltask);
         $diagnoserbooktask  = new diagnoser($deletebooktask);
+        $diagnoserlabeltask  = new diagnoser($deletelabeltask);
 
         // Create Test surgeon objects.
         $surgeonmultitask = new surgeon($diagnosermultitask->get_diagnosis());
         $surgeonpagetask  = new surgeon($diagnoserpagetask->get_diagnosis());
         $surgeonurltask   = new surgeon($diagnoserurltask->get_diagnosis());
         $surgeonbooktask  = new surgeon($diagnoserbooktask->get_diagnosis());
+        $surgeonlabeltask  = new surgeon($diagnoserlabeltask->get_diagnosis());
 
         // Expected outcome messages.
         $messagesmulti = [get_string('outcome_separate_into_individual_task', 'tool_fix_delete_modules'),
@@ -156,21 +171,36 @@ class surgeon_test extends fix_course_delete_module_test {
         array_unshift($messagesurl, get_string('outcome_course_module_table_record_not_found', 'tool_fix_delete_modules'));
 
         $messagesbook = [get_string('outcome_adhoc_task_record_advice', 'tool_fix_delete_modules')];
+        $messageslabel = [get_string('outcome_course_section_data_fixed', 'tool_fix_delete_modules'),
+            get_string('outcome_file_table_record_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_blog_table_record_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_completion_table_record_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_completion_criteria_table_record_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_tag_table_record_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_context_table_record_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_course_module_table_record_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_course_section_data_deleted', 'tool_fix_delete_modules'),
+            get_string('outcome_adhoc_task_record_rescheduled', 'tool_fix_delete_modules'),
+            get_string('outcome_module_fix_successful', 'tool_fix_delete_modules')
+        ];
 
         $expectedoutcomemultitask = new outcome($deletemultitask, $messagesmulti);
         $expectedoutcomepage      = new outcome($deletepagetask,  $messagespage);
         $expectedoutcomeurltask   = new outcome($deleteurltask,   $messagesurl);
         $expectedoutcomebooktask  = new outcome($deletebooktask,  $messagesbook);
+        $expectedoutcomelabeltask  = new outcome($deletelabeltask,  $messageslabel);
 
         $testoutcomemulti = $surgeonmultitask->get_outcome();
         $testoutcomepage  = $surgeonpagetask->get_outcome();
         $testoutcomeurl   = $surgeonurltask->get_outcome();
         $testoutcomebook  = $surgeonbooktask->get_outcome();
+        $testoutcomelabel  = $surgeonlabeltask->get_outcome();
 
         $this->assertEquals($expectedoutcomemultitask->get_messages(), $testoutcomemulti->get_messages());
         $this->assertEquals($expectedoutcomepage->get_messages(), $testoutcomepage->get_messages());
         $this->assertEquals($expectedoutcomeurltask->get_messages(), $testoutcomeurl->get_messages());
         $this->assertEquals($expectedoutcomebooktask->get_messages(), $testoutcomebook->get_messages());
+        $this->assertEquals($expectedoutcomelabeltask->get_messages(), $testoutcomelabel->get_messages());
 
         if ($exceptionthrown) {
             $this->expectException('moodle_exception');

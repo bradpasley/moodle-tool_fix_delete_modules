@@ -70,14 +70,24 @@ class fix_course_delete_module_test extends \advanced_testcase {
     public $quizcm;
     /** @var int course module contextid*/
     public $quizcontextid;
+    /** @var $label moodle module object*/
+    public $label;
+    /** @var $labelcm moodle course module object*/
+    public $labelcm;
+    /** @var int course module contextid*/
+    public $labelcontextid;
     /** @var adhoc_task object */
     public $removaltaskassign;
     /** @var adhoc_task object */
-    public $rmovaltaskmulti;
+    public $removaltaskmulti;
     /** @var adhoc_task object */
-    public $rmovaltaskpage;
+    public $removaltaskpage;
     /** @var adhoc_task object */
-    public $rmovaltaskurl;
+    public $removaltaskurl;
+    /** @var adhoc_task object */
+    public $removaltaskbook;
+    /** @var adhoc_task object */
+    public $removaltasklabel;
 
     /**
      * Setup test.
@@ -105,10 +115,13 @@ class fix_course_delete_module_test extends \advanced_testcase {
         $this->assigncm = get_coursemodule_from_id('assign', $this->assign->cmid);
         $this->quiz     = $this->getDataGenerator()->create_module('quiz', array('course' => $this->course->id));
         $this->quizcm   = get_coursemodule_from_id('quiz', $this->quiz->cmid);
+        $this->label    = $this->getDataGenerator()->create_module('label', array('course' => $this->course->id));
+        $this->labelcm  = get_coursemodule_from_id('label', $this->label->cmid);
         $this->pagecontextid   = (\context_module::instance($this->page->cmid))->id;
         $this->urlcontextid    = (\context_module::instance($this->url->cmid))->id;
         $this->assigncontextid = (\context_module::instance($this->assign->cmid))->id;
         $this->quizcontextid   = (\context_module::instance($this->quiz->cmid))->id;
+        $this->labelcontextid  = (\context_module::instance($this->label->cmid))->id;
 
         // Delete page & quiz table record to replicate failed course_module_delete adhoc tasks.
         $DB->delete_records('page');
@@ -116,6 +129,19 @@ class fix_course_delete_module_test extends \advanced_testcase {
 
         // Delete the url mod's course_module record to replicate a failed course_module_delete adhoc task.
         $DB->delete_records('course_modules', array('id' => $this->url->cmid));
+
+        // Remove cmid from sequence for label.
+        $sql = "SELECT * FROM {course_sections} WHERE course = ? AND sequence LIKE ?";
+        $section = $DB->get_record_sql($sql, [$this->course->id, '%' . $this->label->cmid . '%']);
+        $sequences = explode(',', $section->sequence);
+        $newsequence = [];
+        foreach ($sequences as $sequence) {
+            if ($sequence != $this->label->cmid) {
+                $newsequence[] = $sequence;
+            }
+        }
+        $section->sequence = implode(',', $newsequence);
+        $DB->update_record('course_sections', $section);
 
         // Setup Adhoc tasks, but don't queue them.
         // Setup delete assign adhoc task.
@@ -164,6 +190,15 @@ class fix_course_delete_module_test extends \advanced_testcase {
             'realuserid' => $this->user->id
         ];
         $this->removaltaskbook->set_custom_data($bookdata);
+
+        // Setup adhoc task for label module deletion.
+        $this->removaltasklabel = new \core_course\task\course_delete_modules();
+        $labeldata = [
+            'cms' => [$this->labelcm],
+            'userid' => $this->user->id,
+            'realuserid' => $this->user->id
+        ];
+        $this->removaltasklabel->set_custom_data($labeldata);
     }
 
     /**
@@ -180,6 +215,8 @@ class fix_course_delete_module_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists('assign', array('id' => $this->assigncm->instance)));
         $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->book->cmid)));
         $this->assertTrue($DB->record_exists('book', array('id' => $this->bookcm->instance)));
+        $this->assertTrue($DB->record_exists('course_modules', array('id' => $this->label->cmid)));
+        $this->assertTrue($DB->record_exists('label', array('id' => $this->labelcm->instance)));
 
         // Check page & quiz table records deleted.
         $this->assertFalse($DB->record_exists('page', array('id' => $this->pagecm->instance)));
