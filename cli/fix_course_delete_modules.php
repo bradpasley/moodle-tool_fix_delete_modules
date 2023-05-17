@@ -102,7 +102,7 @@ if (in_array('*', $taskids) || empty($taskids)) {
 // Require --fix to also have the --modules param (with specific modules listed).
 $isfix                     = $options['fix'];
 $isfixwithmodulesspecified = $isfix && $options['taskids'] && !empty($params);
-if ($isfix && !$isfixclusteredtask && !$isfixwithmodulesspecified) {
+if ($isfix && !$isfixwithmodulesspecified) {
     cli_error("fix_course_delete_modules.php '--fix' requires '--taskids=[comma separated taskids]'.");
     cli_writeln($help);
     die();

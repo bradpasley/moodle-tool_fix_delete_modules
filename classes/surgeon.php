@@ -26,8 +26,7 @@
 
 namespace tool_fix_delete_modules;
 
-use moodle_exception;
-use stdClass;
+use \stdClass;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -39,6 +38,7 @@ require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->libdir.'/datalib.php');
 require_once($CFG->dirroot.'/blog/lib.php');
+require_once($CFG->dirroot.'/calendar/lib.php');
 
 /**
  * surgeon class which fixes a Course Module delete task and provides an outcome object.
@@ -56,11 +56,17 @@ class surgeon {
     private $outcome;
 
     /**
+     * @var private diagnosis $diagnosis
+     */
+    private $diagnosis;
+
+    /**
      * Perform fix actions and establish a list of outcomes.
      *
      * @param diagnosis $diagnosis The diagnosis object, containing details of what needs fixing.
      */
     public function __construct(diagnosis $diagnosis) {
+        $this->diagnosis = $diagnosis;
 
         $outcomemessages = array();
         // Run fix and get outcome messages.
@@ -110,7 +116,7 @@ class surgeon {
         } else { // Now, without any task issues, proceed to fix this singular module's issue(s).
             // Fix section before delete module.
             if (in_array(get_string('symptom_course_section_table_record_missing', 'tool_fix_delete_modules'),
-                current($symptoms))) {
+                current($symptoms) ?: [])) {
                 if ($this->fix_course_sequence($diagnosis)) {
                     $outcomemessages[] = get_string('outcome_course_section_data_fixed', 'tool_fix_delete_modules');
                 }
