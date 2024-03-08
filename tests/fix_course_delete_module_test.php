@@ -250,4 +250,102 @@ class fix_course_delete_module_test extends \advanced_testcase {
         }
         return $taskid;
     }
+
+    /**
+     * Common set up for diagnoser, reporter, surgeon tests
+     *
+     */
+    public function setup_test(): array {
+        global $DB;
+
+        // Queue adhoc task for a multi-module delete (both quiz and assign).
+        \core\task\manager::queue_adhoc_task($this->removaltaskmulti);
+
+        // Execute task (assign cm should complete, quiz cm should fail).
+        // This will fail due to the quiz record already being deleted.
+        $now = time();
+        $this->removaltaskmulti = \core\task\manager::get_next_adhoc_task($now);
+        $adhoctaskprecount = count($DB->get_records('task_adhoc'));
+        // Exception expected to be thrown, but tested at end to allow rest of code to run.
+        $exceptionthrown = false;
+        try {
+            $this->removaltaskmulti->execute();
+        } catch (\moodle_exception $exception) {
+            // Replicate failed task.
+            $this->assertCount($adhoctaskprecount, $DB->get_records('task_adhoc'));
+            \core\task\manager::adhoc_task_failed($this->removaltaskmulti);
+            $this->assertCount($adhoctaskprecount, $DB->get_records('task_adhoc'));
+            $exceptionthrown = $exception; // Run exeception case at end of function.
+        }
+
+        // Queue adhoc task for page module deletion.
+        \core\task\manager::queue_adhoc_task($this->removaltaskpage);
+
+        // Queue adhoc task for url module deletion.
+        \core\task\manager::queue_adhoc_task($this->removaltaskurl);
+
+        // Queue adhoc task for label module deletion.
+        \core\task\manager::queue_adhoc_task($this->removaltasklabel);
+
+        // DON'T Queue adhoc task for book module deletion.
+        // This will be used to test a task which is absent from the task_adhoc table.
+
+        // The assign & url module have been deleted from the course.
+        // ... quiz are still thought to be present.
+        // ... page are still thought to be present.
+        // ... url has an orphaned record.
+        // ... book remains undeleted.
+        // ... label doesn't exist in the section record.
+        $this->assertFalse($DB->record_exists('course_modules', ['id' => $this->assigncm->id]));
+        $this->assertFalse($DB->record_exists('course_modules', ['id' => $this->urlcm->id]));
+        $this->assertTrue($DB->record_exists('course_modules', ['id' => $this->pagecm->id]));
+        $this->assertTrue($DB->record_exists('course_modules', ['id' => $this->quizcm->id]));
+        $this->assertTrue($DB->record_exists('course_modules', ['id' => $this->bookcm->id]));
+        $this->assertTrue($DB->record_exists('course_modules', ['id' => $this->labelcm->id]));
+        $this->assertFalse($DB->record_exists('assign', ['id' => $this->assigncm->instance]));
+        $this->assertFalse($DB->record_exists('page', ['id' => $this->pagecm->instance]));
+        $this->assertFalse($DB->record_exists('quiz', ['id' => $this->quizcm->instance]));
+        $this->assertTrue($DB->record_exists('url', ['id' => $this->urlcm->instance]));
+        $this->assertTrue($DB->record_exists('book', ['id' => $this->bookcm->instance]));
+        $this->assertTrue($DB->record_exists('label', ['id' => $this->labelcm->instance]));
+        $this->assertEmpty($DB->get_records('page'));
+        $this->assertEmpty($DB->get_records('assign'));
+        $this->assertEmpty($DB->get_records('quiz'));
+        $this->assertNotEmpty($DB->get_records('url'));
+        $this->assertNotEmpty($DB->get_records('book'));
+        $this->assertNotEmpty($DB->get_records('label'));
+
+        // First create a delete_task_list object first.
+        $deletetasklist = new delete_task_list(0);
+
+        // Create delete_tasks from the delete_task.
+        $deletetasks = array_values($deletetasklist->get_deletetasks());
+        foreach ($deletetasks as $deletetask) {
+            $deletemodules = $deletetask->get_deletemodules();
+            if (count($deletemodules) > 1) { // It's the multi module task.
+                $deletemultitask = $deletetask;
+            } else { // It's one of the single module tasks.
+                $deletemodule = current($deletemodules);
+                $modulename = $deletemodule->get_modulename();
+                switch ($modulename) {
+                    case 'page':
+                        $deletepagetask = $deletetask;
+                        break;
+                    case 'label':
+                        $deletelabeltask = $deletetask;
+                        break;
+                    default:
+                        $deleteurltask = $deletetask;
+                        break;
+                }
+            }
+        }
+        // This task will not exist in the task_adhoc table.
+        $deletebooktask = new delete_task(999999, json_decode($this->removaltaskbook->get_custom_data_as_string()));
+
+        $dbtasks = $DB->get_records('task_adhoc', ['classname' => '\core_course\task\course_delete_modules']);
+        $this->assertCount(4, $dbtasks);
+
+        return [$deletemultitask, $deletepagetask, $deleteurltask, $deletebooktask, $deletelabeltask, $exceptionthrown];
+    }
 }
