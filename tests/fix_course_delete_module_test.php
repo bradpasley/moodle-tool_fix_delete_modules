@@ -155,7 +155,10 @@ class fix_course_delete_module_test extends \advanced_testcase {
 
         // Setup delete mutli-module adhoc task.
         $this->removaltaskmulti = new \core_course\task\course_delete_modules();
+        // When MDL-80930 is integrated, the adhoc task course_delete_modules only stores failed cmids.
+        // Hence, we have 2 failed cmids, page & quiz here, so the multi task checks still be valid.
         $cmsarray = array((string) $this->assigncm->id => array('id' => $this->assigncm->id),
+                          (string) $this->pagecm->id => array('id' => $this->pagecm->id),
                           (string) $this->quizcm->id   => array('id' => $this->quizcm->id));
         $multidata = [
             'cms' => $cmsarray,
