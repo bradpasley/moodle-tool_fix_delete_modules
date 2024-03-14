@@ -110,10 +110,14 @@ class delete_task_test extends fix_course_delete_module_test {
         $this->assertEquals($this->course->id, $quizmodule->courseid); // Should be set via database check.
 
         // Check get ids functions.
-        $this->assertEquals([$this->assign->cmid, $this->quiz->cmid], $deletetask->get_coursemoduleids());
-        $this->assertEquals([$this->assign->id, $this->quiz->id], $deletetask->get_moduleinstanceids());
-        $this->assertEquals([$this->assigncontextid, $this->quizcontextid], $deletetask->get_contextids());
-        $this->assertEquals([$this->assign->cmid => 'assign', $this->quiz->cmid => 'quiz'], $deletetask->get_modulenames());
+        $this->assertEquals([$this->assign->cmid, $this->page->cmid, $this->quiz->cmid],
+            $deletetask->get_coursemoduleids());
+        $this->assertEquals([$this->assign->id, $this->page->id, $this->quiz->id],
+            $deletetask->get_moduleinstanceids());
+        $this->assertEquals([$this->assigncontextid, $this->pagecontextid, $this->quizcontextid],
+            $deletetask->get_contextids());
+        $this->assertEquals([$this->page->cmid => 'page', $this->assign->cmid => 'assign', $this->quiz->cmid => 'quiz'],
+            $deletetask->get_modulenames());
 
         // Check DB status of Modules before execute task.
         $this->assertFalse($DB->record_exists('quiz', array('id' => $this->quizcm->instance)));
@@ -151,6 +155,10 @@ class delete_task_test extends fix_course_delete_module_test {
 
         $deletemodules = array();
         $deletemodules = $deletetask->get_deletemodules();
+        // Reset variables.
+        $assignmodule = null;
+        $quizmodule = null;
+
         foreach ($deletemodules as $deletemodule) {
             if ($deletemodule->coursemoduleid == $this->assign->cmid) {
                 $assignmodule = $deletemodule;
@@ -163,9 +171,7 @@ class delete_task_test extends fix_course_delete_module_test {
         $this->assertTrue($deletetask->is_multi_module_task());
         $this->assertEquals(2, count($deletemodules));
         // Check Assign module.
-        $this->assertEquals($this->assign->cmid, $assignmodule->coursemoduleid);
-        $this->assertNull($assignmodule->moduleinstanceid); // Should fail to set from db.
-        $this->assertNull($assignmodule->courseid); // Should fail to set from db.
+        $this->assertTrue(is_null($assignmodule));
         // Check Quiz module.
         $this->assertEquals($this->quiz->cmid,   $quizmodule->coursemoduleid);
         $this->assertEquals($this->quiz->id,   $quizmodule->moduleinstanceid); // Should be set via database check.

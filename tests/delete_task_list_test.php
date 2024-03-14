@@ -82,7 +82,7 @@ class delete_task_list_test extends fix_course_delete_module_test {
         }
 
         // Check the multi mod deletion task.
-        $this->assertCount(2, $deletemodulesmulti);
+        $this->assertCount(3, $deletemodulesmulti);
         $this->assertTrue($deletemultitask->is_multi_module_task());
         $this->assertEquals($this->assign->cmid, $assignmodule->coursemoduleid);
         $this->assertEquals($this->assign->id,   $assignmodule->moduleinstanceid); // Should be set via database check.
@@ -146,6 +146,11 @@ class delete_task_list_test extends fix_course_delete_module_test {
         $deletemodulesbook  = $deletebooktask->get_deletemodules();
         $dmbook             = current($deletemodulesbook);
         $deletemodulesmulti = $deletemultitask->get_deletemodules();
+
+        // Reset variables.
+        $assignmodule = null;
+        $quizmodule = null;
+
         foreach ($deletemodulesmulti as $deletemodule) {
             if ($deletemodule->coursemoduleid == $this->assign->cmid) {
                 $assignmodule = $deletemodule;
@@ -163,13 +168,10 @@ class delete_task_list_test extends fix_course_delete_module_test {
         // Check the second task (multi mod deletion).
         $this->assertCount(2, $deletemodulesmulti);
         $this->assertTrue($deletemultitask->is_multi_module_task());
-        $this->assertEquals($this->assign->cmid, $assignmodule->coursemoduleid);
-        $this->assertNull($assignmodule->moduleinstanceid); // Should be gone (deleted).
-        $this->assertNull($assignmodule->courseid); // Should be gone (deleted).
+        $this->assertTrue(is_null($assignmodule));
         $this->assertEquals($this->quiz->cmid,   $quizmodule->coursemoduleid);
         $this->assertEquals($this->quiz->id,     $quizmodule->moduleinstanceid); // Should be set via database check.
         $this->assertEquals($this->course->id,   $quizmodule->courseid); // Should be set via database check.
-        $this->assertEquals($multitaskid, $deletemultitask->taskid);
 
         // Execute book task - should execute successfully.
         $now = time();
@@ -226,8 +228,7 @@ class delete_task_list_test extends fix_course_delete_module_test {
         // Check the second task (multi mod deletion).
         $this->assertCount(2, $deletemodulesmulti);
         $this->assertTrue($deletemultitask->is_multi_module_task());
-        $this->assertEquals($this->assign->cmid, $assignmodule->coursemoduleid);
-        $this->assertNull($assignmodule->moduleinstanceid); // Null on muli-mod delete.
+        $this->assertTrue(is_null($assignmodule));
         $this->assertEquals($this->quiz->cmid, $quizmodule->coursemoduleid);
         $this->assertEquals($this->quiz->id,     $quizmodule->moduleinstanceid); // Should be set via database check.
         $this->assertEquals($this->course->id,   $quizmodule->courseid); // Should be set via database check.
