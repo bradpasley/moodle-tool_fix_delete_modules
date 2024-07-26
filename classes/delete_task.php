@@ -181,7 +181,8 @@ class delete_task {
         foreach ($cms as $cmdata) {
             $instanceid = isset($cmdata->instance) ? $cmdata->instance : null;
             if (!isset($instanceid)) { // Attempt to retrieve from database.
-                if ($record = $DB->get_field('course_modules', 'instance', array('id' => $cmdata->id))) {
+                $record = $DB->get_field('course_modules', 'instance', array('id' => $cmdata->id));
+                if ($record !== false) {
                     $instanceid = $record;
                 }
             }
