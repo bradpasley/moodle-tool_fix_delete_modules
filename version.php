@@ -29,5 +29,5 @@ $plugin->component = 'tool_fix_delete_modules';
 $plugin->release = '0.1.0';
 $plugin->version = 2022081600;
 $plugin->requires = 2018051700;
-$plugin->supported = [35, 401];
+$plugin->supported = [35, 405];
 $plugin->maturity = MATURITY_BETA;

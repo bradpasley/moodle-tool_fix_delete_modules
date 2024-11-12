@@ -48,7 +48,7 @@ Instructions of how to use the CLI can be found in the help page:
 
 | Moodle version     | Branch            |
 -------------------- | ------------------|
-| Moodle 3.5+        | main              |
+| Moodle 3.5+        | MOODLE_35_STABLE  |
 
 ## Installing via uploaded ZIP file ##
 
