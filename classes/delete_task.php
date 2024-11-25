@@ -60,13 +60,15 @@ class delete_task {
      * @return array
      */
     public function get_deletemodules() {
-        // Unset if the module is already deleted successfully.
-        // This is only required if MDL-80930 is not applied.
-        // MDL-80930 is integrated, there should be no "NULL moduleinstanceid".
-        foreach ($this->deletemodules as $key => $deletemodule) {
-            // No instanceid.
-            if (is_null($deletemodule->moduleinstanceid)) {
-                unset($this->deletemodules[$key]);
+        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
+            // Unset if the module is already deleted successfully.
+            // This is only required if MDL-80930 is not applied.
+            // MDL-80930 is integrated, there should be no "NULL moduleinstanceid".
+            foreach ($this->deletemodules as $key => $deletemodule) {
+                // No instanceid.
+                if (is_null($deletemodule->moduleinstanceid)) {
+                    unset($this->deletemodules[$key]);
+                }
             }
         }
         return $this->deletemodules;
